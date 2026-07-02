@@ -124,8 +124,8 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.file_download),
-            tooltip: 'Download CSV',
+            icon: const Icon(Icons.share),
+            tooltip: 'Share CSV',
             onPressed: _exportCSV,
           ),
           PopupMenuButton<String>(
@@ -181,6 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 title: Text(
                                   spending.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -190,6 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   children: [
                                     Text(
                                       '${spending.category} • ${DateFormat('hh:mm a').format(spending.date)}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodySmall,

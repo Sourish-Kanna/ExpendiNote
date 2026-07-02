@@ -203,9 +203,13 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           color: colorScheme.secondary,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          '${_getTopCategory(spendings)} • ${spendings.length} items',
-                          style: TextStyle(color: colorScheme.secondary),
+                        Expanded(
+                          child: Text(
+                            '${_getTopCategory(spendings)} • ${spendings.length} items',
+                            style: TextStyle(color: colorScheme.secondary),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
                       ],
                     ),

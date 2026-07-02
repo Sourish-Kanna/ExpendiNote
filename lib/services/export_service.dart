@@ -51,10 +51,10 @@ class ExportService {
 
       await Share.shareXFiles([
         XFile(file.path),
-      ], text: 'Exported Spendings (CSV) - $dateStamp');
-      _logger.i('CSV export successful.');
+      ], text: 'Spendings CSV - $dateStamp');
+      _logger.i('CSV sharing successful.');
     } catch (e) {
-      _logger.e('CSV export failed: $e');
+      _logger.e('CSV sharing failed: $e');
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
@@ -17,6 +18,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
   late String _selectedCategory;
+  late DateTime _selectedDate;
 
   @override
   void initState() {
@@ -29,6 +31,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       text: widget.spending?.description,
     );
     _selectedCategory = widget.spending?.category ?? 'General';
+    _selectedDate = widget.spending?.date ?? DateTime.now();
   }
 
   final Map<String, IconData> _categories = {
@@ -47,7 +50,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         id: widget.spending?.id,
         title: _titleController.text,
         amount: double.parse(_amountController.text),
-        date: widget.spending?.date ?? DateTime.now(),
+        date: _selectedDate,
         category: _selectedCategory,
         description: _descriptionController.text.isEmpty
             ? null
@@ -64,6 +67,26 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         Navigator.pop(context, true);
       }
     }
+  }
+
+  void _presentDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) return;
+      setState(() {
+        _selectedDate = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          _selectedDate.hour,
+          _selectedDate.minute,
+        );
+      });
+    });
   }
 
   @override
@@ -101,12 +124,34 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Please enter an amount';
-                  if (double.tryParse(value) == null)
+                  }
+                  if (double.tryParse(value) == null) {
                     return 'Please enter a valid number';
+                  }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _presentDatePicker,
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Date',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        DateFormat('EEEE, MMM dd, yyyy').format(_selectedDate),
+                      ),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Text(

@@ -124,14 +124,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            DateFormat('EEEE, MMM dd').format(date),
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: colorScheme.primary,
-                                ),
+                          Expanded(
+                            child: Text(
+                              DateFormat('EEEE, MMM dd').format(date),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.primary,
+                                  ),
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             'Total: ₹${dailyTotal.toStringAsFixed(2)}',
                             style: Theme.of(context).textTheme.titleSmall
@@ -147,7 +152,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             _getCategoryIcon(s.category),
                             color: colorScheme.secondary,
                           ),
-                          title: Text(s.title),
+                          title: Text(
+                            s.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: s.description != null
                               ? Tooltip(
                                   message: s.description!,
