@@ -68,6 +68,39 @@ class _HomeScreenState extends State<HomeScreen> {
     await ExportService().exportToCSV(_allSpendings);
   }
 
+  void _confirmDeleteOld() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Old Records?'),
+        content: const Text(
+          'This will permanently delete all spending entries older than 3 months. Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final count = await DatabaseService().deleteOldSpendings(3);
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Deleted $count old records.')),
+              );
+              _refreshSpendings();
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -94,6 +127,25 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.file_download),
             tooltip: 'Download CSV',
             onPressed: _exportCSV,
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'delete_old') {
+                _confirmDeleteOld();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'delete_old',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Clear > 3 months'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
