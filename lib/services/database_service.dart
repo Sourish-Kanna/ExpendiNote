@@ -1,6 +1,7 @@
+import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:logger/logger.dart';
+
 import '../models/spending.dart';
 
 class DatabaseService {
@@ -39,6 +40,17 @@ class DatabaseService {
       'spendings',
       spending.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> updateSpending(Spending spending) async {
+    _logger.i('Updating spending with ID: ${spending.id}');
+    final db = await database;
+    await db.update(
+      'spendings',
+      spending.toMap(),
+      where: 'id = ?',
+      whereArgs: [spending.id],
     );
   }
 

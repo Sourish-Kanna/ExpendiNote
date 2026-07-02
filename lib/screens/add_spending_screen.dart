@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../models/spending.dart';
 import '../services/database_service.dart';
 
 class AddSpendingScreen extends StatefulWidget {
-  const AddSpendingScreen({super.key});
+  final Spending? spending;
+  const AddSpendingScreen({super.key, this.spending});
 
   @override
   State<AddSpendingScreen> createState() => _AddSpendingScreenState();
@@ -11,34 +13,53 @@ class AddSpendingScreen extends StatefulWidget {
 
 class _AddSpendingScreenState extends State<AddSpendingScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _amountController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  String _selectedCategory = 'General';
+  late TextEditingController _titleController;
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
+  late String _selectedCategory;
 
-  final List<String> _categories = [
-    'General',
-    'Food',
-    'Transport',
-    'Entertainment',
-    'Shopping',
-    'Health',
-    'Other',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.spending?.title);
+    _amountController = TextEditingController(
+      text: widget.spending?.amount.toString(),
+    );
+    _descriptionController = TextEditingController(
+      text: widget.spending?.description,
+    );
+    _selectedCategory = widget.spending?.category ?? 'General';
+  }
+
+  final Map<String, IconData> _categories = {
+    'General': Icons.receipt,
+    'Food': Icons.restaurant,
+    'Transport': Icons.directions_bus,
+    'Entertainment': Icons.movie,
+    'Shopping': Icons.shopping_bag,
+    'Health': Icons.medical_services,
+    'Other': Icons.more_horiz,
+  };
 
   void _saveSpending() async {
     if (_formKey.currentState!.validate()) {
       final spending = Spending(
+        id: widget.spending?.id,
         title: _titleController.text,
         amount: double.parse(_amountController.text),
-        date: DateTime.now(),
+        date: widget.spending?.date ?? DateTime.now(),
         category: _selectedCategory,
         description: _descriptionController.text.isEmpty
             ? null
             : _descriptionController.text,
       );
 
-      await DatabaseService().insertSpending(spending);
+      if (widget.spending == null) {
+        await DatabaseService().insertSpending(spending);
+      } else {
+        await DatabaseService().updateSpending(spending);
+      }
+
       if (mounted) {
         Navigator.pop(context, true);
       }
@@ -47,8 +68,11 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isEditing = widget.spending != null;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Spending')),
+      appBar: AppBar(title: Text(isEditing ? 'Edit Spending' : 'Add Spending')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -84,27 +108,47 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  prefixIcon: Icon(Icons.category),
-                  border: OutlineInputBorder(),
+              const SizedBox(height: 24),
+              Text(
+                'Category',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.primary,
                 ),
-                items: _categories.map((String category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child: Text(category),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _categories.entries.map((entry) {
+                  final isSelected = _selectedCategory == entry.key;
+                  return ChoiceChip(
+                    avatar: Icon(
+                      entry.value,
+                      size: 18,
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.primary,
+                    ),
+                    label: Text(entry.key),
+                    selected: isSelected,
+                    selectedColor: colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface,
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedCategory = entry.key;
+                        });
+                      }
+                    },
                   );
                 }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedCategory = newValue!;
-                  });
-                },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -124,9 +168,9 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   ),
                 ),
                 icon: const Icon(Icons.save),
-                label: const Text(
-                  'Save Spending',
-                  style: TextStyle(fontSize: 18),
+                label: Text(
+                  isEditing ? 'Update Spending' : 'Save Spending',
+                  style: const TextStyle(fontSize: 18),
                 ),
               ),
             ],
