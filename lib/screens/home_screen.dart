@@ -59,9 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daily Spendings'),
+        title: const Text('ExpendNote'),
+        backgroundColor: colorScheme.surfaceContainerLow,
         actions: [
           IconButton(
             icon: const Icon(Icons.code),
@@ -78,52 +81,82 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _spendings.isEmpty
-          ? const Center(child: Text('No spendings noted yet.'))
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: colorScheme.outline,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No spendings noted yet.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: colorScheme.outline),
+                  ),
+                ],
+              ),
+            )
           : ListView.builder(
-              itemCount: _spendings.size,
+              padding: const EdgeInsets.all(8),
+              itemCount: _spendings.length,
               itemBuilder: (context, index) {
                 final spending = _spendings[index];
-                return ListTile(
-                  title: Text(spending.title),
-                  subtitle: Text(
-                    '${spending.category} - ${DateFormat('MMM dd, yyyy').format(spending.date)}\n${spending.description ?? ""}',
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 4,
                   ),
-                  trailing: Text(
-                    '₹${spending.amount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.redAccent,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                  ),
-                  onLongPress: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Spending?'),
-                        content: const Text(
-                          'Are you sure you want to delete this entry?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              _deleteSpending(spending.id!);
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Delete'),
-                          ),
-                        ],
+                    leading: CircleAvatar(
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: Icon(
+                        _getCategoryIcon(spending.category),
+                        color: colorScheme.onPrimaryContainer,
                       ),
-                    );
-                  },
+                    ),
+                    title: Text(
+                      spending.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${spending.category} • ${DateFormat('MMM dd, yyyy').format(spending.date)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        if (spending.description != null &&
+                            spending.description!.isNotEmpty)
+                          Text(
+                            spending.description!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                    trailing: Text(
+                      '₹${spending.amount.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: colorScheme.error,
+                      ),
+                    ),
+                    onLongPress: () => _confirmDelete(spending),
+                  ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.large(
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -137,8 +170,49 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
 
-extension on List {
-  int get size => length;
+  void _confirmDelete(Spending spending) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Spending?'),
+        content: const Text('Are you sure you want to delete this entry?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _deleteSpending(spending.id!);
+              Navigator.pop(context);
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Food':
+        return Icons.restaurant;
+      case 'Transport':
+        return Icons.directions_bus;
+      case 'Entertainment':
+        return Icons.movie;
+      case 'Shopping':
+        return Icons.shopping_bag;
+      case 'Health':
+        return Icons.medical_services;
+      case 'Other':
+        return Icons.more_horiz;
+      default:
+        return Icons.receipt;
+    }
+  }
 }
