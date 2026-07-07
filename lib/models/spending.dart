@@ -36,15 +36,4 @@ class Spending {
       description: map['description'],
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'amount': amount,
-      'date': date.toIso8601String(),
-      'category': category,
-      'description': description,
-    };
-  }
 }

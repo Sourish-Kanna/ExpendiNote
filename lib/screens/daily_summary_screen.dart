@@ -108,8 +108,11 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainer,
       appBar: AppBar(
         title: const Text('Daily Summary'),
+        backgroundColor: colorScheme.surfaceContainer,
+        scrolledUnderElevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
@@ -129,7 +132,11 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: EdgeInsets.zero,
+                hintStyle: TextStyle(
+                  color: colorScheme.onSurfaceVariant.withAlpha(150),
+                ),
               ),
+              style: TextStyle(color: colorScheme.onSurface),
             ),
           ),
         ),
@@ -165,15 +172,16 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     ),
                   ),
                   child: ListTile(
-                    onTap: () {
+                    onTap: () async {
                       // Navigate to detail view
-                      Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
                               HistoryScreen(filterDate: dateStr),
                         ),
                       );
+                      _loadSummary();
                     },
                     leading: CircleAvatar(
                       backgroundColor: isToday
@@ -196,6 +204,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           _getCategoryIcon(_getTopCategory(spendings)),
@@ -203,10 +212,13 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           color: colorScheme.secondary,
                         ),
                         const SizedBox(width: 4),
-                        Expanded(
+                        Flexible(
                           child: Text(
                             '${_getTopCategory(spendings)} • ${spendings.length} items',
-                            style: TextStyle(color: colorScheme.secondary),
+                            style: TextStyle(
+                              color: colorScheme.secondary,
+                              fontSize: 12,
+                            ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),

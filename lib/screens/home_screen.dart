@@ -3,9 +3,10 @@ import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
-import '../services/export_service.dart';
 import 'add_spending_screen.dart';
-import 'daily_summary_screen.dart';
+import 'category_summary_screen.dart';
+import 'search_screen.dart';
+import 'unified_summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,8 +16,77 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Spending> _allSpendings = [];
-  List<Spending> _todaySpendings = [];
+  int _selectedIndex = 0;
+  final ValueNotifier<int> _refreshNotifier = ValueNotifier<int>(0);
+
+  late final List<Widget> _tabs;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabs = [
+      _HomeTab(refreshNotifier: _refreshNotifier),
+      UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surfaceContainer,
+      body: IndexedStack(index: _selectedIndex, children: _tabs),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.analytics_outlined),
+            selectedIcon: Icon(Icons.analytics),
+            label: 'Analysis',
+          ),
+        ],
+      ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton.large(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddSpendingScreen(),
+                  ),
+                );
+                if (result == true) {
+                  _refreshNotifier.value++;
+                }
+              },
+              child: const Icon(Icons.add),
+            )
+          : null,
+    );
+  }
+}
+
+class _HomeTab extends StatefulWidget {
+  final ValueNotifier<int> refreshNotifier;
+  const _HomeTab({required this.refreshNotifier});
+
+  @override
+  State<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<_HomeTab> {
+  List<Spending> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
   bool _isLoading = true;
@@ -25,9 +95,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _refreshSpendings();
+    widget.refreshNotifier.addListener(_refreshSpendings);
+  }
+
+  @override
+  void dispose() {
+    widget.refreshNotifier.removeListener(_refreshSpendings);
+    super.dispose();
   }
 
   Future<void> _refreshSpendings() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     final data = await DatabaseService().getSpendings();
 
@@ -44,61 +122,13 @@ class _HomeScreenState extends State<HomeScreen> {
         .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)
         .fold(0.0, (sum, item) => sum + item.amount);
 
+    if (!mounted) return;
     setState(() {
-      _allSpendings = data;
-      _todaySpendings = todayData;
+      _recentSpendings = data.take(20).toList();
       _todayTotal = total;
       _monthlyTotal = monthlyTotal;
       _isLoading = false;
     });
-  }
-
-  void _deleteSpending(int id) async {
-    await DatabaseService().deleteSpending(id);
-    _refreshSpendings();
-  }
-
-  void _exportCSV() async {
-    if (_allSpendings.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No data to export')));
-      return;
-    }
-    await ExportService().exportToCSV(_allSpendings);
-  }
-
-  void _confirmDeleteOld() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Old Records?'),
-        content: const Text(
-          'This will permanently delete all spending entries older than 3 months. Are you sure?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final count = await DatabaseService().deleteOldSpendings(3);
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Deleted $count old records.')),
-              );
-              _refreshSpendings();
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -106,217 +136,205 @@ class _HomeScreenState extends State<HomeScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainer,
       appBar: AppBar(
         title: const Text('ExpendNote'),
-        backgroundColor: colorScheme.surfaceContainerLow,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'History',
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DailySummaryScreen(),
-                ),
-              );
-              _refreshSpendings();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Share CSV',
-            onPressed: _exportCSV,
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'delete_old') {
-                _confirmDeleteOld();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'delete_old',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_sweep, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('Clear > 3 months'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
+        backgroundColor: colorScheme.surfaceContainer,
+        scrolledUnderElevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                _buildTotalCard(colorScheme),
-                Expanded(
-                  child: _todaySpendings.isEmpty
-                      ? _buildEmptyState(colorScheme)
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: _todaySpendings.length,
-                          itemBuilder: (context, index) {
-                            final spending = _todaySpendings[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
+          : RefreshIndicator(
+              onRefresh: _refreshSpendings,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: SearchBar(
+                        hintText: 'Search spending...',
+                        leading: const Icon(Icons.search),
+                        elevation: WidgetStateProperty.all(0),
+                        backgroundColor: WidgetStateProperty.all(
+                          colorScheme.surfaceContainerHigh,
+                        ),
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SearchScreen(),
+                            ),
+                          );
+                          if (result == true) {
+                            widget.refreshNotifier.value++;
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(child: _buildTotalCard(colorScheme)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverToBoxAdapter(
+                      child: Text(
+                        'Recent Activity',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                  _recentSpendings.isEmpty
+                      ? SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: _buildEmptyState(colorScheme),
+                        )
+                      : SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final spending = _recentSpendings[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
                                 vertical: 4,
-                                horizontal: 4,
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                leading: CircleAvatar(
-                                  backgroundColor: colorScheme.primaryContainer,
-                                  child: Icon(
-                                    _getCategoryIcon(spending.category),
-                                    color: colorScheme.onPrimaryContainer,
+                              child: Card(
+                                color: colorScheme.surfaceContainerLow,
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                ),
-                                title: Text(
-                                  spending.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${spending.category} • ${DateFormat('hh:mm a').format(spending.date)}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        colorScheme.primaryContainer,
+                                    child: Icon(
+                                      _getCategoryIcon(spending.category),
+                                      color: colorScheme.onPrimaryContainer,
                                     ),
-                                    if (spending.description != null &&
-                                        spending.description!.isNotEmpty)
-                                      Tooltip(
-                                        message: spending.description!,
-                                        child: Text(
-                                          spending.description!,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
+                                  ),
+                                  title: Text(
+                                    spending.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${spending.category} • ${DateFormat('hh:mm a').format(spending.date)}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                  trailing: Text(
+                                    '₹${spending.amount.toStringAsFixed(0)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: colorScheme.error,
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => AddSpendingScreen(
+                                          spending: spending,
                                         ),
                                       ),
-                                  ],
+                                    );
+                                    if (result == true) {
+                                      widget.refreshNotifier.value++;
+                                    }
+                                  },
+                                  onLongPress: () => _confirmDelete(spending),
                                 ),
-                                trailing: Text(
-                                  '₹${spending.amount.toStringAsFixed(2)}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: colorScheme.error,
-                                  ),
-                                ),
-                                onTap: () async {
-                                  final result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          AddSpendingScreen(spending: spending),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    _refreshSpendings();
-                                  }
-                                },
-                                onLongPress: () => _confirmDelete(spending),
                               ),
                             );
-                          },
+                          }, childCount: _recentSpendings.length),
                         ),
-                ),
-              ],
+                ],
+              ),
             ),
-      floatingActionButton: FloatingActionButton.large(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddSpendingScreen()),
-          );
-          if (result == true) {
-            _refreshSpendings();
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
   Widget _buildTotalCard(ColorScheme colorScheme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  "Today",
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    fontSize: 14,
+    return InkWell(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CategorySummaryScreen(),
+          ),
+        );
+        _refreshSpendings();
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    "Today",
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₹${_todayTotal.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${_todayTotal.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: colorScheme.onPrimaryContainer.withAlpha(51),
-          ),
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  "This Month",
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '₹${_monthlyTotal.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            Container(
+              width: 1,
+              height: 40,
+              color: colorScheme.onPrimaryContainer.withAlpha(51),
             ),
-          ),
-        ],
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    "This Month",
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${_monthlyTotal.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      color: colorScheme.onPrimaryContainer,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -332,12 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          Text(
-            'No spendings noted for today.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyLarge?.copyWith(color: colorScheme.outline),
-          ),
+          const Text('No spendings noted yet.'),
         ],
       ),
     );
@@ -355,9 +368,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              _deleteSpending(spending.id!);
+            onPressed: () async {
               Navigator.pop(context);
+              await DatabaseService().deleteSpending(spending.id!);
+              widget.refreshNotifier.value++;
             },
             child: Text(
               'Delete',

@@ -95,7 +95,21 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     final isEditing = widget.spending != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(isEditing ? 'Edit Spending' : 'Add Spending')),
+      backgroundColor: colorScheme.surfaceContainer,
+      appBar: AppBar(
+        title: Text(isEditing ? 'Edit Spending' : 'Add Spending'),
+        backgroundColor: colorScheme.surfaceContainer,
+        scrolledUnderElevation: 0,
+        actions: isEditing
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  color: colorScheme.error,
+                  onPressed: () => _confirmDelete(widget.spending!),
+                ),
+              ]
+            : null,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -105,10 +119,14 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'What did you spend on?',
-                  prefixIcon: Icon(Icons.title),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.title),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 validator: (value) => value == null || value.isEmpty
                     ? 'Please enter a title'
@@ -117,10 +135,14 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _amountController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Amount',
-                  prefixIcon: Icon(Icons.currency_rupee),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.currency_rupee),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -136,11 +158,16 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
               const SizedBox(height: 16),
               InkWell(
                 onTap: _presentDatePicker,
+                borderRadius: BorderRadius.circular(12),
                 child: InputDecorator(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Date',
-                    prefixIcon: Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: colorScheme.surfaceContainerLow,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -168,6 +195,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 children: _categories.entries.map((entry) {
                   final isSelected = _selectedCategory == entry.key;
                   return ChoiceChip(
+                    showCheckmark: false,
                     avatar: Icon(
                       entry.value,
                       size: 18,
@@ -196,10 +224,14 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Description (Optional)',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.description),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 maxLines: 3,
               ),
@@ -212,7 +244,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.save),
+                icon: Icon(isEditing ? Icons.update : Icons.save),
                 label: Text(
                   isEditing ? 'Update Spending' : 'Save Spending',
                   style: const TextStyle(fontSize: 18),
@@ -221,6 +253,35 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _confirmDelete(Spending spending) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Spending?'),
+        content: const Text('Are you sure you want to delete this entry?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await DatabaseService().deleteSpending(spending.id!);
+              if (mounted) {
+                Navigator.pop(context, true);
+              }
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
       ),
     );
   }

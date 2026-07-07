@@ -16,6 +16,7 @@ class HistoryScreen extends StatefulWidget {
 class _HistoryScreenState extends State<HistoryScreen> {
   Map<String, List<Spending>> _groupedSpendings = {};
   bool _isLoading = true;
+  bool _hasChanged = false;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   void _deleteSpending(int id) async {
     await DatabaseService().deleteSpending(id);
+    _hasChanged = true;
     _loadHistory();
   }
 
@@ -99,7 +101,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
         : 'Spending History';
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      backgroundColor: colorScheme.surfaceContainer,
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: colorScheme.surfaceContainer,
+        scrolledUnderElevation: 0,
+        leading: BackButton(
+          onPressed: () => Navigator.pop(context, _hasChanged),
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : sortedDates.isEmpty
@@ -177,6 +187,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                             );
                             if (result == true) {
+                              _hasChanged = true;
                               _loadHistory();
                             }
                           },

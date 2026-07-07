@@ -72,19 +72,4 @@ class DatabaseService {
     final db = await database;
     await db.delete('spendings', where: 'id = ?', whereArgs: [id]);
   }
-
-  Future<int> deleteOldSpendings(int months) async {
-    _logger.i('Deleting spendings older than $months months...');
-    final db = await database;
-    final dateLimit = DateTime.now().subtract(Duration(days: months * 30));
-    final dateLimitStr = dateLimit.toIso8601String();
-
-    final count = await db.delete(
-      'spendings',
-      where: 'date < ?',
-      whereArgs: [dateLimitStr],
-    );
-    _logger.i('Deleted $count old entries.');
-    return count;
-  }
 }

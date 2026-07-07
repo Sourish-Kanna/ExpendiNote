@@ -1,0 +1,221 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../models/spending.dart';
+import '../services/database_service.dart';
+
+class CategorySummaryScreen extends StatefulWidget {
+  const CategorySummaryScreen({super.key});
+
+  @override
+  State<CategorySummaryScreen> createState() => _CategorySummaryScreenState();
+}
+
+class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
+  Map<String, double> _categoryTotals = {};
+  double _grandTotal = 0;
+  bool _isLoading = true;
+  String _selectedPeriod = 'This Month';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategoryData();
+  }
+
+  Future<void> _loadCategoryData() async {
+    setState(() => _isLoading = true);
+    final allSpendings = await DatabaseService().getSpendings();
+
+    final now = DateTime.now();
+    final monthStr = DateFormat('yyyy-MM').format(now);
+
+    List<Spending> filtered;
+    if (_selectedPeriod == 'This Month') {
+      filtered = allSpendings
+          .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)
+          .toList();
+    } else {
+      filtered = allSpendings;
+    }
+
+    Map<String, double> totals = {};
+    double grand = 0;
+    for (var s in filtered) {
+      totals[s.category] = (totals[s.category] ?? 0) + s.amount;
+      grand += s.amount;
+    }
+
+    // Sort categories by amount descending
+    final sortedTotals = Map.fromEntries(
+      totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+    );
+
+    setState(() {
+      _categoryTotals = sortedTotals;
+      _grandTotal = grand;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      backgroundColor: colorScheme.surfaceContainer,
+      appBar: AppBar(
+        title: const Text('Category Spending'),
+        backgroundColor: colorScheme.surfaceContainer,
+        scrolledUnderElevation: 0,
+        actions: [
+          PopupMenuButton<String>(
+            initialValue: _selectedPeriod,
+            onSelected: (value) {
+              setState(() => _selectedPeriod = value);
+              _loadCategoryData();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'This Month',
+                child: Text('This Month'),
+              ),
+              const PopupMenuItem(value: 'All Time', child: Text('All Time')),
+            ],
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _categoryTotals.isEmpty
+          ? const Center(child: Text('No data for this period.'))
+          : Column(
+              children: [
+                _buildOverviewCard(colorScheme),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _categoryTotals.length,
+                    itemBuilder: (context, index) {
+                      final entry = _categoryTotals.entries.elementAt(index);
+                      final percentage = _grandTotal > 0
+                          ? (entry.value / _grandTotal) * 100
+                          : 0.0;
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    backgroundColor:
+                                        colorScheme.secondaryContainer,
+                                    child: Icon(
+                                      _getCategoryIcon(entry.key),
+                                      color: colorScheme.onSecondaryContainer,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          entry.key,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${percentage.toStringAsFixed(1)}% of total',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    '₹${entry.value.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              LinearProgressIndicator(
+                                value: percentage / 100,
+                                backgroundColor:
+                                    colorScheme.surfaceContainerHighest,
+                                color: colorScheme.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildOverviewCard(ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Total Spending ($_selectedPeriod)',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '₹${_grandTotal.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Food':
+        return Icons.restaurant;
+      case 'Transport':
+        return Icons.directions_bus;
+      case 'Entertainment':
+        return Icons.movie;
+      case 'Shopping':
+        return Icons.shopping_bag;
+      case 'Health':
+        return Icons.medical_services;
+      case 'Other':
+        return Icons.more_horiz;
+      default:
+        return Icons.receipt;
+    }
+  }
+}
