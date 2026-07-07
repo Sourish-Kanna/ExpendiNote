@@ -4,8 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/spending.dart';
 import '../services/database_service.dart';
 import 'add_spending_screen.dart';
-import 'category_summary_screen.dart';
 import 'search_screen.dart';
+import 'spending_detail_screen.dart';
 import 'unified_summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,7 +25,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _tabs = [
-      _HomeTab(refreshNotifier: _refreshNotifier),
+      _HomeTab(
+        refreshNotifier: _refreshNotifier,
+        onShowAnalysis: () {
+          setState(() {
+            _selectedIndex = 1;
+          });
+        },
+      ),
       UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
     ];
   }
@@ -79,7 +86,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeTab extends StatefulWidget {
   final ValueNotifier<int> refreshNotifier;
-  const _HomeTab({required this.refreshNotifier});
+  final VoidCallback onShowAnalysis;
+  const _HomeTab({required this.refreshNotifier, required this.onShowAnalysis});
 
   @override
   State<_HomeTab> createState() => _HomeTabState();
@@ -241,9 +249,10 @@ class _HomeTabState extends State<_HomeTab> {
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => AddSpendingScreen(
-                                          spending: spending,
-                                        ),
+                                        builder: (context) =>
+                                            SpendingDetailScreen(
+                                              spending: spending,
+                                            ),
                                       ),
                                     );
                                     if (result == true) {
@@ -264,15 +273,7 @@ class _HomeTabState extends State<_HomeTab> {
 
   Widget _buildTotalCard(ColorScheme colorScheme) {
     return InkWell(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CategorySummaryScreen(),
-          ),
-        );
-        _refreshSpendings();
-      },
+      onTap: widget.onShowAnalysis,
       borderRadius: BorderRadius.circular(24),
       child: Container(
         width: double.infinity,

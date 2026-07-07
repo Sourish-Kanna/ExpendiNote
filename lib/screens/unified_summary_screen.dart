@@ -6,6 +6,7 @@ import '../services/database_service.dart';
 import '../services/export_service.dart';
 import 'category_summary_screen.dart';
 import 'daily_summary_screen.dart';
+import 'history_screen.dart';
 import 'monthly_summary_screen.dart';
 
 class UnifiedSummaryScreen extends StatefulWidget {
@@ -75,7 +76,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           : RefreshIndicator(
               onRefresh: _loadData,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 children: [
                   _buildSectionHeader(context, 'Categories', () async {
                     await Navigator.push(
@@ -153,14 +154,34 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         return Card(
           color: colorScheme.surfaceContainerLow,
           child: ListTile(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      HistoryScreen(filterCategory: entry.key),
+                ),
+              );
+              if (result == true) {
+                _loadData();
+                widget.refreshNotifier.value++;
+              }
+            },
             leading: Icon(
               _getCategoryIcon(entry.key),
               color: colorScheme.primary,
             ),
             title: Text(entry.key),
-            trailing: Text(
-              '₹${entry.value.toStringAsFixed(0)}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '₹${entry.value.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, size: 16),
+              ],
             ),
           ),
         );
@@ -185,13 +206,32 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         return Card(
           color: colorScheme.surfaceContainerLow,
           child: ListTile(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HistoryScreen(filterMonth: entry.key),
+                ),
+              );
+              if (result == true) {
+                _loadData();
+                widget.refreshNotifier.value++;
+              }
+            },
             title: Text(entry.key),
-            trailing: Text(
-              '₹${entry.value.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.primary,
-              ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '₹${entry.value.toStringAsFixed(0)}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, size: 16),
+              ],
             ),
           ),
         );
@@ -217,10 +257,29 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         return Card(
           color: colorScheme.surfaceContainerLow,
           child: ListTile(
+            onTap: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HistoryScreen(filterDate: entry.key),
+                ),
+              );
+              if (result == true) {
+                _loadData();
+                widget.refreshNotifier.value++;
+              }
+            },
             title: Text(DateFormat('EEEE, MMM dd').format(date)),
-            trailing: Text(
-              '₹${entry.value.toStringAsFixed(0)}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '₹${entry.value.toStringAsFixed(0)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, size: 16),
+              ],
             ),
           ),
         );

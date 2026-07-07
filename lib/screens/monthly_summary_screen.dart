@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
+import 'history_screen.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {
   const MonthlySummaryScreen({super.key});
@@ -71,6 +72,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                 final spendings = _monthlySpendings[monthStr]!;
                 final monthlyTotal = _calculateMonthlyTotal(spendings);
                 final date = DateTime.parse('$monthStr-01');
+                final filterMonthStr = DateFormat('MMM yyyy').format(date);
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -95,17 +97,30 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text('${spendings.length} entries'),
-                    trailing: Text(
-                      '₹${monthlyTotal.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '₹${monthlyTotal.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
-                    onTap: () {
-                      // Optionally navigate to a filtered history or just stay here
-                      // For now, let's just show a snackbar or navigate to history filtered by month if implemented
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              HistoryScreen(filterMonth: filterMonthStr),
+                        ),
+                      );
+                      _loadMonthlySummary();
                     },
                   ),
                 );

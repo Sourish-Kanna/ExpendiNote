@@ -3,11 +3,19 @@ import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
-import 'add_spending_screen.dart';
+import 'spending_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
-  final String? filterDate;
-  const HistoryScreen({super.key, this.filterDate});
+  final String? filterDate; // yyyy-MM-dd
+  final String? filterCategory;
+  final String? filterMonth; // MMM yyyy
+
+  const HistoryScreen({
+    super.key,
+    this.filterDate,
+    this.filterCategory,
+    this.filterMonth,
+  });
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -28,19 +36,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() => _isLoading = true);
     final allSpendings = await DatabaseService().getSpendings();
 
-    // Group spendings by date string
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
     Map<String, List<Spending>> grouped = {};
     for (var s in allSpendings) {
       final dateStr = DateFormat('yyyy-MM-dd').format(s.date);
+      final monthStr = DateFormat('MMM yyyy').format(s.date);
 
-      // If filtering by date, only include that date
+      // Filtering logic
       if (widget.filterDate != null && dateStr != widget.filterDate) continue;
+      if (widget.filterCategory != null &&
+          s.category != widget.filterCategory) {
+        continue;
+      }
+      if (widget.filterMonth != null && monthStr != widget.filterMonth) {
+        continue;
+      }
 
-      // If not filtering, skip today (it's on Home) - keeping original logic for general history
-      if (widget.filterDate == null && dateStr == todayStr) continue;
+      // If no filter, skip today (standard history view)
+      if (widget.filterDate == null &&
+          widget.filterCategory == null &&
+          widget.filterMonth == null &&
+          dateStr == todayStr) {
+        continue;
+      }
 
       if (!grouped.containsKey(dateStr)) {
         grouped[dateStr] = [];
@@ -96,9 +116,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final sortedDates = _groupedSpendings.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
-    final title = widget.filterDate != null
-        ? DateFormat('EEEE, MMM dd').format(DateTime.parse(widget.filterDate!))
-        : 'Spending History';
+    String title = 'Spending History';
+    if (widget.filterDate != null) {
+      title = DateFormat(
+        'EEEE, MMM dd',
+      ).format(DateTime.parse(widget.filterDate!));
+    } else if (widget.filterCategory != null) {
+      title = widget.filterCategory!;
+    } else if (widget.filterMonth != null) {
+      title = widget.filterMonth!;
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -113,7 +140,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : sortedDates.isEmpty
-          ? const Center(child: Text('No previous history found.'))
+          ? const Center(child: Text('No entries found.'))
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: sortedDates.length,
@@ -183,7 +210,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AddSpendingScreen(spending: s),
+                                    SpendingDetailScreen(spending: s),
                               ),
                             );
                             if (result == true) {

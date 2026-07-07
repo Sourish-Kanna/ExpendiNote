@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
+import 'history_screen.dart';
 
 class CategorySummaryScreen extends StatefulWidget {
   const CategorySummaryScreen({super.key});
@@ -68,103 +69,150 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
         title: const Text('Category Spending'),
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
-        actions: [
-          PopupMenuButton<String>(
-            initialValue: _selectedPeriod,
-            onSelected: (value) {
-              setState(() => _selectedPeriod = value);
-              _loadCategoryData();
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'This Month',
-                child: Text('This Month'),
-              ),
-              const PopupMenuItem(value: 'All Time', child: Text('All Time')),
-            ],
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _categoryTotals.isEmpty
-          ? const Center(child: Text('No data for this period.'))
           : Column(
               children: [
-                _buildOverviewCard(colorScheme),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _categoryTotals.length,
-                    itemBuilder: (context, index) {
-                      final entry = _categoryTotals.entries.elementAt(index);
-                      final percentage = _grandTotal > 0
-                          ? (entry.value / _grandTotal) * 100
-                          : 0.0;
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor:
-                                        colorScheme.secondaryContainer,
-                                    child: Icon(
-                                      _getCategoryIcon(entry.key),
-                                      color: colorScheme.onSecondaryContainer,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          entry.key,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Text(
-                                          '${percentage.toStringAsFixed(1)}% of total',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '₹${entry.value.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              LinearProgressIndicator(
-                                value: percentage / 100,
-                                backgroundColor:
-                                    colorScheme.surfaceContainerHighest,
-                                color: colorScheme.primary,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 'This Month',
+                        label: Text('This Month'),
+                        icon: Icon(Icons.calendar_month),
+                      ),
+                      ButtonSegment(
+                        value: 'All Time',
+                        label: Text('All Time'),
+                        icon: Icon(Icons.all_inclusive),
+                      ),
+                    ],
+                    selected: {_selectedPeriod},
+                    onSelectionChanged: (newSelection) {
+                      setState(() {
+                        _selectedPeriod = newSelection.first;
+                      });
+                      _loadCategoryData();
                     },
                   ),
                 ),
+                _categoryTotals.isEmpty
+                    ? const Expanded(
+                        child: Center(child: Text('No data for this period.')),
+                      )
+                    : Expanded(
+                        child: Column(
+                          children: [
+                            _buildOverviewCard(colorScheme),
+                            Expanded(
+                              child: ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _categoryTotals.length,
+                                itemBuilder: (context, index) {
+                                  final entry = _categoryTotals.entries
+                                      .elementAt(index);
+                                  final percentage = _grandTotal > 0
+                                      ? (entry.value / _grandTotal) * 100
+                                      : 0.0;
+
+                                  return Card(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final now = DateTime.now();
+                                        final filterMonth =
+                                            _selectedPeriod == 'This Month'
+                                            ? DateFormat('MMM yyyy').format(now)
+                                            : null;
+
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => HistoryScreen(
+                                              filterCategory: entry.key,
+                                              filterMonth: filterMonth,
+                                            ),
+                                          ),
+                                        );
+                                        _loadCategoryData();
+                                      },
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  backgroundColor: colorScheme
+                                                      .secondaryContainer,
+                                                  child: Icon(
+                                                    _getCategoryIcon(entry.key),
+                                                    color: colorScheme
+                                                        .onSecondaryContainer,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        entry.key,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        '${percentage.toStringAsFixed(1)}% of total',
+                                                        style: Theme.of(
+                                                          context,
+                                                        ).textTheme.bodySmall,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '₹${entry.value.toStringAsFixed(0)}',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                    color: colorScheme.primary,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Icon(
+                                                  Icons.chevron_right,
+                                                  size: 16,
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 12),
+                                            LinearProgressIndicator(
+                                              value: percentage / 100,
+                                              backgroundColor: colorScheme
+                                                  .surfaceContainerHighest,
+                                              color: colorScheme.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
               ],
             ),
     );
@@ -188,7 +236,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '₹${_grandTotal.toStringAsFixed(2)}',
+            '₹${_grandTotal.toStringAsFixed(0)}',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,

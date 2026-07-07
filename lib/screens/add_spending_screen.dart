@@ -260,18 +260,20 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   void _confirmDelete(Spending spending) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Spending?'),
         content: const Text('Are you sure you want to delete this entry?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
               await DatabaseService().deleteSpending(spending.id!);
+
+              // Guard State.context using the State property 'mounted'
               if (mounted) {
                 Navigator.pop(context, true);
               }

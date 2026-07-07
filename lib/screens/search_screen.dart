@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/spending.dart';
 import '../services/database_service.dart';
-import 'add_spending_screen.dart';
+import 'spending_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -120,7 +120,8 @@ class _SearchScreenState extends State<SearchScreen> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddSpendingScreen(spending: s),
+                          builder: (context) =>
+                              SpendingDetailScreen(spending: s),
                         ),
                       );
                       if (result == true) {
