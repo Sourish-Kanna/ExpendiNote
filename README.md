@@ -1,4 +1,4 @@
-# ExpendNote 📝
+# ExpendiNote 📝
 
 <!-- Badges -->
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -8,7 +8,7 @@
 
 > **A minimalist personal finance tracker designed for rapid daily spending logging and long-term analysis.**
 
-ExpendNote is a mobile application that simplifies the process of tracking daily expenses. It provides immediate visibility into daily and monthly spending while offering deep-dive analysis through category-wise and temporal summaries. This repository contains the full Flutter source code for the Android application.
+ExpendiNote is a mobile application that simplifies the process of tracking daily expenses. It provides immediate visibility into daily and monthly spending while offering deep-dive analysis through category-wise and temporal summaries. This repository contains the full Flutter source code for the Android application.
 
 ---
 
@@ -18,7 +18,7 @@ The project is currently stable. You can download and install the ready-to-run A
 
 👉 **APK available via GitHub Releases**
 
-[![Download Latest APK](https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android)](https://github.com/Sourish-Kanna/ExpendNote/releases/latest)
+[![Download Latest APK](https://img.shields.io/badge/Download-APK-green?style=for-the-badge&logo=android)](https://github.com/Sourish-Kanna/ExpendiNote/releases/latest)
 
 ---
 
@@ -26,7 +26,7 @@ The project is currently stable. You can download and install the ready-to-run A
 
 > *Most finance apps are over-engineered with complex bank integrations, making simple manual logging feel like a chore.*
 
-ExpendNote was built to solve the friction of manual expense tracking. It focuses on:
+ExpendiNote was built to solve the friction of manual expense tracking. It focuses on:
 
 - **Speed**: Log an expense in seconds.
 - **Privacy**: Local-first storage using SQLite; your data never leaves your device unless you choose to export it.
@@ -108,8 +108,8 @@ This repository demonstrates:
 
 ```bash
 # Clone the repository
-git clone [https://github.com/your-username/ExpendNote.git](https://github.com/your-username/ExpendNote.git)
-cd ExpendNote
+git clone [https://github.com/your-username/ExpendiNote.git](https://github.com/your-username/ExpendiNote.git)
+cd ExpendiNote
 
 # Install dependencies
 flutter pub get
