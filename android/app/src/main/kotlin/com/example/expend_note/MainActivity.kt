@@ -1,4 +1,4 @@
-package com.sourish.expendi_notes
+package com.example.expend_note
 
 import io.flutter.embedding.android.FlutterActivity
 

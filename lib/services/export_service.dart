@@ -42,16 +42,20 @@ class ExportService {
         ]);
       }
 
-      final String csvString = const ListToCsvConverter().convert(rows);
+      // Modern csv package conversion
+      final String csvString = csv.encode(rows);
 
       final directory = await getTemporaryDirectory();
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final file = File('${directory.path}/spendings_$dateStamp.csv');
       await file.writeAsString(csvString);
 
-      await Share.shareXFiles([
-        XFile(file.path),
-      ], text: 'Spendings CSV - $dateStamp');
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Spendings CSV - $dateStamp',
+        ),
+      );
       _logger.i('CSV sharing successful.');
     } catch (e) {
       _logger.e('CSV sharing failed: $e');
