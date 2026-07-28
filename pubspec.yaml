@@ -41,11 +41,12 @@ dependencies:
   share_plus: ^13.3.0
   intl: ^0.20.3
   logger: ^2.7.0
-  launcher_name: ^1.0.2
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  launcher_name: ^1.0.2
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -66,9 +67,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+   - assets/icon/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -95,6 +95,22 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
 #  dart run launcher_name:main
 launcher_name:
   default: "Expendi Note"
+
+#  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+
+  # Adaptive Icon Config (Android 8.0+)
+  adaptive_icon_background: "#006A67" # Deep Material 3 Teal Background
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+
+  # Android 13+ Monochromatic/Themed Home Screen Icon Config
+  adaptive_icon_monochrome: "assets/icon/icon_monochrome.png"
