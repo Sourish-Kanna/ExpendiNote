@@ -1,4 +1,4 @@
-name: expendi_notes
+name: expend_note
 description: "An App to track daily spending and analyze it"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -97,4 +97,4 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 #  dart run launcher_name:main
 launcher_name:
-  default: "ExpendiNote"
+  default: "Expendi Note"
