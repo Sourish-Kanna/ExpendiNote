@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'spending_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -14,8 +14,8 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<Spending> _allSpendings = [];
-  List<Spending> _filteredSpendings = [];
+  List<txmodel.Transaction> _allSpendings = [];
+  List<txmodel.Transaction> _filteredSpendings = [];
   bool _isLoading = true;
   bool _hasChanged = false;
 
@@ -34,7 +34,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final data = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
+
+    final data = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
     setState(() {
       _allSpendings = data;
       _filteredSpendings = _allSpendings.where((s) {
@@ -121,7 +126,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              SpendingDetailScreen(spending: s),
+                              SpendingDetailScreen(transaction: s),
                         ),
                       );
                       if (result == true) {

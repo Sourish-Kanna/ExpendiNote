@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'spending_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  Map<String, List<Spending>> _groupedSpendings = {};
+  Map<String, List<txmodel.Transaction>> _groupedSpendings = {};
   bool _isLoading = true;
   bool _hasChanged = false;
 
@@ -34,12 +34,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _loadHistory() async {
     setState(() => _isLoading = true);
-    final allSpendings = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
+
+    final allSpendings = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
 
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
-    Map<String, List<Spending>> grouped = {};
+    Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {
       final dateStr = DateFormat('yyyy-MM-dd').format(s.date);
       final monthStr = DateFormat('MMM yyyy').format(s.date);
@@ -65,7 +70,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (!grouped.containsKey(dateStr)) {
         grouped[dateStr] = [];
       }
-      grouped[dateStr]!.add(s);
+      grouped[dateStr]!.add(s); // This line remains unchanged
     }
 
     setState(() {
@@ -75,12 +80,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _deleteSpending(int id) async {
-    await DatabaseService().deleteSpending(id);
+    await TransactionRepository().deleteTransaction(id);
     _hasChanged = true;
     _loadHistory();
   }
 
-  void _confirmDelete(Spending spending) {
+  void _confirmDelete(txmodel.Transaction spending) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -106,7 +111,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  double _calculateDailyTotal(List<Spending> spendings) {
+  double _calculateDailyTotal(List<txmodel.Transaction> spendings) {
     return spendings.fold(0, (sum, item) => sum + item.amount);
   }
 
@@ -210,7 +215,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    SpendingDetailScreen(spending: s),
+                                    SpendingDetailScreen(transaction: s),
                               ),
                             );
                             if (result == true) {

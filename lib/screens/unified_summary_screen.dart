@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import '../services/export_service.dart';
 import 'category_summary_screen.dart';
 import 'daily_summary_screen.dart';
@@ -18,7 +18,7 @@ class UnifiedSummaryScreen extends StatefulWidget {
 }
 
 class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
-  List<Spending> _allSpendings = [];
+  List<txmodel.Transaction> _allSpendings = [];
   bool _isLoading = true;
 
   @override
@@ -36,7 +36,12 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final data = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
+
+    final data = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
     setState(() {
       _allSpendings = data;
       _isLoading = false;

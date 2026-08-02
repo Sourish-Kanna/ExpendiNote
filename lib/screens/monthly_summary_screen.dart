@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'history_screen.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {
@@ -13,7 +13,7 @@ class MonthlySummaryScreen extends StatefulWidget {
 }
 
 class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
-  Map<String, List<Spending>> _monthlySpendings = {};
+  Map<String, List<txmodel.Transaction>> _monthlySpendings = {};
   List<String> _sortedMonths = [];
   bool _isLoading = true;
 
@@ -25,9 +25,14 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
   Future<void> _loadMonthlySummary() async {
     setState(() => _isLoading = true);
-    final allSpendings = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
 
-    Map<String, List<Spending>> grouped = {};
+    final allSpendings = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
+
+    Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {
       final monthStr = DateFormat('yyyy-MM').format(s.date);
       if (!grouped.containsKey(monthStr)) {
@@ -45,7 +50,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     });
   }
 
-  double _calculateMonthlyTotal(List<Spending> spendings) {
+  double _calculateMonthlyTotal(List<txmodel.Transaction> spendings) {
     return spendings.fold(0, (sum, item) => sum + item.amount);
   }
 

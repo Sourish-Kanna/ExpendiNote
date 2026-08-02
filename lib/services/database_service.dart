@@ -1,8 +1,9 @@
+
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../models/spending.dart';
+import '../migrations/migrate_v1_to_v2.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -18,58 +19,91 @@ class DatabaseService {
     return _database!;
   }
 
+  /// Testing helper: override the internal database instance.
+  /// Use this in tests to point the service to an in-memory or temp DB.
+  static void setTestDatabase(Database db) {
+    _database = db;
+  }
+
   Future<Database> _initDatabase() async {
     _logger.i('Initializing database...');
     String path = join(await getDatabasesPath(), 'spending_database.db');
     return await openDatabase(
       path,
-      version: 1,
-      onCreate: (db, version) {
-        _logger.i('Creating spendings table...');
-        return db.execute(
-          'CREATE TABLE spendings(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, amount REAL, date TEXT, category TEXT, description TEXT)',
+      version: 2,
+      onCreate: (db, version) async {
+        _logger.i('Creating v2 schema (transactions, categories, settings)...');
+        await db.execute(
+          'CREATE TABLE categories(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
         );
+        await db.execute(
+          'CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, categoryId INTEGER, description TEXT, createdAt TEXT NOT NULL, FOREIGN KEY(categoryId) REFERENCES categories(id))',
+        );
+        await db.execute(
+          'CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT)',
+        );
+        await _seedDefaultCategories(db);
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        _logger.i('Upgrading DB from v$oldVersion to v$newVersion...');
+        if (oldVersion < 2 && newVersion >= 2) {
+          try {
+            await migrateV1toV2(db, _logger);
+          } catch (e) {
+            _logger.e('Migration failed: $e');
+            rethrow;
+          }
+        }
       },
     );
   }
 
-  Future<void> insertSpending(Spending spending) async {
-    _logger.i('Inserting spending: ${spending.title}');
-    final db = await database;
-    await db.insert(
-      'spendings',
-      spending.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  static Future<void> _seedDefaultCategories(Database db) async {
+    final now = DateTime.now().toIso8601String();
+    final defaults = [
+      'Food',
+      'Transport',
+      'Shopping',
+      'Bills',
+      'Entertainment',
+      'Education',
+      'Healthcare',
+      'Housing',
+      'Investment',
+      'Income',
+      'Others',
+    ];
+    for (final name in defaults) {
+      try {
+        await db.insert('categories', {
+          'name': name,
+          'icon': null,
+          'color': null,
+          'isPinned': 0,
+          'isArchived': 0,
+          'createdAt': now,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      } catch (_) {}
+    }
   }
 
-  Future<void> updateSpending(Spending spending) async {
-    _logger.i('Updating spending with ID: ${spending.id}');
-    final db = await database;
-    await db.update(
-      'spendings',
-      spending.toMap(),
-      where: 'id = ?',
-      whereArgs: [spending.id],
+  Future<int> _ensureCategory(Database db, String name) async {
+    final List<Map<String, dynamic>> found = await db.query(
+      'categories',
+      where: 'LOWER(name) = LOWER(?)',
+      whereArgs: [name],
+      limit: 1,
     );
+    if (found.isNotEmpty) return found.first['id'] as int;
+    final now = DateTime.now().toIso8601String();
+    return await db.insert('categories', {'name': name, 'createdAt': now});
   }
 
-  Future<List<Spending>> getSpendings() async {
-    _logger.i('Fetching all spendings...');
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'spendings',
-      orderBy: 'date DESC',
+  Future<bool> _hasTable(Database db, String tableName) async {
+    final res = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+      [tableName],
     );
-    _logger.i('Fetched ${maps.length} entries.');
-    return List.generate(maps.length, (i) {
-      return Spending.fromMap(maps[i]);
-    });
-  }
-
-  Future<void> deleteSpending(int id) async {
-    _logger.i('Deleting spending with ID: $id');
-    final db = await database;
-    await db.delete('spendings', where: 'id = ?', whereArgs: [id]);
+    return res.isNotEmpty;
   }
 }

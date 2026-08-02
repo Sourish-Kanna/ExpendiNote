@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'add_spending_screen.dart';
 
 class SpendingDetailScreen extends StatefulWidget {
-  final Spending spending;
-  const SpendingDetailScreen({super.key, required this.spending});
+  final txmodel.Transaction transaction;
+  const SpendingDetailScreen({super.key, required this.transaction});
 
   @override
   State<SpendingDetailScreen> createState() => _SpendingDetailScreenState();
 }
 
 class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
-  late Spending _currentSpending;
+  late txmodel.Transaction _currentSpending;
 
   @override
   void initState() {
     super.initState();
-    _currentSpending = widget.spending;
+    _currentSpending = widget.transaction;
   }
 
   void _confirmDelete() {
@@ -37,7 +37,9 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
             onPressed: () async {
               Navigator.pop(dialogContext);
 
-              await DatabaseService().deleteSpending(_currentSpending.id!);
+              await TransactionRepository().deleteTransaction(
+                _currentSpending.id!,
+              );
 
               // Correct guard for State.context inside a StatefulWidget
               if (mounted) {
@@ -72,18 +74,20 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      AddSpendingScreen(spending: _currentSpending),
+                      AddSpendingScreen(transaction: _currentSpending),
                 ),
               );
               if (result == true) {
                 // Refresh data
-                final allData = await DatabaseService().getSpendings();
+                final maps = await TransactionRepository()
+                    .getAllWithCategoryName();
+                final allData = maps
+                    .map((m) => txmodel.Transaction.fromMap(m))
+                    .toList();
                 final updated = allData.firstWhere(
                   (s) => s.id == _currentSpending.id,
                 );
-                setState(() {
-                  _currentSpending = updated;
-                });
+                setState(() => _currentSpending = updated);
               }
             },
           ),

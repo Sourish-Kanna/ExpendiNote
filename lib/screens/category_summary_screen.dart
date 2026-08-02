@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'history_screen.dart';
 
 class CategorySummaryScreen extends StatefulWidget {
@@ -26,12 +26,17 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
 
   Future<void> _loadCategoryData() async {
     setState(() => _isLoading = true);
-    final allSpendings = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
+
+    final allSpendings = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
 
     final now = DateTime.now();
     final monthStr = DateFormat('yyyy-MM').format(now);
 
-    List<Spending> filtered;
+    List<txmodel.Transaction> filtered;
     if (_selectedPeriod == 'This Month') {
       filtered = allSpendings
           .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)

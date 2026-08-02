@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart' as txrepo;
+import '../repositories/category_repository.dart';
 
 class AddSpendingScreen extends StatefulWidget {
-  final Spending? spending;
-  const AddSpendingScreen({super.key, this.spending});
+  final txmodel.Transaction? transaction;
+  const AddSpendingScreen({super.key, this.transaction});
 
   @override
   State<AddSpendingScreen> createState() => _AddSpendingScreenState();
@@ -23,15 +24,15 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.spending?.title);
+    _titleController = TextEditingController(text: widget.transaction?.title);
     _amountController = TextEditingController(
-      text: widget.spending?.amount.toString(),
+      text: widget.transaction?.amount.toString(),
     );
     _descriptionController = TextEditingController(
-      text: widget.spending?.description,
+      text: widget.transaction?.description,
     );
-    _selectedCategory = widget.spending?.category ?? 'General';
-    _selectedDate = widget.spending?.date ?? DateTime.now();
+    _selectedCategory = widget.transaction?.category ?? 'General';
+    _selectedDate = widget.transaction?.date ?? DateTime.now();
   }
 
   final Map<String, IconData> _categories = {
@@ -46,21 +47,25 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
 
   void _saveSpending() async {
     if (_formKey.currentState!.validate()) {
-      final spending = Spending(
-        id: widget.spending?.id,
+      final trRepo = txrepo.TransactionRepository();
+      final catRepo = CategoryRepository();
+      final categoryId = await catRepo.ensureCategoryByName(_selectedCategory);
+
+      final tx = txmodel.Transaction(
+        id: widget.transaction?.id,
         title: _titleController.text,
         amount: double.parse(_amountController.text),
         date: _selectedDate,
-        category: _selectedCategory,
+        categoryId: categoryId,
         description: _descriptionController.text.isEmpty
             ? null
             : _descriptionController.text,
       );
 
-      if (widget.spending == null) {
-        await DatabaseService().insertSpending(spending);
+      if (widget.transaction == null) {
+        await trRepo.insertTransaction(tx);
       } else {
-        await DatabaseService().updateSpending(spending);
+        await trRepo.updateTransaction(tx);
       }
 
       if (mounted) {
@@ -92,7 +97,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isEditing = widget.spending != null;
+    final isEditing = widget.transaction != null;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -105,7 +110,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   color: colorScheme.error,
-                  onPressed: () => _confirmDelete(widget.spending!),
+                  onPressed: () => _confirmDelete(widget.transaction!),
                 ),
               ]
             : null,
@@ -257,7 +262,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     );
   }
 
-  void _confirmDelete(Spending spending) {
+  void _confirmDelete(txmodel.Transaction spending) {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -271,7 +276,9 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              await DatabaseService().deleteSpending(spending.id!);
+              await txrepo.TransactionRepository().deleteTransaction(
+                spending.id!,
+              );
 
               // Guard State.context using the State property 'mounted'
               if (mounted) {

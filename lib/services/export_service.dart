@@ -6,12 +6,12 @@ import 'package:logger/logger.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../models/spending.dart';
+import '../models/transaction.dart' as txmodel;
 
 class ExportService {
   final Logger _logger = Logger();
 
-  Future<void> exportToCSV(List<Spending> spendings) async {
+  Future<void> exportToCSV(List<txmodel.Transaction> spendings) async {
     _logger.i('Exporting ${spendings.length} spendings to CSV...');
     try {
       final List<List<dynamic>> rows = [];

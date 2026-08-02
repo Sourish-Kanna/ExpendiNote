@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'history_screen.dart';
 
 class DailySummaryScreen extends StatefulWidget {
@@ -13,7 +13,7 @@ class DailySummaryScreen extends StatefulWidget {
 }
 
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
-  Map<String, List<Spending>> _groupedSpendings = {};
+  Map<String, List<txmodel.Transaction>> _groupedSpendings = {};
   List<String> _sortedDates = [];
   List<String> _filteredDates = [];
   bool _isLoading = true;
@@ -34,9 +34,14 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
   Future<void> _loadSummary() async {
     setState(() => _isLoading = true);
-    final allSpendings = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
 
-    Map<String, List<Spending>> grouped = {};
+    final allSpendings = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
+
+    Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {
       final dateStr = DateFormat('yyyy-MM-dd').format(s.date);
       if (!grouped.containsKey(dateStr)) {
@@ -69,11 +74,11 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     });
   }
 
-  double _calculateDailyTotal(List<Spending> spendings) {
+  double _calculateDailyTotal(List<txmodel.Transaction> spendings) {
     return spendings.fold(0, (sum, item) => sum + item.amount);
   }
 
-  String _getTopCategory(List<Spending> spendings) {
+  String _getTopCategory(List<txmodel.Transaction> spendings) {
     if (spendings.isEmpty) return 'None';
     Map<String, double> categoryTotals = {};
     for (var s in spendings) {

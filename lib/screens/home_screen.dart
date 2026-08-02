@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../models/spending.dart';
-import '../services/database_service.dart';
+import '../models/transaction.dart' as txmodel;
+import '../repositories/transaction_repository.dart';
 import 'add_spending_screen.dart';
 import 'search_screen.dart';
 import 'spending_detail_screen.dart';
@@ -94,7 +94,7 @@ class _HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<_HomeTab> {
-  List<Spending> _recentSpendings = [];
+  List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
   bool _isLoading = true;
@@ -115,7 +115,12 @@ class _HomeTabState extends State<_HomeTab> {
   Future<void> _refreshSpendings() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    final data = await DatabaseService().getSpendings();
+    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
+        .getAllWithCategoryName();
+
+    final data = rawDataMaps
+        .map((m) => txmodel.Transaction.fromMap(m))
+        .toList();
 
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
@@ -251,7 +256,7 @@ class _HomeTabState extends State<_HomeTab> {
                                       MaterialPageRoute(
                                         builder: (context) =>
                                             SpendingDetailScreen(
-                                              spending: spending,
+                                              transaction: spending,
                                             ),
                                       ),
                                     );
@@ -357,7 +362,7 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-  void _confirmDelete(Spending spending) {
+  void _confirmDelete(txmodel.Transaction spending) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -371,7 +376,7 @@ class _HomeTabState extends State<_HomeTab> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await DatabaseService().deleteSpending(spending.id!);
+              await TransactionRepository().deleteTransaction(spending.id!);
               widget.refreshNotifier.value++;
             },
             child: Text(
