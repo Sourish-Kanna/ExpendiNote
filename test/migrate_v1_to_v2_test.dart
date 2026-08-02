@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logger/logger.dart';
+import 'package:expend_note/constants/database_constants.dart';
 
 import 'package:expend_note/migrations/migrate_v1_to_v2.dart';
 
@@ -29,7 +30,7 @@ void main() {
           version: 1,
           onCreate: (db, version) async {
             await db.execute(
-              'CREATE TABLE spendings(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, amount REAL, date TEXT, category TEXT, description TEXT)',
+              'CREATE TABLE ${DbTables.legacySpendings}(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, amount REAL, date TEXT, category TEXT, description TEXT)',
             );
             await db.insert('spendings', {
               'id': 1,
@@ -68,13 +69,13 @@ void main() {
           onCreate: (db, version) async {
             // create v2 schema
             await db.execute(
-              'CREATE TABLE categories(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
+              'CREATE TABLE ${DbTables.categories}(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
             );
             await db.execute(
-              'CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, categoryId INTEGER, description TEXT, createdAt TEXT NOT NULL, FOREIGN KEY(categoryId) REFERENCES categories(id))',
+              'CREATE TABLE ${DbTables.transactions}(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, categoryId INTEGER, description TEXT, createdAt TEXT NOT NULL, FOREIGN KEY(categoryId) REFERENCES ${DbTables.categories}(id))',
             );
             await db.execute(
-              'CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT)',
+              'CREATE TABLE ${DbTables.settings}(key TEXT PRIMARY KEY, value TEXT)',
             );
           },
           onUpgrade: (db, oldV, newV) async {

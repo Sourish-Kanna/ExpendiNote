@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart' as sql;
 
+import '../constants/database_constants.dart';
 import '../models/category.dart';
 import '../services/database_service.dart';
 
@@ -9,7 +10,7 @@ class CategoryRepository {
   Future<int> createCategory(Category category) async {
     final db = await _dbService.database;
     return await db.insert(
-      'categories',
+      DbTables.categories,
       category.toMap(),
       conflictAlgorithm: sql.ConflictAlgorithm.replace,
     );
@@ -21,9 +22,9 @@ class CategoryRepository {
     }
     final db = await _dbService.database;
     return await db.update(
-      'categories',
+      DbTables.categories,
       category.toMap(),
-      where: 'id = ?',
+      where: '${DbCols.id} = ?',
       whereArgs: [category.id],
     );
   }
@@ -31,8 +32,8 @@ class CategoryRepository {
   Future<List<Category>> getAllCategories() async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'categories',
-      orderBy: 'name COLLATE NOCASE ASC',
+      DbTables.categories,
+      orderBy: '${DbCols.name} COLLATE NOCASE ASC',
     );
     return maps.map((m) => Category.fromMap(m)).toList();
   }
@@ -40,8 +41,8 @@ class CategoryRepository {
   Future<Category?> getById(int id) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'categories',
-      where: 'id = ?',
+      DbTables.categories,
+      where: '${DbCols.id} = ?',
       whereArgs: [id],
       limit: 1,
     );
@@ -52,27 +53,34 @@ class CategoryRepository {
   Future<int> ensureCategoryByName(String name) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> found = await db.query(
-      'categories',
-      where: 'LOWER(name) = LOWER(?)',
+      DbTables.categories,
+      where: 'LOWER(${DbCols.name}) = LOWER(?)',
       whereArgs: [name],
       limit: 1,
     );
     if (found.isNotEmpty) return found.first['id'] as int;
     final now = DateTime.now().toIso8601String();
-    return await db.insert('categories', {'name': name, 'createdAt': now});
+    return await db.insert(DbTables.categories, {
+      DbCols.name: name,
+      DbCols.createdAt: now,
+    });
   }
 
   Future<int> deleteCategory(int id) async {
     final db = await _dbService.database;
     // Prevent deleting categories that are in use
     final inUse = await db.rawQuery(
-      'SELECT COUNT(*) AS c FROM transactions WHERE categoryId = ?',
+      'SELECT COUNT(*) AS c FROM ${DbTables.transactions} WHERE ${DbCols.categoryId} = ?',
       [id],
     );
     final count = inUse.isNotEmpty ? (inUse.first['c'] as int) : 0;
     if (count > 0) {
       throw StateError('Cannot delete category that has $count transactions');
     }
-    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
+    return await db.delete(
+      DbTables.categories,
+      where: '${DbCols.id} = ?',
+      whereArgs: [id],
+    );
   }
 }

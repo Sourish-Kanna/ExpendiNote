@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../constants/database_constants.dart';
 import '../migrations/migrate_v1_to_v2.dart';
 
 class DatabaseService {
@@ -27,26 +28,36 @@ class DatabaseService {
 
   Future<Database> _initDatabase() async {
     _logger.i('Initializing database...');
-    String path = join(await getDatabasesPath(), 'spending_database.db');
+    String path = join(await getDatabasesPath(), DbConfig.databaseFile);
     return await openDatabase(
       path,
-      version: 2,
+      version: DbConfig.databaseVersion,
+      onConfigure: (db) async {
+        // Enable foreign keys before anything else
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: (db, version) async {
         _logger.i('Creating v2 schema (transactions, categories, settings)...');
         await db.execute(
-          'CREATE TABLE categories(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
+          'CREATE TABLE IF NOT EXISTS ${DbTables.categories}(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
         );
         await db.execute(
-          'CREATE TABLE transactions(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, categoryId INTEGER, description TEXT, createdAt TEXT NOT NULL, FOREIGN KEY(categoryId) REFERENCES categories(id))',
+          'CREATE TABLE IF NOT EXISTS ${DbTables.transactions}(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, amount REAL NOT NULL, date TEXT NOT NULL, categoryId INTEGER, description TEXT, createdAt TEXT NOT NULL, FOREIGN KEY(categoryId) REFERENCES ${DbTables.categories}(id))',
         );
         await db.execute(
-          'CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT)',
+          'CREATE TABLE IF NOT EXISTS ${DbTables.settings}(key TEXT PRIMARY KEY, value TEXT)',
         );
+
+        // Indexes for performance
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_date ON ${DbTables.transactions}(${DbCols.date})');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_categoryId ON ${DbTables.transactions}(${DbCols.categoryId})');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.categories}_name ON ${DbTables.categories}(${DbCols.name})');
+
         await _seedDefaultCategories(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         _logger.i('Upgrading DB from v$oldVersion to v$newVersion...');
-        if (oldVersion < 2 && newVersion >= 2) {
+        if (oldVersion < DbConfig.databaseVersion && newVersion >= DbConfig.databaseVersion) {
           try {
             await migrateV1toV2(db, _logger);
           } catch (e) {
@@ -75,35 +86,15 @@ class DatabaseService {
     ];
     for (final name in defaults) {
       try {
-        await db.insert('categories', {
-          'name': name,
+        await db.insert(DbTables.categories, {
+          DbCols.name: name,
           'icon': null,
           'color': null,
           'isPinned': 0,
           'isArchived': 0,
-          'createdAt': now,
+          DbCols.createdAt: now,
         }, conflictAlgorithm: ConflictAlgorithm.ignore);
       } catch (_) {}
     }
-  }
-
-  Future<int> _ensureCategory(Database db, String name) async {
-    final List<Map<String, dynamic>> found = await db.query(
-      'categories',
-      where: 'LOWER(name) = LOWER(?)',
-      whereArgs: [name],
-      limit: 1,
-    );
-    if (found.isNotEmpty) return found.first['id'] as int;
-    final now = DateTime.now().toIso8601String();
-    return await db.insert('categories', {'name': name, 'createdAt': now});
-  }
-
-  Future<bool> _hasTable(Database db, String tableName) async {
-    final res = await db.rawQuery(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-      [tableName],
-    );
-    return res.isNotEmpty;
   }
 }

@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart' as sql;
 
+import '../constants/database_constants.dart';
 import '../models/transaction.dart';
 import '../services/database_service.dart';
 
@@ -10,7 +11,7 @@ class TransactionRepository {
     final db = await _dbService.database;
     final map = tx.toMap();
     return await db.insert(
-      'transactions',
+      DbTables.transactions,
       map,
       conflictAlgorithm: sql.ConflictAlgorithm.replace,
     );
@@ -23,9 +24,9 @@ class TransactionRepository {
     final db = await _dbService.database;
     final map = tx.toMap();
     return await db.update(
-      'transactions',
+      DbTables.transactions,
       map,
-      where: 'id = ?',
+      where: '${DbCols.id} = ?',
       whereArgs: [tx.id],
     );
   }
@@ -35,7 +36,7 @@ class TransactionRepository {
     int? offset,
   }) async {
     final db = await _dbService.database;
-    final q = StringBuffer('SELECT * FROM transactions ORDER BY date DESC');
+    final q = StringBuffer('SELECT * FROM ${DbTables.transactions} ORDER BY ${DbCols.date} DESC');
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
     final List<Map<String, dynamic>> maps = await db.rawQuery(q.toString());
@@ -50,7 +51,7 @@ class TransactionRepository {
   }) async {
     final db = await _dbService.database;
     final q = StringBuffer(
-      'SELECT t.id, t.title, t.amount, t.date, COALESCE(c.name, "") as category, t.description FROM transactions t LEFT JOIN categories c ON t.categoryId = c.id ORDER BY date DESC',
+      'SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, t.${DbCols.date}, COALESCE(c.${DbCols.name}, "") as ${DbCols.name}, t.${DbCols.description} FROM ${DbTables.transactions} t LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} ORDER BY ${DbCols.date} DESC',
     );
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
@@ -61,8 +62,8 @@ class TransactionRepository {
   Future<Transaction?> getById(int id) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      'transactions',
-      where: 'id = ?',
+      DbTables.transactions,
+      where: '${DbCols.id} = ?',
       whereArgs: [id],
       limit: 1,
     );
@@ -72,6 +73,6 @@ class TransactionRepository {
 
   Future<int> deleteTransaction(int id) async {
     final db = await _dbService.database;
-    return await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
+    return await db.delete(DbTables.transactions, where: '${DbCols.id} = ?', whereArgs: [id]);
   }
 }
