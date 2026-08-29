@@ -43,6 +43,7 @@ dependencies:
   logger: ^2.7.0
   flutter_launcher_icons: ^0.14.4
   dynamic_color: ^1.8.1
+  file_picker: ^12.1.2
 
 dev_dependencies:
   flutter_test:

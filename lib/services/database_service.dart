@@ -18,6 +18,16 @@ class DatabaseService {
     return _database!;
   }
 
+  // Add this method to safely reset the connection
+  Future<void> resetDatabaseConnection() async {
+    if (_database != null) {
+      if (_database!.isOpen) {
+        await _database!.close();
+      }
+      _database = null;
+    }
+  }
+
   Future<Database> _initDatabase() async {
     _logger.i('Initializing database...');
     String path = join(await getDatabasesPath(), 'spending_database.db');
