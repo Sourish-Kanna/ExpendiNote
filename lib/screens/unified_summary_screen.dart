@@ -43,6 +43,68 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     });
   }
 
+  // Dialog to import raw JSON string without external file pickers
+  Future<void> _showImportJsonDialog() async {
+    final TextEditingController jsonController = TextEditingController();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Import JSON Backup'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Paste your spendings JSON data below. This will overwrite current entries.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: jsonController,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                  hintText: '[{"title": "Groceries", "amount": 250.0, ...}]',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Import'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true && jsonController.text.trim().isNotEmpty) {
+      final success = await ExportService().importFromJSONString(
+        jsonController.text.trim(),
+      );
+      if (mounted) {
+        if (success) {
+          await _loadData();
+          widget.refreshNotifier.value++;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('JSON imported successfully!')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to parse JSON data.')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -54,59 +116,42 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
         actions: [
-          // Share CSV / Backup
+          // Export JSON via Share Sheet
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: 'Share CSV',
+            tooltip: 'Share JSON',
             onPressed: () async {
               if (_allSpendings.isEmpty) return;
-              await ExportService().exportToCSV(_allSpendings);
+              await ExportService().exportToJSON(_allSpendings);
             },
           ),
-          // Save Database to Downloads
+          // Save JSON to Downloads Folder
           IconButton(
             icon: const Icon(Icons.download),
-            tooltip: 'Save DB to Device',
+            tooltip: 'Save JSON to Downloads',
             onPressed: () async {
-              final success = await ExportService().saveDatabaseToDevice();
+              final success = await ExportService().saveJSONToDevice(
+                _allSpendings,
+              );
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       success
-                          ? 'Saved backup to Downloads folder!'
-                          : 'Failed to save database.',
+                          ? 'Saved JSON backup to Downloads folder!'
+                          : 'Failed to save JSON backup.',
                     ),
                   ),
                 );
               }
             },
           ),
-          // // Import DB File
-          // IconButton(
-          //   icon: const Icon(Icons.upload_file),
-          //   tooltip: 'Import DB',
-          //   onPressed: () async {
-          //     final success = await ExportService().importDatabase();
-          //     if (success) {
-          //       await _loadData(); // Reload screen with imported data
-          //       widget.refreshNotifier.value++;
-          //       if (mounted) {
-          //         ScaffoldMessenger.of(context).showSnackBar(
-          //           const SnackBar(
-          //             content: Text('Database imported successfully!'),
-          //           ),
-          //         );
-          //       }
-          //     } else if (mounted) {
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         const SnackBar(
-          //           content: Text('Failed to import database file.'),
-          //         ),
-          //       );
-          //     }
-          //   },
-          // ),
+          // Import JSON String via Dialog
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Import JSON',
+            onPressed: _showImportJsonDialog,
+          ),
         ],
       ),
       body: _isLoading

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
@@ -9,96 +10,44 @@ import 'package:share_plus/share_plus.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../models/spending.dart';
+import 'database_service.dart';
 
 class ExportService {
   final Logger _logger = Logger();
 
-  Future<void> exportToCSV(List<Spending> spendings) async {
-    _logger.i('Exporting ${spendings.length} spendings to CSV...');
+  // --- 1. EXPORT TO JSON & SHARE ---
+  Future<void> exportToJSON(List<Spending> spendings) async {
+    _logger.i('Exporting ${spendings.length} spendings to JSON...');
     try {
-      final List<List<dynamic>> rows = [];
+      final List<Map<String, dynamic>> jsonList =
+      spendings.map((s) => s.toMap()).toList();
 
-      // Add header
-      rows.add([
-        'ID',
-        'Title',
-        'Amount',
-        'Date',
-        'Time',
-        'Day',
-        'Category',
-        'Description',
-      ]);
-
-      // Add data
-      for (var s in spendings) {
-        rows.add([
-          s.id,
-          s.title,
-          s.amount,
-          DateFormat('yyyy-MM-dd').format(s.date),
-          DateFormat('HH:mm:ss').format(s.date),
-          DateFormat('EEEE').format(s.date),
-          s.category,
-          s.description ?? '',
-        ]);
-      }
-
-      final String csvString = csv.encode(rows);
+      final String jsonString = const JsonEncoder.withIndent('  ').convert(jsonList);
 
       final directory = await getTemporaryDirectory();
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final file = File('${directory.path}/spendings_$dateStamp.csv');
-      await file.writeAsString(csvString);
+      final file = File('${directory.path}/spendings_backup_$dateStamp.json');
+      await file.writeAsString(jsonString);
 
       await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path)],
-          text: 'Spendings CSV - $dateStamp',
+          text: 'Spendings JSON Backup - $dateStamp',
         ),
       );
-      _logger.i('CSV sharing successful.');
+      _logger.i('JSON sharing successful.');
     } catch (e) {
-      _logger.e('CSV sharing failed: $e');
+      _logger.e('JSON export failed: $e');
     }
   }
 
-  Future<void> exportDatabaseFile() async {
-    _logger.i('Exporting SQLite database file...');
+  // --- 2. SAVE JSON TO DEVICE DOWNLOADS ---
+  Future<bool> saveJSONToDevice(List<Spending> spendings) async {
+    _logger.i('Saving JSON backup to device storage...');
     try {
-      final dbDir = await getDatabasesPath();
-      final dbPath = join(dbDir, 'spending_database.db');
-      final dbFile = File(dbPath);
-
-      if (await dbFile.exists()) {
-        final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [XFile(dbFile.path)],
-            text: 'ExpendiNote DB Backup - $dateStamp',
-          ),
-        );
-        _logger.i('Database export successful.');
-      } else {
-        _logger.w('Database file does not exist at $dbPath');
-      }
-    } catch (e) {
-      _logger.e('Database export failed: $e');
-    }
-  }
-
-  Future<bool> saveDatabaseToDevice() async {
-    _logger.i('Saving SQLite database to device storage...');
-    try {
-      final dbDir = await getDatabasesPath();
-      final dbPath = join(dbDir, 'spending_database.db');
-      final dbFile = File(dbPath);
-
-      if (!await dbFile.exists()) {
-        _logger.w('Database file does not exist at $dbPath');
-        return false;
-      }
+      final List<Map<String, dynamic>> jsonList =
+      spendings.map((s) => s.toMap()).toList();
+      final String jsonString = const JsonEncoder.withIndent('  ').convert(jsonList);
 
       Directory? targetDir;
       if (Platform.isAndroid) {
@@ -113,67 +62,115 @@ class ExportService {
       if (targetDir == null) return false;
 
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final backupPath = join(targetDir.path, 'spending_backup_$dateStamp.db');
+      final backupPath = join(targetDir.path, 'spending_backup_$dateStamp.json');
 
-      await dbFile.copy(backupPath);
-      _logger.i('Database copied to: $backupPath');
+      final file = File(backupPath);
+      await file.writeAsString(jsonString);
+      _logger.i('JSON backup saved to: $backupPath');
       return true;
     } catch (e) {
-      _logger.e('Failed to save database to device: $e');
+      _logger.e('Failed to save JSON to device: $e');
       return false;
     }
   }
 
-  // // --- IMPORT DB & VERIFY INTEGRITY ---
-  // Future<bool> importDatabase() async {
-  //   _logger.i('Picking backup database file...');
-  //   try {
-  //     final result = await FilePicker.platform.pickFiles(type: FileType.any);
-  //
-  //     if (result == null ||
-  //         result.files.isEmpty ||
-  //         result.files.single.path == null) {
-  //       _logger.i('File picking canceled.');
-  //       return false;
-  //     }
-  //
-  //     final pickedFilePath = result.files.single.path!;
-  //     final pickedFile = File(pickedFilePath);
-  //
-  //     // Validate selected file by opening it temporarily
-  //     try {
-  //       final tempDb = await openReadOnlyDatabase(pickedFile.path);
-  //       final tables = await tempDb.rawQuery(
-  //         "SELECT name FROM sqlite_master WHERE type='table' AND name='spendings';",
-  //       );
-  //
-  //       if (tables.isEmpty) {
-  //         _logger.e('Selected database does not contain spendings table.');
-  //         await tempDb.close();
-  //         return false;
-  //       }
-  //       await tempDb.close();
-  //     } catch (e) {
-  //       _logger.e('Invalid SQLite database file: $e');
-  //       return false;
-  //     }
-  //
-  //     // 1. Close active connection and clear reference
-  //     await DatabaseService().resetDatabaseConnection();
-  //
-  //     // 2. Overwrite current DB file with chosen backup
-  //     final dbDir = await getDatabasesPath();
-  //     final dbPath = join(dbDir, 'spending_database.db');
-  //     await pickedFile.copy(dbPath);
-  //
-  //     // 3. Re-initialize database connection
-  //     await DatabaseService().database;
-  //
-  //     _logger.i('Database restored successfully from ${pickedFile.path}');
-  //     return true;
-  //   } catch (e) {
-  //     _logger.e('Failed to import database: $e');
-  //     return false;
-  //   }
-  // }
+  // --- 3. IMPORT FROM JSON STRING / RAW DATA ---
+  Future<bool> importFromJSONString(String jsonContent) async {
+    _logger.i('Parsing and restoring from JSON string...');
+    try {
+      final dynamic decoded = jsonDecode(jsonContent);
+      if (decoded is! List) {
+        _logger.e('Invalid JSON format: Expected a JSON array.');
+        return false;
+      }
+
+      final db = await DatabaseService().database;
+
+      await db.transaction((txn) async {
+        // Clear current entries before restoring
+        await txn.delete('spendings');
+
+        for (var item in decoded) {
+          if (item is Map<String, dynamic>) {
+            await txn.insert(
+              'spendings',
+              {
+                'title': item['title'],
+                'amount': item['amount'],
+                'date': item['date'],
+                'category': item['category'],
+                'description': item['description'],
+              },
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+        }
+      });
+
+      _logger.i('JSON restoration completed successfully.');
+      return true;
+    } catch (e) {
+      _logger.e('Failed to import JSON: $e');
+      return false;
+    }
+  }
+
+  // --- 4. IMPORT FROM FILE PATH ---
+  Future<bool> importFromJSONFile(String filePath) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) return false;
+      final content = await file.readAsString();
+      return await importFromJSONString(content);
+    } catch (e) {
+      _logger.e('Failed to read JSON file: $e');
+      return false;
+    }
+  }
+
+  // Existing CSV & DB export methods below...
+  Future<void> exportToCSV(List<Spending> spendings) async {
+    _logger.i('Exporting ${spendings.length} spendings to CSV...');
+    try {
+      final List<List<dynamic>> rows = [];
+      rows.add([
+        'ID',
+        'Title',
+        'Amount',
+        'Date',
+        'Time',
+        'Day',
+        'Category',
+        'Description',
+      ]);
+
+      for (var s in spendings) {
+        rows.add([
+          s.id,
+          s.title,
+          s.amount,
+          DateFormat('yyyy-MM-dd').format(s.date),
+          DateFormat('HH:mm:ss').format(s.date),
+          DateFormat('EEEE').format(s.date),
+          s.category,
+          s.description ?? '',
+        ]);
+      }
+
+      final String csvString = csv.encode(rows);
+      final directory = await getTemporaryDirectory();
+      final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final file = File('${directory.path}/spendings_$dateStamp.csv');
+      await file.writeAsString(csvString);
+
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Spendings CSV - $dateStamp',
+        ),
+      );
+    } catch (e) {
+      _logger.e('CSV sharing failed: $e');
+    }
+  }
 }
