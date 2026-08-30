@@ -52,6 +52,9 @@ class DatabaseService {
         if (oldVersion < 2) {
           await _migrateV1toV2(db);
         }
+        if (oldVersion < 3) {
+          await _migrateV2toV3(db);
+        }
       },
     );
   }
@@ -61,10 +64,10 @@ class DatabaseService {
       CREATE TABLE IF NOT EXISTS ${DbTables.categories}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
-        icon TEXT,
-        color INTEGER,
-        isPinned INTEGER DEFAULT 0,
-        isArchived INTEGER DEFAULT 0,
+        ${DbCols.icon} TEXT,
+        ${DbCols.color} INTEGER,
+        ${DbCols.isPinned} INTEGER DEFAULT 0,
+        ${DbCols.isArchived} INTEGER DEFAULT 0,
         ${DbCols.createdAt} TEXT NOT NULL
       )
     ''');
@@ -121,10 +124,10 @@ class DatabaseService {
     for (final name in defaults) {
       batch.insert(DbTables.categories, {
         DbCols.name: name,
-        'icon': null,
-        'color': null,
-        'isPinned': 0,
-        'isArchived': 0,
+        DbCols.icon: null,
+        DbCols.color: null,
+        DbCols.isPinned: 0,
+        DbCols.isArchived: 0,
         DbCols.createdAt: now,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
@@ -139,14 +142,11 @@ class DatabaseService {
       AppLogger.debug('Creating v2 schema tables for migration...');
 
       // Step 1: Create v2 tables (Independent of _createTables to satisfy Task 5)
+      // v2 schema for categories did NOT include icon, color, pinned, or archived fields.
       await db.execute('''
         CREATE TABLE IF NOT EXISTS ${DbTables.categories}(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
-          icon TEXT,
-          color INTEGER,
-          isPinned INTEGER DEFAULT 0,
-          isArchived INTEGER DEFAULT 0,
           ${DbCols.createdAt} TEXT NOT NULL
         )
       ''');
@@ -285,5 +285,30 @@ class DatabaseService {
           return p[0].toUpperCase() + p.substring(1).toLowerCase();
         })
         .join(' ');
+  }
+
+  /// Migrates the database from version 2 to version 3.
+  /// Adds missing columns to categories table.
+  static Future<void> _migrateV2toV3(Database db) async {
+    AppLogger.info('Starting database migration: v2 -> v3');
+    // SQLite doesn't support multiple columns in one ALTER TABLE
+    // We wrap each in a try-catch in case they already exist (idempotency)
+    final columns = {
+      DbCols.icon: 'TEXT',
+      DbCols.color: 'INTEGER',
+      DbCols.isPinned: 'INTEGER DEFAULT 0',
+      DbCols.isArchived: 'INTEGER DEFAULT 0',
+    };
+
+    for (final entry in columns.entries) {
+      try {
+        await db.execute(
+          'ALTER TABLE ${DbTables.categories} ADD COLUMN ${entry.key} ${entry.value}',
+        );
+      } catch (e) {
+        AppLogger.debug('Column ${entry.key} might already exist: $e');
+      }
+    }
+    AppLogger.info('Migration v2 -> v3 completed.');
   }
 }

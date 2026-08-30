@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'history_screen.dart';
 
 class CategorySummaryScreen extends StatefulWidget {
@@ -13,7 +15,7 @@ class CategorySummaryScreen extends StatefulWidget {
 }
 
 class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
-  Map<String, double> _categoryTotals = {};
+  Map<int, _CategoryGroup> _categoryGroups = {};
   double _grandTotal = 0;
   bool _isLoading = true;
   String _selectedPeriod = 'This Month';
@@ -45,20 +47,29 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
       filtered = allSpendings;
     }
 
-    Map<String, double> totals = {};
+    Map<int, _CategoryGroup> groups = {};
     double grand = 0;
     for (var s in filtered) {
-      totals[s.categoryId as String] = (totals[s.categoryId] ?? 0) + s.amount;
+      final id = s.categoryId ?? -1;
+      if (!groups.containsKey(id)) {
+        groups[id] = _CategoryGroup(
+          name: s.categoryName ?? 'Other',
+          icon: s.categoryIcon,
+          color: s.categoryColor,
+          total: 0,
+        );
+      }
+      groups[id]!.total += s.amount;
       grand += s.amount;
     }
 
     // Sort categories by amount descending
-    final sortedTotals = Map.fromEntries(
-      totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+    final sortedGroups = Map.fromEntries(
+      groups.entries.toList()..sort((a, b) => b.value.total.compareTo(a.value.total)),
     );
 
     setState(() {
-      _categoryTotals = sortedTotals;
+      _categoryGroups = sortedGroups;
       _grandTotal = grand;
       _isLoading = false;
     });
@@ -103,7 +114,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                     },
                   ),
                 ),
-                _categoryTotals.isEmpty
+                _categoryGroups.isEmpty
                     ? const Expanded(
                         child: Center(child: Text('No data for this period.')),
                       )
@@ -114,12 +125,13 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                             Expanded(
                               child: ListView.builder(
                                 padding: const EdgeInsets.all(16),
-                                itemCount: _categoryTotals.length,
+                                itemCount: _categoryGroups.length,
                                 itemBuilder: (context, index) {
-                                  final entry = _categoryTotals.entries
+                                  final entry = _categoryGroups.entries
                                       .elementAt(index);
+                                  final group = entry.value;
                                   final percentage = _grandTotal > 0
-                                      ? (entry.value / _grandTotal) * 100
+                                      ? (group.total / _grandTotal) * 100
                                       : 0.0;
 
                                   return Card(
@@ -136,7 +148,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) => HistoryScreen(
-                                              filterCategory: entry.key,
+                                              filterCategory: group.name,
                                               filterMonth: filterMonth,
                                             ),
                                           ),
@@ -151,12 +163,11 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                             Row(
                                               children: [
                                                 CircleAvatar(
-                                                  backgroundColor: colorScheme
-                                                      .secondaryContainer,
+                                                  backgroundColor: ColorUtils.fromInt(group.color)
+                                                      .withValues(alpha: 0.2),
                                                   child: Icon(
-                                                    _getCategoryIcon(entry.key),
-                                                    color: colorScheme
-                                                        .onSecondaryContainer,
+                                                    IconUtils.fromString(group.icon),
+                                                    color: ColorUtils.fromInt(group.color),
                                                   ),
                                                 ),
                                                 const SizedBox(width: 16),
@@ -167,7 +178,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                                             .start,
                                                     children: [
                                                       Text(
-                                                        entry.key,
+                                                        group.name,
                                                         style: const TextStyle(
                                                           fontWeight:
                                                               FontWeight.bold,
@@ -184,7 +195,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                                   ),
                                                 ),
                                                 Text(
-                                                  '₹${entry.value.toStringAsFixed(0)}',
+                                                  '₹${group.total.toStringAsFixed(0)}',
                                                   style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
@@ -252,23 +263,18 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
       ),
     );
   }
+}
 
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
-  }
+class _CategoryGroup {
+  final String name;
+  final String? icon;
+  final int? color;
+  double total;
+
+  _CategoryGroup({
+    required this.name,
+    this.icon,
+    this.color,
+    required this.total,
+  });
 }

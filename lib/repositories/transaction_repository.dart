@@ -40,10 +40,10 @@ class TransactionRepository {
   }) async {
     final db = await _dbService.database;
     final q = StringBuffer('''
-      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
-             t.${DbCols.date}, t.${DbCols.categoryId}, 
-             COALESCE(c.${DbCols.name}, '') AS category, 
-             t.${DbCols.description}, t.${DbCols.createdAt} 
+      SELECT t.*, 
+             c.${DbCols.name} AS categoryName,
+             c.${DbCols.icon} AS categoryIcon,
+             c.${DbCols.color} AS categoryColor
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
       ORDER BY t.${DbCols.date} DESC
@@ -62,9 +62,10 @@ class TransactionRepository {
   }) async {
     final db = await _dbService.database;
     final q = StringBuffer('''
-      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
-             t.${DbCols.date}, COALESCE(c.${DbCols.name}, '') AS ${DbCols.name}, 
-             t.${DbCols.description} 
+      SELECT t.*, 
+             c.${DbCols.name} AS categoryName,
+             c.${DbCols.icon} AS categoryIcon,
+             c.${DbCols.color} AS categoryColor
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
       ORDER BY t.${DbCols.date} DESC
@@ -80,10 +81,10 @@ class TransactionRepository {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.rawQuery(
       '''
-      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
-             t.${DbCols.date}, t.${DbCols.categoryId}, 
-             COALESCE(c.${DbCols.name}, '') AS category, 
-             t.${DbCols.description}, t.${DbCols.createdAt} 
+      SELECT t.*, 
+             c.${DbCols.name} AS categoryName,
+             c.${DbCols.icon} AS categoryIcon,
+             c.${DbCols.color} AS categoryColor
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
       WHERE t.${DbCols.id} = ? 

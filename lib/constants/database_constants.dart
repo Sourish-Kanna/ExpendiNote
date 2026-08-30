@@ -13,10 +13,14 @@ class DbCols {
   static const categoryId = 'categoryId';
   static const name = 'name';
   static const description = 'description';
+  static const icon = 'icon';
+  static const color = 'color';
+  static const isPinned = 'isPinned';
+  static const isArchived = 'isArchived';
   static const createdAt = 'createdAt';
 }
 
 class DbConfig {
-  static const databaseVersion = 2;
+  static const databaseVersion = 3;
   static const databaseFile = 'spending_database.db';
 }

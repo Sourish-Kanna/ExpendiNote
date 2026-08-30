@@ -3,7 +3,10 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'add_spending_screen.dart';
+import 'category_management_screen.dart';
 import 'search_screen.dart';
 import 'spending_detail_screen.dart';
 import 'unified_summary_screen.dart';
@@ -154,6 +157,22 @@ class _HomeTabState extends State<_HomeTab> {
         title: const Text('ExpendNote'),
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.category_outlined),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryManagementScreen(),
+                ),
+              );
+              if (result == true) {
+                widget.refreshNotifier.value++;
+              }
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -221,13 +240,12 @@ class _HomeTabState extends State<_HomeTab> {
                                     vertical: 8,
                                   ),
                                   leading: CircleAvatar(
-                                    backgroundColor:
-                                        colorScheme.primaryContainer,
+                                    backgroundColor: _getCategoryColor(
+                                      spending,
+                                    ).withValues(alpha: 0.2),
                                     child: Icon(
-                                      _getCategoryIcon(
-                                        spending.categoryId as String,
-                                      ),
-                                      color: colorScheme.onPrimaryContainer,
+                                      _getCategoryIcon(spending),
+                                      color: _getCategoryColor(spending),
                                     ),
                                   ),
                                   title: Text(
@@ -239,7 +257,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    '${spending.categoryId} • ${DateFormat('hh:mm a').format(spending.date)}',
+                                    '${spending.categoryName ?? 'Other'} • ${DateFormat('hh:mm a').format(spending.date)}',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,
@@ -391,22 +409,11 @@ class _HomeTabState extends State<_HomeTab> {
     );
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
+  IconData _getCategoryIcon(txmodel.Transaction spending) {
+    return IconUtils.fromString(spending.categoryIcon);
+  }
+
+  Color _getCategoryColor(txmodel.Transaction spending) {
+    return ColorUtils.fromInt(spending.categoryColor);
   }
 }

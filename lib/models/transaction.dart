@@ -9,7 +9,9 @@ class Transaction {
   final double amount;
   final DateTime date;
   final int? categoryId;
-  final String? categoryName; // Joined from categories table for UI display
+  final String? categoryName;
+  final String? categoryIcon;
+  final int? categoryColor;
   final String? description;
   final DateTime createdAt;
 
@@ -20,6 +22,8 @@ class Transaction {
     required this.date,
     this.categoryId,
     this.categoryName,
+    this.categoryIcon,
+    this.categoryColor,
     this.description,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -63,7 +67,12 @@ class Transaction {
       date: parseDate(map[DbCols.date]),
       categoryId: map[DbCols.categoryId] as int?,
       categoryName:
-          map['categoryName'] as String? ?? map['category'] as String?,
+          map['categoryName'] as String? ??
+          map['category'] as String? ??
+          map[DbCols.name] as String?,
+      categoryIcon:
+          map['categoryIcon'] as String? ?? map[DbCols.icon] as String?,
+      categoryColor: map['categoryColor'] as int? ?? map[DbCols.color] as int?,
       description: map[DbCols.description] as String?,
       createdAt: parseDate(map[DbCols.createdAt]),
     );
@@ -76,6 +85,8 @@ class Transaction {
     DateTime? date,
     int? categoryId,
     String? categoryName,
+    String? categoryIcon,
+    int? categoryColor,
     String? description,
     DateTime? createdAt,
   }) {
@@ -86,6 +97,8 @@ class Transaction {
       date: date ?? this.date,
       categoryId: categoryId ?? this.categoryId,
       categoryName: categoryName ?? this.categoryName,
+      categoryIcon: categoryIcon ?? this.categoryIcon,
+      categoryColor: categoryColor ?? this.categoryColor,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -101,6 +114,8 @@ class Transaction {
         other.date == date &&
         other.categoryId == categoryId &&
         other.categoryName == categoryName &&
+        other.categoryIcon == categoryIcon &&
+        other.categoryColor == categoryColor &&
         other.description == description &&
         other.createdAt == createdAt;
   }
@@ -114,6 +129,8 @@ class Transaction {
       date,
       categoryId,
       categoryName,
+      categoryIcon,
+      categoryColor,
       description,
       createdAt,
     );

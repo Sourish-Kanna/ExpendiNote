@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'add_spending_screen.dart';
 
 class SpendingDetailScreen extends StatefulWidget {
@@ -108,11 +110,12 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: colorScheme.primaryContainer,
+                    backgroundColor: ColorUtils.fromInt(_currentSpending.categoryColor)
+                        .withValues(alpha: 0.2),
                     child: Icon(
-                      _getCategoryIcon(_currentSpending.categoryId as String),
+                      IconUtils.fromString(_currentSpending.categoryIcon),
                       size: 40,
-                      color: colorScheme.onPrimaryContainer,
+                      color: ColorUtils.fromInt(_currentSpending.categoryColor),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -139,7 +142,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               context,
               Icons.category_outlined,
               'Category',
-              _currentSpending.categoryId as String,
+              _currentSpending.categoryName ?? 'Other',
             ),
             const Divider(height: 32),
             _buildDetailRow(
@@ -205,24 +208,5 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
         ),
       ],
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
   }
 }

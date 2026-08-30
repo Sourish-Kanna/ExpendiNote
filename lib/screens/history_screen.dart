@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'spending_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -52,7 +54,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // Filtering logic
       if (widget.filterDate != null && dateStr != widget.filterDate) continue;
       if (widget.filterCategory != null &&
-          s.categoryId != widget.filterCategory) {
+          s.categoryName != widget.filterCategory) {
         continue;
       }
       if (widget.filterMonth != null && monthStr != widget.filterMonth) {
@@ -190,9 +192,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     ...spendings.map(
                       (s) => Card(
                         child: ListTile(
-                          leading: Icon(
-                            _getCategoryIcon(s.categoryId as String),
-                            color: colorScheme.secondary,
+                          leading: CircleAvatar(
+                            backgroundColor: ColorUtils.fromInt(s.categoryColor)
+                                .withValues(alpha: 0.2),
+                            child: Icon(
+                              IconUtils.fromString(s.categoryIcon),
+                              color: ColorUtils.fromInt(s.categoryColor),
+                            ),
                           ),
                           title: Text(
                             s.title,
@@ -233,24 +239,5 @@ class _HistoryScreenState extends State<HistoryScreen> {
               },
             ),
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
   }
 }

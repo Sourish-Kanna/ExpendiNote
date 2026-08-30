@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'history_screen.dart';
 
 class DailySummaryScreen extends StatefulWidget {
@@ -78,35 +80,26 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     return spendings.fold(0, (sum, item) => sum + item.amount);
   }
 
-  String _getTopCategory(List<txmodel.Transaction> spendings) {
-    if (spendings.isEmpty) return 'None';
-    Map<String, double> categoryTotals = {};
-    for (var s in spendings) {
-      categoryTotals[s.categoryId as String] =
-          (categoryTotals[s.categoryId] ?? 0) + s.amount;
+  _TopCategory _getTopCategory(List<txmodel.Transaction> spendings) {
+    if (spendings.isEmpty) {
+      return _TopCategory(name: 'None', icon: null, color: null);
     }
-    return categoryTotals.entries
+    Map<int, double> categoryTotals = {};
+    Map<int, txmodel.Transaction> sampleTransactions = {};
+    for (var s in spendings) {
+      final id = s.categoryId ?? -1;
+      categoryTotals[id] = (categoryTotals[id] ?? 0) + s.amount;
+      sampleTransactions[id] = s;
+    }
+    final topId = categoryTotals.entries
         .reduce((a, b) => a.value > b.value ? a : b)
         .key;
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
+    final sample = sampleTransactions[topId]!;
+    return _TopCategory(
+      name: sample.categoryName ?? 'Other',
+      icon: sample.categoryIcon,
+      color: sample.categoryColor,
+    );
   }
 
   @override
@@ -162,6 +155,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                 final date = DateTime.parse(dateStr);
                 final isToday =
                     DateFormat('yyyy-MM-dd').format(DateTime.now()) == dateStr;
+                final topCat = _getTopCategory(spendings);
 
                 return Card(
                   elevation: 0,
@@ -213,14 +207,14 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          _getCategoryIcon(_getTopCategory(spendings)),
+                          IconUtils.fromString(topCat.icon),
                           size: 14,
-                          color: colorScheme.secondary,
+                          color: ColorUtils.fromInt(topCat.color),
                         ),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            '${_getTopCategory(spendings)} • ${spendings.length} items',
+                            '${topCat.name} • ${spendings.length} items',
                             style: TextStyle(
                               color: colorScheme.secondary,
                               fontSize: 12,
@@ -252,4 +246,12 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
             ),
     );
   }
+}
+
+class _TopCategory {
+  final String name;
+  final String? icon;
+  final int? color;
+
+  _TopCategory({required this.name, this.icon, this.color});
 }

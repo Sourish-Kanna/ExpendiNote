@@ -8,6 +8,8 @@ import 'category_summary_screen.dart';
 import 'daily_summary_screen.dart';
 import 'history_screen.dart';
 import 'monthly_summary_screen.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 
 class UnifiedSummaryScreen extends StatefulWidget {
   final ValueNotifier<int> refreshNotifier;
@@ -144,19 +146,28 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
   }
 
   Widget _buildCategoryOverview(ColorScheme colorScheme) {
-    Map<String, double> categoryTotals = {};
+    Map<int, _CategorySummary> categoryStats = {};
     for (var s in _allSpendings) {
-      categoryTotals[s.categoryId as String] =
-          (categoryTotals[s.categoryId as String] ?? 0) + s.amount;
+      final id = s.categoryId ?? -1;
+      if (!categoryStats.containsKey(id)) {
+        categoryStats[id] = _CategorySummary(
+          name: s.categoryName ?? 'Other',
+          icon: s.categoryIcon,
+          color: s.categoryColor,
+          total: 0,
+        );
+      }
+      categoryStats[id]!.total += s.amount;
     }
-    final sorted = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sorted = categoryStats.entries.toList()
+      ..sort((a, b) => b.value.total.compareTo(a.value.total));
     final top3 = sorted.take(3).toList();
 
     if (top3.isEmpty) return const Text('No categories recorded.');
 
     return Column(
       children: top3.map((entry) {
+        final stat = entry.value;
         return Card(
           color: colorScheme.surfaceContainerLow,
           child: ListTile(
@@ -165,7 +176,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (context) =>
-                      HistoryScreen(filterCategory: entry.key),
+                      HistoryScreen(filterCategory: stat.name),
                 ),
               );
               if (result == true) {
@@ -173,16 +184,20 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                 widget.refreshNotifier.value++;
               }
             },
-            leading: Icon(
-              _getCategoryIcon(entry.key),
-              color: colorScheme.primary,
+            leading: CircleAvatar(
+              backgroundColor: ColorUtils.fromInt(stat.color).withValues(alpha: 0.2),
+              child: Icon(
+                IconUtils.fromString(stat.icon),
+                color: ColorUtils.fromInt(stat.color),
+                size: 20,
+              ),
             ),
-            title: Text(entry.key),
+            title: Text(stat.name),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '₹${entry.value.toStringAsFixed(0)}',
+                  '₹${stat.total.toStringAsFixed(0)}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 8),
@@ -297,23 +312,18 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     final format = DateFormat('MMM yyyy');
     return format.parse(a).compareTo(format.parse(b));
   }
+}
 
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
-  }
+class _CategorySummary {
+  final String name;
+  final String? icon;
+  final int? color;
+  double total;
+
+  _CategorySummary({
+    required this.name,
+    this.icon,
+    this.color,
+    required this.total,
+  });
 }

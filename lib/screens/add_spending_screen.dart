@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../models/category.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart' as txrepo;
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
+import 'category_management_screen.dart';
 
 class AddSpendingScreen extends StatefulWidget {
   final txmodel.Transaction? transaction;
@@ -18,8 +22,12 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   late TextEditingController _titleController;
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
-  late String _selectedCategory;
+  int? _selectedCategoryId;
   late DateTime _selectedDate;
+
+  final CategoryRepository _categoryRepository = CategoryRepository();
+  List<Category> _categories = [];
+  bool _isLoadingCategories = true;
 
   @override
   void initState() {
@@ -31,32 +39,43 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     _descriptionController = TextEditingController(
       text: widget.transaction?.description,
     );
-    // _selectedCategory = widget.transaction?.categoryId ?? 'General';
+    _selectedCategoryId = widget.transaction?.categoryId;
     _selectedDate = widget.transaction?.date ?? DateTime.now();
+    _loadCategories();
   }
 
-  final Map<String, IconData> _categories = {
-    'General': Icons.receipt,
-    'Food': Icons.restaurant,
-    'Transport': Icons.directions_bus,
-    'Entertainment': Icons.movie,
-    'Shopping': Icons.shopping_bag,
-    'Health': Icons.medical_services,
-    'Other': Icons.more_horiz,
-  };
+  Future<void> _loadCategories() async {
+    final cats = await _categoryRepository.getAllCategories();
+    if (mounted) {
+      setState(() {
+        _categories = cats;
+        _isLoadingCategories = false;
+        // If editing and has category, ensure it's selected.
+        // If adding new, select first pinned category or first category if available.
+        if (_selectedCategoryId == null && _categories.isNotEmpty) {
+          _selectedCategoryId = _categories.first.id;
+        }
+      });
+    }
+  }
 
   void _saveSpending() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedCategoryId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a category')),
+        );
+        return;
+      }
+
       final trRepo = txrepo.TransactionRepository();
-      final catRepo = CategoryRepository();
-      final categoryId = await catRepo.ensureCategoryByName(_selectedCategory);
 
       final tx = txmodel.Transaction(
         id: widget.transaction?.id,
         title: _titleController.text,
         amount: double.parse(_amountController.text),
         date: _selectedDate,
-        categoryId: categoryId,
+        categoryId: _selectedCategoryId,
         description: _descriptionController.text.isEmpty
             ? null
             : _descriptionController.text,
@@ -127,11 +146,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 decoration: InputDecoration(
                   labelText: 'What did you spend on?',
                   prefixIcon: const Icon(Icons.title),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 validator: (value) => value == null || value.isEmpty
                     ? 'Please enter a title'
@@ -143,11 +157,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 decoration: InputDecoration(
                   labelText: 'Amount',
                   prefixIcon: const Icon(Icons.currency_rupee),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -163,16 +172,11 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
               const SizedBox(height: 16),
               InkWell(
                 onTap: _presentDatePicker,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Date',
                     prefixIcon: const Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: colorScheme.surfaceContainerLow,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -186,57 +190,77 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'Category',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _categories.entries.map((entry) {
-                  final isSelected = _selectedCategory == entry.key;
-                  return ChoiceChip(
-                    showCheckmark: false,
-                    avatar: Icon(
-                      entry.value,
-                      size: 18,
-                      color: isSelected
-                          ? colorScheme.onPrimary
-                          : colorScheme.primary,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Category',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
                     ),
-                    label: Text(entry.key),
-                    selected: isSelected,
-                    selectedColor: colorScheme.primary,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurface,
-                    ),
-                    onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _selectedCategory = entry.key;
-                        });
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const CategoryManagementScreen(),
+                        ),
+                      );
+                      if (result == true) {
+                        _loadCategories();
                       }
                     },
-                  );
-                }).toList(),
+                    icon: const Icon(Icons.settings, size: 16),
+                    label: const Text('Manage'),
+                  ),
+                ],
               ),
+              const SizedBox(height: 8),
+              if (_isLoadingCategories)
+                const Center(child: CircularProgressIndicator())
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ..._categories.map((category) {
+                      final isSelected = _selectedCategoryId == category.id;
+                      final catColor = ColorUtils.fromInt(category.color);
+                      return ChoiceChip(
+                        showCheckmark: false,
+                        avatar: Icon(
+                          IconUtils.fromString(category.icon),
+                          size: 18,
+                          color: isSelected ? colorScheme.onPrimary : catColor,
+                        ),
+                        label: Text(category.name),
+                        selected: isSelected,
+                        selectedColor: colorScheme.primary,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurface,
+                        ),
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedCategoryId = category.id;
+                            });
+                          }
+                        },
+                      );
+                    }),
+                  ],
+                ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: 'Description (Optional)',
                   prefixIcon: const Icon(Icons.description),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerLow,
                 ),
                 maxLines: 3,
               ),
@@ -245,9 +269,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 onPressed: _saveSpending,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
                 ),
                 icon: Icon(isEditing ? Icons.update : Icons.save),
                 label: Text(
@@ -280,7 +301,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 spending.id!,
               );
 
-              // Guard State.context using the State property 'mounted'
               if (mounted) {
                 Navigator.pop(context, true);
               }

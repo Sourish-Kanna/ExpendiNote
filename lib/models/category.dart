@@ -27,10 +27,10 @@ class Category {
     return {
       if (id != null) DbCols.id: id,
       DbCols.name: name,
-      'icon': icon,
-      'color': color,
-      'isPinned': isPinned ? 1 : 0,
-      'isArchived': isArchived ? 1 : 0,
+      DbCols.icon: icon,
+      DbCols.color: color,
+      DbCols.isPinned: isPinned ? 1 : 0,
+      DbCols.isArchived: isArchived ? 1 : 0,
       DbCols.createdAt: createdAt.toIso8601String(),
     };
   }
@@ -47,10 +47,10 @@ class Category {
     return Category(
       id: map[DbCols.id] as int?,
       name: map[DbCols.name] as String? ?? '',
-      icon: map['icon'] as String?,
-      color: map['color'] as int?,
-      isPinned: map['isPinned'] == 1 || map['isPinned'] == true,
-      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
+      icon: map[DbCols.icon] as String?,
+      color: map[DbCols.color] as int?,
+      isPinned: map[DbCols.isPinned] == 1 || map[DbCols.isPinned] == true,
+      isArchived: map[DbCols.isArchived] == 1 || map[DbCols.isArchived] == true,
       createdAt: parseDate(map[DbCols.createdAt]),
     );
   }

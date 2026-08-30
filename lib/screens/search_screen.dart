@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'spending_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -44,8 +46,9 @@ class _SearchScreenState extends State<SearchScreen> {
       _allSpendings = data;
       _filteredSpendings = _allSpendings.where((s) {
         final query = _searchController.text.toLowerCase();
-        return s.title.toLowerCase().contains(query); // ||
-        // s.categoryId?.toLowerCase().contains(query);
+        return s.title.toLowerCase().contains(query) ||
+            (s.categoryName?.toLowerCase().contains(query) ?? false) ||
+            (s.description?.toLowerCase().contains(query) ?? false);
       }).toList();
       _isLoading = false;
     });
@@ -55,8 +58,9 @@ class _SearchScreenState extends State<SearchScreen> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredSpendings = _allSpendings.where((s) {
-        return s.title.toLowerCase().contains(query); // ||
-        // s.categoryId?.toLowerCase().contains(query);
+        return s.title.toLowerCase().contains(query) ||
+            (s.categoryName?.toLowerCase().contains(query) ?? false) ||
+            (s.description?.toLowerCase().contains(query) ?? false);
       }).toList();
     });
   }
@@ -98,10 +102,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 return Card(
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: colorScheme.secondaryContainer,
+                      backgroundColor: ColorUtils.fromInt(s.categoryColor)
+                          .withValues(alpha: 0.2),
                       child: Icon(
-                        _getCategoryIcon(s.categoryId as String),
-                        color: colorScheme.onSecondaryContainer,
+                        IconUtils.fromString(s.categoryIcon),
+                        color: ColorUtils.fromInt(s.categoryColor),
                         size: 20,
                       ),
                     ),
@@ -112,7 +117,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      '${s.categoryId} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
+                      '${s.categoryName ?? 'Other'} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
                     ),
                     trailing: Text(
                       '₹${s.amount.toStringAsFixed(2)}',
@@ -139,24 +144,5 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
     );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'Food':
-        return Icons.restaurant;
-      case 'Transport':
-        return Icons.directions_bus;
-      case 'Entertainment':
-        return Icons.movie;
-      case 'Shopping':
-        return Icons.shopping_bag;
-      case 'Health':
-        return Icons.medical_services;
-      case 'Other':
-        return Icons.more_horiz;
-      default:
-        return Icons.receipt;
-    }
   }
 }
