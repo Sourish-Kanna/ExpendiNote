@@ -5,7 +5,10 @@ import '../models/transaction.dart';
 import '../services/database_service.dart';
 
 class TransactionRepository {
-  final DatabaseService _dbService = DatabaseService();
+  final DatabaseService _dbService;
+
+  TransactionRepository({DatabaseService? dbService})
+    : _dbService = dbService ?? DatabaseService();
 
   Future<int> insertTransaction(Transaction tx) async {
     final db = await _dbService.database;
@@ -36,38 +39,57 @@ class TransactionRepository {
     int? offset,
   }) async {
     final db = await _dbService.database;
-    final q = StringBuffer(
-      'SELECT * FROM ${DbTables.transactions} ORDER BY ${DbCols.date} DESC',
-    );
+    final q = StringBuffer('''
+      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
+             t.${DbCols.date}, t.${DbCols.categoryId}, 
+             COALESCE(c.${DbCols.name}, '') AS category, 
+             t.${DbCols.description}, t.${DbCols.createdAt} 
+      FROM ${DbTables.transactions} t 
+      LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
+      ORDER BY t.${DbCols.date} DESC
+      ''');
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
+
     final List<Map<String, dynamic>> maps = await db.rawQuery(q.toString());
     return maps.map((m) => Transaction.fromMap(m)).toList();
   }
 
-  /// Returns transaction rows joined with category name (key: 'category') to
-  /// make it compatible with legacy UI code that expects a `category` string.
+  /// Returns raw maps joined with category name for legacy UI components
   Future<List<Map<String, dynamic>>> getAllWithCategoryName({
     int? limit,
     int? offset,
   }) async {
     final db = await _dbService.database;
-    final q = StringBuffer(
-      'SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, t.${DbCols.date}, COALESCE(c.${DbCols.name}, "") as ${DbCols.name}, t.${DbCols.description} FROM ${DbTables.transactions} t LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} ORDER BY ${DbCols.date} DESC',
-    );
+    final q = StringBuffer('''
+      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
+             t.${DbCols.date}, COALESCE(c.${DbCols.name}, '') AS ${DbCols.name}, 
+             t.${DbCols.description} 
+      FROM ${DbTables.transactions} t 
+      LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
+      ORDER BY t.${DbCols.date} DESC
+      ''');
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
+
     final List<Map<String, dynamic>> maps = await db.rawQuery(q.toString());
     return maps;
   }
 
   Future<Transaction?> getById(int id) async {
     final db = await _dbService.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      DbTables.transactions,
-      where: '${DbCols.id} = ?',
-      whereArgs: [id],
-      limit: 1,
+    final List<Map<String, dynamic>> maps = await db.rawQuery(
+      '''
+      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
+             t.${DbCols.date}, t.${DbCols.categoryId}, 
+             COALESCE(c.${DbCols.name}, '') AS category, 
+             t.${DbCols.description}, t.${DbCols.createdAt} 
+      FROM ${DbTables.transactions} t 
+      LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
+      WHERE t.${DbCols.id} = ? 
+      LIMIT 1
+      ''',
+      [id],
     );
     if (maps.isEmpty) return null;
     return Transaction.fromMap(maps.first);
@@ -84,18 +106,18 @@ class TransactionRepository {
 
   Future<List<Map<String, dynamic>>> searchTransactions(String keyword) async {
     final db = await _dbService.database;
-    final searchPattern = '%$keyword%';
+    final searchPattern = '%${keyword.trim().toLowerCase()}%';
 
     return await db.rawQuery(
       '''
       SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
-             t.${DbCols.date}, COALESCE(c.${DbCols.name}, '') as category, 
+             t.${DbCols.date}, COALESCE(c.${DbCols.name}, '') AS category, 
              t.${DbCols.description} 
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
-      WHERE t.${DbCols.title} LIKE ? 
-         OR t.${DbCols.description} LIKE ? 
-         OR c.${DbCols.name} LIKE ? 
+      WHERE LOWER(t.${DbCols.title}) LIKE ? 
+         OR LOWER(t.${DbCols.description}) LIKE ? 
+         OR LOWER(c.${DbCols.name}) LIKE ? 
       ORDER BY t.${DbCols.date} DESC
       ''',
       [searchPattern, searchPattern, searchPattern],

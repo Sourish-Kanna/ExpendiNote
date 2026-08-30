@@ -1,3 +1,8 @@
+import 'package:flutter/foundation.dart';
+
+import '../constants/database_constants.dart';
+
+@immutable
 class Category {
   final int? id;
   final String name;
@@ -17,29 +22,74 @@ class Category {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+  /// Converts model instance to SQLite v2 column map.
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'name': name,
+      if (id != null) DbCols.id: id,
+      DbCols.name: name,
       'icon': icon,
       'color': color,
       'isPinned': isPinned ? 1 : 0,
       'isArchived': isArchived ? 1 : 0,
-      'createdAt': createdAt.toIso8601String(),
+      DbCols.createdAt: createdAt.toIso8601String(),
     };
   }
 
+  /// Constructs a Category instance from SQLite database row.
   factory Category.fromMap(Map<String, dynamic> map) {
+    DateTime parseDate(dynamic rawDate) {
+      if (rawDate is String) {
+        return DateTime.tryParse(rawDate) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
     return Category(
-      id: map['id'] as int?,
-      name: map['name'] as String? ?? '',
+      id: map[DbCols.id] as int?,
+      name: map[DbCols.name] as String? ?? '',
       icon: map['icon'] as String?,
       color: map['color'] as int?,
-      isPinned: (map['isPinned'] == 1),
-      isArchived: (map['isArchived'] == 1),
-      createdAt: map.containsKey('createdAt') && map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
-          : DateTime.now(),
+      isPinned: map['isPinned'] == 1 || map['isPinned'] == true,
+      isArchived: map['isArchived'] == 1 || map['isArchived'] == true,
+      createdAt: parseDate(map[DbCols.createdAt]),
     );
+  }
+
+  Category copyWith({
+    int? id,
+    String? name,
+    String? icon,
+    int? color,
+    bool? isPinned,
+    bool? isArchived,
+    DateTime? createdAt,
+  }) {
+    return Category(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      isPinned: isPinned ?? this.isPinned,
+      isArchived: isArchived ?? this.isArchived,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Category &&
+        other.id == id &&
+        other.name == name &&
+        other.icon == icon &&
+        other.color == color &&
+        other.isPinned == isPinned &&
+        other.isArchived == isArchived &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(id, name, icon, color, isPinned, isArchived, createdAt);
   }
 }

@@ -1,10 +1,15 @@
+import 'package:flutter/foundation.dart';
+
+import '../constants/database_constants.dart';
+
+@immutable
 class Transaction {
   final int? id;
   final String title;
   final double amount;
   final DateTime date;
   final int? categoryId;
-  final String? categoryName;
+  final String? categoryName; // Joined from categories table for UI display
   final String? description;
   final DateTime createdAt;
 
@@ -19,39 +24,98 @@ class Transaction {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+  /// Converts model instance to SQLite v2 column map for database insertion.
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'title': title,
-      'amount': amount,
-      'date': date.toIso8601String(),
-      'categoryId': categoryId,
-      'description': description,
-      'createdAt': createdAt.toIso8601String(),
+      if (id != null) DbCols.id: id,
+      DbCols.title: title,
+      DbCols.amount: amount,
+      DbCols.date: date.toIso8601String(),
+      DbCols.categoryId: categoryId,
+      DbCols.description: description,
+      DbCols.createdAt: createdAt.toIso8601String(),
     };
   }
 
+  /// Constructs a Transaction instance from SQLite database row.
   factory Transaction.fromMap(Map<String, dynamic> map) {
+    DateTime parseDate(dynamic rawDate) {
+      if (rawDate is String) {
+        return DateTime.tryParse(rawDate) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
+    double parseAmount(dynamic rawAmount) {
+      if (rawAmount is num) {
+        return rawAmount.toDouble();
+      }
+      if (rawAmount is String) {
+        return double.tryParse(rawAmount) ?? 0.0;
+      }
+      return 0.0;
+    }
+
     return Transaction(
-      id: map['id'] as int?,
-      title: map['title'] as String? ?? '',
-      amount: (map['amount'] is int)
-          ? (map['amount'] as int).toDouble()
-          : (map['amount'] as double? ?? 0.0),
-      date: DateTime.parse(map['date'] as String),
-      categoryId: map.containsKey('categoryId')
-          ? map['categoryId'] as int?
-          : null,
-      categoryName: map.containsKey('category')
-          ? map['category'] as String?
-          : null,
-      description: map['description'] as String?,
-      createdAt: map.containsKey('createdAt') && map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
-          : DateTime.now(),
+      id: map[DbCols.id] as int?,
+      title: map[DbCols.title] as String? ?? '',
+      amount: parseAmount(map[DbCols.amount]),
+      date: parseDate(map[DbCols.date]),
+      categoryId: map[DbCols.categoryId] as int?,
+      categoryName:
+          map['categoryName'] as String? ?? map['category'] as String?,
+      description: map[DbCols.description] as String?,
+      createdAt: parseDate(map[DbCols.createdAt]),
     );
   }
 
-  /// Convenience getter to provide a `category` string for UI compatibility
-  String get category => categoryName ?? '';
+  Transaction copyWith({
+    int? id,
+    String? title,
+    double? amount,
+    DateTime? date,
+    int? categoryId,
+    String? categoryName,
+    String? description,
+    DateTime? createdAt,
+  }) {
+    return Transaction(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      categoryId: categoryId ?? this.categoryId,
+      categoryName: categoryName ?? this.categoryName,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is Transaction &&
+        other.id == id &&
+        other.title == title &&
+        other.amount == amount &&
+        other.date == date &&
+        other.categoryId == categoryId &&
+        other.categoryName == categoryName &&
+        other.description == description &&
+        other.createdAt == createdAt;
+  }
+
+  @override
+  int get hashCode {
+    return Object.hash(
+      id,
+      title,
+      amount,
+      date,
+      categoryId,
+      categoryName,
+      description,
+      createdAt,
+    );
+  }
 }

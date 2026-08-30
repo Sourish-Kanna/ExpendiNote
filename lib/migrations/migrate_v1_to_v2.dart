@@ -1,55 +1,52 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../constants/database_constants.dart';
-import '../utils/logger.dart'; // Adjust path if necessary
+import '../utils/logger.dart';
 
 String _normalizeCategoryName(String? raw) {
   if (raw == null) return 'Others';
-  final s = raw.trim();
-  if (s.isEmpty) return 'Others';
+  final cleaned = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
+  if (cleaned.isEmpty) return 'Others';
 
-  // Collapse multiple spaces and Title Case each word efficiently
-  return s
-      .replaceAll(RegExp(r'\s+'), ' ')
+  return cleaned
       .split(' ')
       .map((p) {
         if (p.isEmpty) return '';
-        final lower = p.toLowerCase();
-        return lower[0].toUpperCase() + lower.substring(1);
+        return p[0].toUpperCase() + p.substring(1).toLowerCase();
       })
       .join(' ');
 }
 
-// Removed the Logger parameter since we now use the global AppLogger
 Future<void> migrateV1toV2(Database db) async {
   AppLogger.info('Starting database migration: v1 -> v2');
 
   try {
     await db.transaction((txn) async {
-      AppLogger.debug('Creating v2 tables if they do not exist...');
-      // 1. Ensure v2 tables exist
+      AppLogger.debug('Creating v2 schema tables if they do not exist...');
+
+      // 1. Ensure v2 schema exists
       await txn.execute('''
         CREATE TABLE IF NOT EXISTS ${DbTables.categories}(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+          ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
           icon TEXT,
           color INTEGER,
           isPinned INTEGER DEFAULT 0,
           isArchived INTEGER DEFAULT 0,
-          createdAt TEXT NOT NULL
+          ${DbCols.createdAt} TEXT NOT NULL
         )
       ''');
 
       await txn.execute('''
         CREATE TABLE IF NOT EXISTS ${DbTables.transactions}(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          title TEXT NOT NULL,
-          amount REAL NOT NULL,
-          date TEXT NOT NULL,
-          categoryId INTEGER,
-          description TEXT,
-          createdAt TEXT NOT NULL,
-          FOREIGN KEY(categoryId) REFERENCES ${DbTables.categories}(id)
+          ${DbCols.title} TEXT NOT NULL,
+          ${DbCols.amount} REAL NOT NULL,
+          ${DbCols.date} TEXT NOT NULL,
+          ${DbCols.categoryId} INTEGER,
+          ${DbCols.description} TEXT,
+          ${DbCols.createdAt} TEXT NOT NULL,
+          FOREIGN KEY(${DbCols.categoryId}) REFERENCES ${DbTables.categories}(id)
         )
       ''');
 
@@ -58,7 +55,7 @@ Future<void> migrateV1toV2(Database db) async {
       );
 
       AppLogger.debug('Creating database indexes...');
-      // 2. Create Indexes
+      // 2. Create performance indexes
       await txn.execute(
         'CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_date ON ${DbTables.transactions}(${DbCols.date})',
       );
@@ -69,7 +66,7 @@ Future<void> migrateV1toV2(Database db) async {
         'CREATE INDEX IF NOT EXISTS idx_${DbTables.categories}_name ON ${DbTables.categories}(${DbCols.name})',
       );
 
-      // 3. Check for legacy table using single quotes for string literal
+      // 3. Check for presence of legacy table
       final legacy = await txn.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='${DbTables.legacySpendings}'",
       );
@@ -81,23 +78,23 @@ Future<void> migrateV1toV2(Database db) async {
         return;
       }
 
-      // 4. Read legacy rows
+      // 4. Read legacy records
       final List<Map<String, dynamic>> rows = await txn.query(
         DbTables.legacySpendings,
       );
       AppLogger.info(
-        'Found ${rows.length} legacy records in ${DbTables.legacySpendings} to migrate.',
+        'Found ${rows.length} legacy records in `${DbTables.legacySpendings}` to migrate.',
       );
 
       if (rows.isEmpty) {
-        AppLogger.debug('Legacy table is empty. Dropping table.');
+        AppLogger.debug('Legacy table is empty. Dropping legacy table.');
         await txn.execute('DROP TABLE IF EXISTS ${DbTables.legacySpendings}');
         return;
       }
 
       final now = DateTime.now().toIso8601String();
 
-      // 5. Pre-fetch existing categories into an in-memory map
+      // 5. Build in-memory map of existing categories
       final existingCategoryRows = await txn.query(
         DbTables.categories,
         columns: ['id', DbCols.name],
@@ -117,8 +114,7 @@ Future<void> migrateV1toV2(Database db) async {
 
       for (final r in rows) {
         final rawCat = r['category'] as String?;
-        final normalized = _normalizeCategoryName(rawCat);
-        final catNameFinal = normalized.isEmpty ? 'Others' : normalized;
+        final catNameFinal = _normalizeCategoryName(rawCat);
         final lookupKey = catNameFinal.toLowerCase();
 
         if (!categoryMap.containsKey(lookupKey) &&
@@ -142,16 +138,14 @@ Future<void> migrateV1toV2(Database db) async {
         }
       }
 
-      // 7. Insert all transactions in a single batch
+      // 7. Transfer legacy records into transactions table batch
       AppLogger.debug('Preparing transaction batch insert...');
       final transactionBatch = txn.batch();
       for (final r in rows) {
         final rawCat = r['category'] as String?;
-        final normalized = _normalizeCategoryName(rawCat);
-        final catNameFinal = normalized.isEmpty ? 'Others' : normalized;
+        final catNameFinal = _normalizeCategoryName(rawCat);
         final categoryId = categoryMap[catNameFinal.toLowerCase()];
 
-        // Safe amount parsing handles legacy text, int, or real values
         final rawAmount = r['amount'];
         final amount = (rawAmount is num)
             ? rawAmount.toDouble()
@@ -177,7 +171,7 @@ Future<void> migrateV1toV2(Database db) async {
       await transactionBatch.commit(noResult: true);
       AppLogger.info('Successfully migrated ${rows.length} transactions.');
 
-      // 8. Drop legacy table
+      // 8. Clean up legacy spendings table
       await txn.execute('DROP TABLE IF EXISTS ${DbTables.legacySpendings}');
       AppLogger.info('Dropped legacy table `${DbTables.legacySpendings}`.');
     });
