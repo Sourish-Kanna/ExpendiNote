@@ -14,7 +14,7 @@
   - `categories` — category metadata (name, icon, color, pinned/archived flags)
   - `settings` — key/value application settings
 
-Migration recorded: v1 → v2 implemented in `lib/migrations/migrate_v1_to_v2.dart`.
+Migration recorded: v1 → v2 implemented directly in `lib/services/database_service.dart`.
 
 ## Migration Rules
 
@@ -32,17 +32,13 @@ Migration recorded: v1 → v2 implemented in `lib/migrations/migrate_v1_to_v2.da
 ## Upgrade Process (Developer Guide)
 
 1. Update `DbConfig.databaseVersion` in `lib/constants/database_constants.dart`.
-2. Add a migration helper function in `lib/migrations/` named following the pattern `migrate_v<from>_to_v<to>.dart` and export a callable migration function (e.g., `migrateV1toV2`).
-3. Ensure the migration function:
-   - Performs schema modifications and data transformation within `db.transaction(...)` to guarantee atomicity.
-   - Uses centralized constants from `DbTables`/`DbCols`/`DbConfig` to avoid magic strings.
+2. Add a private migration helper method within `DatabaseService` (e.g., `_migrateV2toV3`).
+3. Ensure the migration method:
+   - Performs schema modifications and data transformation within the `onUpgrade` transaction (or its own transaction if needed) to guarantee atomicity.
+   - Uses centralized constants from `DbTables`/`DbCols`/`DbConfig` where appropriate, but maintains specific SQL for the target version to ensure independence from future schema changes.
    - Normalizes and deduplicates user-facing strings (categories) as required.
-4. Add tests validating:
-   - Migration success on real vN DB files.
-   - Migration rollback behavior when an exception is thrown (no partial changes remain, original data preserved).
-   - Foreign key behavior and index creation.
-5. Update `DatabaseService` `onUpgrade` to call your migration helper and handle exceptions by logging and rethrowing as needed.
-6. Run `flutter test` and `flutter analyze`, fix issues, then ship.
+4. Update `DatabaseService.onUpgrade` to call your migration helper based on `oldVersion`.
+5. Run `flutter analyze`, fix issues, then ship.
 
 ## Best Practices for Future Migrations
 
