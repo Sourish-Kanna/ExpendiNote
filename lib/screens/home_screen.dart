@@ -224,7 +224,9 @@ class _HomeTabState extends State<_HomeTab> {
                                     backgroundColor:
                                         colorScheme.primaryContainer,
                                     child: Icon(
-                                      _getCategoryIcon(spending.category),
+                                      _getCategoryIcon(
+                                        spending.categoryId as String,
+                                      ),
                                       color: colorScheme.onPrimaryContainer,
                                     ),
                                   ),
@@ -237,7 +239,7 @@ class _HomeTabState extends State<_HomeTab> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    '${spending.category} • ${DateFormat('hh:mm a').format(spending.date)}',
+                                    '${spending.categoryId} • ${DateFormat('hh:mm a').format(spending.date)}',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,

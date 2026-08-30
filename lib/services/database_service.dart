@@ -18,6 +18,7 @@ class DatabaseService {
   Future<Database> get database async {
     if (_database != null && _database!.isOpen) return _database!;
     _database = await _initDatabase();
+    await DatabaseService.debugPrintDatabase();
     return _database!;
   }
 
@@ -141,5 +142,49 @@ class DatabaseService {
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
     await batch.commit(noResult: true);
+  }
+
+  static Future<void> debugPrintDatabase() async {
+    final db = await instance.database;
+
+    AppLogger.info('========== DATABASE DEBUG ==========');
+
+    final tables = await db.rawQuery('''
+    SELECT name, sql
+    FROM sqlite_master
+    WHERE type = 'table'
+      AND name NOT LIKE 'sqlite_%'
+    ORDER BY name
+  ''');
+
+    for (final table in tables) {
+      final tableName = table['name'] as String;
+
+      AppLogger.info('TABLE: $tableName');
+      AppLogger.info('SQL: ${table['sql']}');
+
+      final columns = await db.rawQuery('PRAGMA table_info("$tableName")');
+
+      for (final column in columns) {
+        AppLogger.info(
+          '  COLUMN: ${column['name']} '
+          '| type=${column['type']} '
+          '| notNull=${column['notnull']} '
+          '| default=${column['dflt_value']}',
+        );
+      }
+
+      final rows = await db.rawQuery('SELECT * FROM "$tableName" LIMIT 10');
+
+      AppLogger.info('  PREVIEW (${rows.length} rows):');
+
+      for (final row in rows) {
+        AppLogger.info('    $row');
+      }
+
+      AppLogger.info('');
+    }
+
+    AppLogger.info('========== END DATABASE DEBUG ==========');
   }
 }

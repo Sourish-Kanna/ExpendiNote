@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
-import '../repositories/transaction_repository.dart' as txrepo;
 import '../repositories/category_repository.dart';
+import '../repositories/transaction_repository.dart' as txrepo;
 
 class AddSpendingScreen extends StatefulWidget {
   final txmodel.Transaction? transaction;
@@ -31,7 +31,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     _descriptionController = TextEditingController(
       text: widget.transaction?.description,
     );
-    _selectedCategory = widget.transaction?.category ?? 'General';
+    // _selectedCategory = widget.transaction?.categoryId ?? 'General';
     _selectedDate = widget.transaction?.date ?? DateTime.now();
   }
 

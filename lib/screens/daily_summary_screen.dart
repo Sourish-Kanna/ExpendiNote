@@ -82,7 +82,8 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     if (spendings.isEmpty) return 'None';
     Map<String, double> categoryTotals = {};
     for (var s in spendings) {
-      categoryTotals[s.category] = (categoryTotals[s.category] ?? 0) + s.amount;
+      categoryTotals[s.categoryId as String] =
+          (categoryTotals[s.categoryId] ?? 0) + s.amount;
     }
     return categoryTotals.entries
         .reduce((a, b) => a.value > b.value ? a : b)

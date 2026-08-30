@@ -48,7 +48,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
     Map<String, double> totals = {};
     double grand = 0;
     for (var s in filtered) {
-      totals[s.category] = (totals[s.category] ?? 0) + s.amount;
+      totals[s.categoryId as String] = (totals[s.categoryId] ?? 0) + s.amount;
       grand += s.amount;
     }
 

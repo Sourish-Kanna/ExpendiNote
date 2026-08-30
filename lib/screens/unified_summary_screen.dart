@@ -146,7 +146,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
   Widget _buildCategoryOverview(ColorScheme colorScheme) {
     Map<String, double> categoryTotals = {};
     for (var s in _allSpendings) {
-      categoryTotals[s.category] = (categoryTotals[s.category] ?? 0) + s.amount;
+      categoryTotals[s.categoryId as String] =
+          (categoryTotals[s.categoryId as String] ?? 0) + s.amount;
     }
     final sorted = categoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));

@@ -44,8 +44,8 @@ class _SearchScreenState extends State<SearchScreen> {
       _allSpendings = data;
       _filteredSpendings = _allSpendings.where((s) {
         final query = _searchController.text.toLowerCase();
-        return s.title.toLowerCase().contains(query) ||
-            s.category.toLowerCase().contains(query);
+        return s.title.toLowerCase().contains(query); // ||
+        // s.categoryId?.toLowerCase().contains(query);
       }).toList();
       _isLoading = false;
     });
@@ -55,8 +55,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredSpendings = _allSpendings.where((s) {
-        return s.title.toLowerCase().contains(query) ||
-            s.category.toLowerCase().contains(query);
+        return s.title.toLowerCase().contains(query); // ||
+        // s.categoryId?.toLowerCase().contains(query);
       }).toList();
     });
   }
@@ -100,7 +100,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     leading: CircleAvatar(
                       backgroundColor: colorScheme.secondaryContainer,
                       child: Icon(
-                        _getCategoryIcon(s.category),
+                        _getCategoryIcon(s.categoryId as String),
                         color: colorScheme.onSecondaryContainer,
                         size: 20,
                       ),
@@ -112,7 +112,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      '${s.category} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
+                      '${s.categoryId} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
                     ),
                     trailing: Text(
                       '₹${s.amount.toStringAsFixed(2)}',

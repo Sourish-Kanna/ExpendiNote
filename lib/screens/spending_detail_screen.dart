@@ -110,7 +110,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                     radius: 40,
                     backgroundColor: colorScheme.primaryContainer,
                     child: Icon(
-                      _getCategoryIcon(_currentSpending.category),
+                      _getCategoryIcon(_currentSpending.categoryId as String),
                       size: 40,
                       color: colorScheme.onPrimaryContainer,
                     ),
@@ -139,7 +139,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               context,
               Icons.category_outlined,
               'Category',
-              _currentSpending.category,
+              _currentSpending.categoryId as String,
             ),
             const Divider(height: 32),
             _buildDetailRow(

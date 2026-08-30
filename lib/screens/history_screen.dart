@@ -52,7 +52,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       // Filtering logic
       if (widget.filterDate != null && dateStr != widget.filterDate) continue;
       if (widget.filterCategory != null &&
-          s.category != widget.filterCategory) {
+          s.categoryId != widget.filterCategory) {
         continue;
       }
       if (widget.filterMonth != null && monthStr != widget.filterMonth) {
@@ -191,7 +191,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       (s) => Card(
                         child: ListTile(
                           leading: Icon(
-                            _getCategoryIcon(s.category),
+                            _getCategoryIcon(s.categoryId as String),
                             color: colorScheme.secondary,
                           ),
                           title: Text(
