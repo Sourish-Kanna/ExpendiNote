@@ -6,7 +6,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:expend_note/constants/database_constants.dart';
 import 'package:expend_note/migrations/migrate_v1_to_v2.dart' as mig;
-import 'package:logger/logger.dart' as log;
 
 void main() {
   sqfliteFfiInit();
@@ -54,7 +53,6 @@ void main() {
       final fkOn = fk.isNotEmpty ? fk.first.values.first : 0;
       expect(fkOn, 1);
 
-      // inserting with invalid categoryId should fail
       var threw = false;
       try {
         await db.insert('transactions', {
@@ -112,7 +110,6 @@ void main() {
         ]),
       );
 
-      // Duplicate names (case-insensitive) should be rejected
       await db.insert(DbTables.categories, {'name': 'food'});
       var threw = false;
       try {
@@ -128,7 +125,6 @@ void main() {
     test(
       'normalization: empty category becomes Others and duplicates collapsed',
       () async {
-        // Create legacy v1 DB with messy category names
         final dbV1 = await factory.openDatabase(
           dbPath,
           options: OpenDatabaseOptions(
@@ -163,23 +159,18 @@ void main() {
         );
         await dbV1.close();
 
-        // Run migration using migrateV1toV2 directly
         final db = await factory.openDatabase(
           dbPath,
           options: OpenDatabaseOptions(
             version: 2,
             onCreate: (db, version) async {},
-            onUpgrade: (db, oldV, newV) async {
-              // we import and call the migration under test
-              // import deferred because of test file scope
-            },
+            onUpgrade: (db, oldV, newV) async {},
           ),
         );
 
-        // Manually call the migration implementation
+        // Manually call the migration implementation without a logger parameter
         final migrator = mig.migrateV1toV2;
-        final logger = log.Logger();
-        await migrator(db, logger);
+        await migrator(db);
 
         final cats = await db.query(DbTables.categories);
         final names = cats
@@ -188,7 +179,7 @@ void main() {
             .toList();
         expect(names, contains('Food'));
         expect(names, contains('Others'));
-        // ensure only single Food entry
+
         final foodCount = names.where((n) => n == 'Food').length;
         expect(foodCount, 1);
 
@@ -197,5 +188,3 @@ void main() {
     );
   });
 }
-
-// no-op

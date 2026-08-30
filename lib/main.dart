@@ -2,9 +2,12 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'services/database_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Launch UI immediately without waiting for disk I/O
   runApp(const MyApp());
 }
 
@@ -34,28 +37,20 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Expendi Note',
           debugShowCheckedModeBanner: false,
-
-          theme: _theme(lightScheme),
-
-          darkTheme: _theme(darkScheme),
-
+          theme: _buildTheme(lightScheme),
+          darkTheme: _buildTheme(darkScheme),
           themeMode: ThemeMode.system,
-
-          home: const HomeScreen(),
+          home: const AppInitializationWrapper(),
         );
       },
     );
   }
 
-  ThemeData _theme(ColorScheme scheme) {
+  ThemeData _buildTheme(ColorScheme scheme) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
-
-      // Typography
       typography: Typography.material2021(),
-
-      // App Bar
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -63,11 +58,7 @@ class MyApp extends StatelessWidget {
         backgroundColor: scheme.surface,
         foregroundColor: scheme.onSurface,
       ),
-
-      // Scaffold
       scaffoldBackgroundColor: scheme.surface,
-
-      // Cards
       cardTheme: CardThemeData(
         elevation: 0,
         color: scheme.surfaceContainerLow,
@@ -77,15 +68,11 @@ class MyApp extends StatelessWidget {
           side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
       ),
-
-      // FAB
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         shape: const CircleBorder(),
         backgroundColor: scheme.primaryContainer,
         foregroundColor: scheme.onPrimaryContainer,
       ),
-
-      // Buttons
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           elevation: 0,
@@ -94,7 +81,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -102,7 +88,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -110,7 +95,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -118,8 +102,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
-      // Input fields
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
@@ -133,21 +115,15 @@ class MyApp extends StatelessWidget {
           borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
       ),
-
-      // Dialogs
       dialogTheme: DialogThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
-
-      // Bottom Sheet
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: scheme.surface,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
       ),
-
-      // Navigation Bar
       navigationBarTheme: NavigationBarThemeData(
         indicatorColor: scheme.secondaryContainer,
         backgroundColor: scheme.surface,
@@ -159,25 +135,52 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
-      // Snackbars
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-
-      // Dividers
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant.withValues(alpha: 0.5),
       ),
-
-      // List Tiles
       listTileTheme: ListTileThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
-
-      // Progress Indicators
       progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
+    );
+  }
+}
+
+/// A wrapper widget that handles asynchronous database setup smoothly
+/// while keeping the UI thread responsive.
+class AppInitializationWrapper extends StatefulWidget {
+  const AppInitializationWrapper({super.key});
+
+  @override
+  State<AppInitializationWrapper> createState() =>
+      _AppInitializationWrapperState();
+}
+
+class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
+  late Future<void> _initFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger database init after frame rendering schedule starts
+    _initFuture = DatabaseService.instance.database.then((_) => null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<void>(
+      future: _initFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return const HomeScreen();
+        }
+
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
     );
   }
 }

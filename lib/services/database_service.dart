@@ -1,18 +1,19 @@
-
-import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../constants/database_constants.dart';
 import '../migrations/migrate_v1_to_v2.dart';
+import '../utils/logger.dart'; // Added our new global logger
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
   factory DatabaseService() => _instance;
   DatabaseService._internal();
 
+  /// Singleton getter
+  static DatabaseService get instance => _instance;
+
   static Database? _database;
-  final Logger _logger = Logger();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -21,13 +22,12 @@ class DatabaseService {
   }
 
   /// Testing helper: override the internal database instance.
-  /// Use this in tests to point the service to an in-memory or temp DB.
   static void setTestDatabase(Database db) {
     _database = db;
   }
 
   Future<Database> _initDatabase() async {
-    _logger.i('Initializing database...');
+    AppLogger.info('Initializing database...');
     String path = join(await getDatabasesPath(), DbConfig.databaseFile);
     return await openDatabase(
       path,
@@ -37,7 +37,9 @@ class DatabaseService {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
-        _logger.i('Creating v2 schema (transactions, categories, settings)...');
+        AppLogger.info(
+          'Creating v2 schema (transactions, categories, settings)...',
+        );
         await db.execute(
           'CREATE TABLE IF NOT EXISTS ${DbTables.categories}(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE COLLATE NOCASE, icon TEXT, color INTEGER, isPinned INTEGER DEFAULT 0, isArchived INTEGER DEFAULT 0, createdAt TEXT NOT NULL)',
         );
@@ -49,19 +51,26 @@ class DatabaseService {
         );
 
         // Indexes for performance
-        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_date ON ${DbTables.transactions}(${DbCols.date})');
-        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_categoryId ON ${DbTables.transactions}(${DbCols.categoryId})');
-        await db.execute('CREATE INDEX IF NOT EXISTS idx_${DbTables.categories}_name ON ${DbTables.categories}(${DbCols.name})');
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_date ON ${DbTables.transactions}(${DbCols.date})',
+        );
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_${DbTables.transactions}_categoryId ON ${DbTables.transactions}(${DbCols.categoryId})',
+        );
+        await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_${DbTables.categories}_name ON ${DbTables.categories}(${DbCols.name})',
+        );
 
         await _seedDefaultCategories(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        _logger.i('Upgrading DB from v$oldVersion to v$newVersion...');
-        if (oldVersion < DbConfig.databaseVersion && newVersion >= DbConfig.databaseVersion) {
+        AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+        if (oldVersion < DbConfig.databaseVersion &&
+            newVersion >= DbConfig.databaseVersion) {
           try {
-            await migrateV1toV2(db, _logger);
-          } catch (e) {
-            _logger.e('Migration failed: $e');
+            await migrateV1toV2(db); // Logger parameter removed here
+          } catch (e, stackTrace) {
+            AppLogger.error('Migration failed', e, stackTrace);
             rethrow;
           }
         }
@@ -84,17 +93,18 @@ class DatabaseService {
       'Income',
       'Others',
     ];
+
+    final batch = db.batch();
     for (final name in defaults) {
-      try {
-        await db.insert(DbTables.categories, {
-          DbCols.name: name,
-          'icon': null,
-          'color': null,
-          'isPinned': 0,
-          'isArchived': 0,
-          DbCols.createdAt: now,
-        }, conflictAlgorithm: ConflictAlgorithm.ignore);
-      } catch (_) {}
+      batch.insert(DbTables.categories, {
+        DbCols.name: name,
+        'icon': null,
+        'color': null,
+        'isPinned': 0,
+        'isArchived': 0,
+        DbCols.createdAt: now,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
+    await batch.commit(noResult: true);
   }
 }

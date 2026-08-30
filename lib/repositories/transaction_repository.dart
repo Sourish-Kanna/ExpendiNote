@@ -36,7 +36,9 @@ class TransactionRepository {
     int? offset,
   }) async {
     final db = await _dbService.database;
-    final q = StringBuffer('SELECT * FROM ${DbTables.transactions} ORDER BY ${DbCols.date} DESC');
+    final q = StringBuffer(
+      'SELECT * FROM ${DbTables.transactions} ORDER BY ${DbCols.date} DESC',
+    );
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
     final List<Map<String, dynamic>> maps = await db.rawQuery(q.toString());
@@ -73,6 +75,30 @@ class TransactionRepository {
 
   Future<int> deleteTransaction(int id) async {
     final db = await _dbService.database;
-    return await db.delete(DbTables.transactions, where: '${DbCols.id} = ?', whereArgs: [id]);
+    return await db.delete(
+      DbTables.transactions,
+      where: '${DbCols.id} = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> searchTransactions(String keyword) async {
+    final db = await _dbService.database;
+    final searchPattern = '%$keyword%';
+
+    return await db.rawQuery(
+      '''
+      SELECT t.${DbCols.id}, t.${DbCols.title}, t.${DbCols.amount}, 
+             t.${DbCols.date}, COALESCE(c.${DbCols.name}, '') as category, 
+             t.${DbCols.description} 
+      FROM ${DbTables.transactions} t 
+      LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
+      WHERE t.${DbCols.title} LIKE ? 
+         OR t.${DbCols.description} LIKE ? 
+         OR c.${DbCols.name} LIKE ? 
+      ORDER BY t.${DbCols.date} DESC
+      ''',
+      [searchPattern, searchPattern, searchPattern],
+    );
   }
 }
