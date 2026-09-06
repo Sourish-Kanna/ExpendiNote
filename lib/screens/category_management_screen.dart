@@ -60,7 +60,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 final totalAmount = catMap['totalAmount'] ?? 0.0;
 
                 return Card(
-                  color: colorScheme.surfaceContainerLow,
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: ColorUtils.fromInt(
@@ -75,7 +74,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       children: [
                         Text(
                           category.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                         if (category.isPinned) ...[
                           const SizedBox(width: 8),
@@ -89,6 +88,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     ),
                     subtitle: Text(
                       '$txCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) =>
@@ -189,7 +189,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               Navigator.pop(context);
               try {
                 await _categoryRepository.deleteCategory(category.id!);
-                _loadCategories();
+                if (context.mounted) {
+                  _loadCategories();
+                }
               } catch (e) {
                 if (!mounted) return;
                 ScaffoldMessenger.of(

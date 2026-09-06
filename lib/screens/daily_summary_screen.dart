@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'history_screen.dart';
@@ -104,7 +105,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -127,15 +130,17 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: AppShapes.smallRadius,
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: EdgeInsets.zero,
-                hintStyle: TextStyle(
+                hintStyle: textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant.withAlpha(150),
                 ),
               ),
-              style: TextStyle(color: colorScheme.onSurface),
+              style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface,
+              ),
             ),
           ),
         ),
@@ -161,9 +166,8 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   elevation: 0,
                   color: isToday
                       ? colorScheme.primaryContainer.withAlpha(50)
-                      : colorScheme.surfaceContainerLow,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                      : null,
+                  shape: AppShapes.mediumShape.copyWith(
                     side: BorderSide(
                       color: isToday
                           ? colorScheme.primary
@@ -189,7 +193,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           : colorScheme.secondaryContainer,
                       child: Text(
                         DateFormat('dd').format(date),
-                        style: TextStyle(
+                        style: textTheme.labelLarge?.copyWith(
                           color: isToday
                               ? colorScheme.onPrimary
                               : colorScheme.onSecondaryContainer,
@@ -201,7 +205,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       isToday
                           ? 'Today'
                           : DateFormat('EEEE, MMM dd').format(date),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     subtitle: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -215,9 +221,8 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                         Flexible(
                           child: Text(
                             '${topCat.name} • ${spendings.length} items',
-                            style: TextStyle(
+                            style: textTheme.bodySmall?.copyWith(
                               color: colorScheme.secondary,
-                              fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
@@ -230,8 +235,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       children: [
                         Text(
                           '₹${dailyTotal.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.primary,
                           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 
@@ -80,7 +81,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final isEditing = widget.category != null;
 
     return Scaffold(
@@ -103,7 +106,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                   labelText: 'Category Name',
                   prefixIcon: const Icon(Icons.label_outline),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: AppShapes.smallRadius,
                   ),
                   filled: true,
                   fillColor: colorScheme.surfaceContainerLow,
@@ -118,9 +121,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
               const SizedBox(height: 24),
               Text(
                 'Icon',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -135,14 +138,14 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: InkWell(
                         onTap: () => setState(() => _selectedIcon = icon),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: AppShapes.smallRadius,
                         child: Container(
                           width: 60,
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? colorScheme.primaryContainer
                                 : colorScheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppShapes.smallRadius,
                             border: Border.all(
                               color: isSelected
                                   ? colorScheme.primary
@@ -164,9 +167,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
               const SizedBox(height: 24),
               Text(
                 'Color',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -231,15 +234,19 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                 icon: Icon(isEditing ? Icons.update : Icons.save),
                 label: Text(
                   isEditing ? 'Update Category' : 'Save Category',
-                  style: const TextStyle(fontSize: 18),
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               if (!isEditing) ...[
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Categories cannot be deleted because they may be used by existing transactions. You can rename or merge a category instead.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  style: textTheme.bodySmall?.copyWith(
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
             ],

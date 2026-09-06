@@ -291,22 +291,34 @@ class DatabaseService {
   /// Adds missing columns to categories table.
   static Future<void> _migrateV2toV3(Database db) async {
     AppLogger.info('Starting database migration: v2 -> v3');
-    // SQLite doesn't support multiple columns in one ALTER TABLE
-    // We wrap each in a try-catch in case they already exist (idempotency)
-    final columns = {
+
+    // Check existing columns to avoid duplicate column errors
+    final tableInfo = await db.rawQuery(
+      'PRAGMA table_info(${DbTables.categories})',
+    );
+    final existingColumns = tableInfo.map((c) => c['name'] as String).toSet();
+
+    final columnsToAdd = {
       DbCols.icon: 'TEXT',
       DbCols.color: 'INTEGER',
       DbCols.isPinned: 'INTEGER DEFAULT 0',
       DbCols.isArchived: 'INTEGER DEFAULT 0',
     };
 
-    for (final entry in columns.entries) {
-      try {
-        await db.execute(
-          'ALTER TABLE ${DbTables.categories} ADD COLUMN ${entry.key} ${entry.value}',
+    for (final entry in columnsToAdd.entries) {
+      if (!existingColumns.contains(entry.key)) {
+        try {
+          await db.execute(
+            'ALTER TABLE ${DbTables.categories} ADD COLUMN ${entry.key} ${entry.value}',
+          );
+          AppLogger.info('Added column ${entry.key} to ${DbTables.categories}');
+        } catch (e) {
+          AppLogger.error('Failed to add column ${entry.key}: $e');
+        }
+      } else {
+        AppLogger.debug(
+          'Column ${entry.key} already exists in ${DbTables.categories}; skipping.',
         );
-      } catch (e) {
-        AppLogger.debug('Column ${entry.key} might already exist: $e');
       }
     }
     AppLogger.info('Migration v2 -> v3 completed.');

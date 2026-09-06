@@ -25,6 +25,10 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
   }
 
   void _confirmDelete() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -50,7 +54,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
             },
             child: Text(
               'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: textTheme.labelLarge?.copyWith(color: colorScheme.error),
             ),
           ),
         ],
@@ -60,7 +64,9 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -110,8 +116,9 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: ColorUtils.fromInt(_currentSpending.categoryColor)
-                        .withValues(alpha: 0.2),
+                    backgroundColor: ColorUtils.fromInt(
+                      _currentSpending.categoryColor,
+                    ).withValues(alpha: 0.2),
                     child: Icon(
                       IconUtils.fromString(_currentSpending.categoryIcon),
                       size: 40,
@@ -121,7 +128,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                   const SizedBox(height: 16),
                   Text(
                     '₹${_currentSpending.amount.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    style: textTheme.displayMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onSurface,
                     ),
@@ -129,7 +136,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _currentSpending.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -180,7 +187,10 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
     String label,
     String value,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -192,16 +202,16 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
             children: [
               Text(
                 label,
-                style: Theme.of(
-                  context,
-                ).textTheme.labelMedium?.copyWith(color: colorScheme.outline),
+                style: textTheme.labelMedium?.copyWith(
+                  color: colorScheme.outline,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                style: textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),

@@ -3,150 +3,84 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
+import 'theme/app_theme.dart';
+import 'theme/app_theme_controller.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Launch UI immediately without waiting for disk I/O
-  runApp(const MyApp());
+  final themeController = AppThemeController();
+
+  runApp(MyApp(themeController: themeController));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  static const Color fallbackSeed = Colors.teal;
+  final AppThemeController themeController;
+  const MyApp({super.key, required this.themeController});
 
   @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        final lightScheme =
-            lightDynamic ??
-            ColorScheme.fromSeed(
-              seedColor: fallbackSeed,
-              brightness: Brightness.light,
-            );
+    return AppThemeScope(
+      controller: themeController,
+      child: ListenableBuilder(
+        listenable: themeController,
+        builder: (context, _) {
+          return DynamicColorBuilder(
+            builder: (lightDynamic, darkDynamic) {
+              ColorScheme lightScheme;
+              ColorScheme darkScheme;
 
-        final darkScheme =
-            darkDynamic ??
-            ColorScheme.fromSeed(
-              seedColor: fallbackSeed,
-              brightness: Brightness.dark,
-            );
+              if (themeController.customThemeEnabled) {
+                lightScheme = ColorScheme.fromSeed(
+                  seedColor: themeController.selectedThemeColor.seed,
+                  brightness: Brightness.light,
+                );
+                darkScheme = ColorScheme.fromSeed(
+                  seedColor: themeController.selectedThemeColor.seed,
+                  brightness: Brightness.dark,
+                );
+              } else {
+                lightScheme =
+                    lightDynamic ??
+                    ColorScheme.fromSeed(
+                      seedColor: AppTheme.fallbackSeed,
+                      brightness: Brightness.light,
+                    );
+                darkScheme =
+                    darkDynamic ??
+                    ColorScheme.fromSeed(
+                      seedColor: AppTheme.fallbackSeed,
+                      brightness: Brightness.dark,
+                    );
+              }
 
-        return MaterialApp(
-          title: 'Expendi Note',
-          debugShowCheckedModeBanner: false,
-          theme: _buildTheme(lightScheme),
-          darkTheme: _buildTheme(darkScheme),
-          themeMode: ThemeMode.system,
-          home: const AppInitializationWrapper(),
-        );
-      },
+              return MaterialApp(
+                title: 'Expendi Note',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.buildTheme(lightScheme),
+                darkTheme: AppTheme.buildTheme(darkScheme),
+                themeMode: themeController.themeMode,
+                home: const AppInitializationWrapper(),
+              );
+            },
+          );
+        },
+      ),
     );
   }
+}
 
-  ThemeData _buildTheme(ColorScheme scheme) {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
-      typography: Typography.material2021(),
-      appBarTheme: AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-        scrolledUnderElevation: 2,
-        backgroundColor: scheme.surface,
-        foregroundColor: scheme.onSurface,
-      ),
-      scaffoldBackgroundColor: scheme.surface,
-      cardTheme: CardThemeData(
-        elevation: 0,
-        color: scheme.surfaceContainerLow,
-        margin: const EdgeInsets.all(8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
-        ),
-      ),
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        shape: const CircleBorder(),
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: scheme.primary, width: 2),
-        ),
-      ),
-      dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: scheme.surface,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        indicatorColor: scheme.secondaryContainer,
-        backgroundColor: scheme.surface,
-        labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => TextStyle(
-            fontWeight: states.contains(WidgetState.selected)
-                ? FontWeight.w600
-                : FontWeight.w500,
-          ),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      dividerTheme: DividerThemeData(
-        color: scheme.outlineVariant.withValues(alpha: 0.5),
-      ),
-      listTileTheme: ListTileThemeData(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
-    );
+class AppThemeScope extends InheritedNotifier<AppThemeController> {
+  const AppThemeScope({
+    super.key,
+    required AppThemeController controller,
+    required super.child,
+  }) : super(notifier: controller);
+
+  static AppThemeController of(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<AppThemeScope>()!
+        .notifier!;
   }
 }
 

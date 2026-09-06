@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'history_screen.dart';
@@ -65,7 +66,8 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
 
     // Sort categories by amount descending
     final sortedGroups = Map.fromEntries(
-      groups.entries.toList()..sort((a, b) => b.value.total.compareTo(a.value.total)),
+      groups.entries.toList()
+        ..sort((a, b) => b.value.total.compareTo(a.value.total)),
     );
 
     setState(() {
@@ -77,7 +79,9 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -121,7 +125,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                     : Expanded(
                         child: Column(
                           children: [
-                            _buildOverviewCard(colorScheme),
+                            _buildOverviewCard(theme),
                             Expanded(
                               child: ListView.builder(
                                 padding: const EdgeInsets.all(16),
@@ -155,7 +159,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                         );
                                         _loadCategoryData();
                                       },
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: AppShapes.mediumRadius,
                                       child: Padding(
                                         padding: const EdgeInsets.all(16.0),
                                         child: Column(
@@ -163,11 +167,17 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                             Row(
                                               children: [
                                                 CircleAvatar(
-                                                  backgroundColor: ColorUtils.fromInt(group.color)
-                                                      .withValues(alpha: 0.2),
+                                                  backgroundColor:
+                                                      ColorUtils.fromInt(
+                                                        group.color,
+                                                      ).withValues(alpha: 0.2),
                                                   child: Icon(
-                                                    IconUtils.fromString(group.icon),
-                                                    color: ColorUtils.fromInt(group.color),
+                                                    IconUtils.fromString(
+                                                      group.icon,
+                                                    ),
+                                                    color: ColorUtils.fromInt(
+                                                      group.color,
+                                                    ),
                                                   ),
                                                 ),
                                                 const SizedBox(width: 16),
@@ -179,28 +189,31 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                                     children: [
                                                       Text(
                                                         group.name,
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 16,
-                                                        ),
+                                                        style: textTheme
+                                                            .titleMedium
+                                                            ?.copyWith(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
                                                       ),
                                                       Text(
                                                         '${percentage.toStringAsFixed(1)}% of total',
-                                                        style: Theme.of(
-                                                          context,
-                                                        ).textTheme.bodySmall,
+                                                        style:
+                                                            textTheme.bodySmall,
                                                       ),
                                                     ],
                                                   ),
                                                 ),
                                                 Text(
                                                   '₹${group.total.toStringAsFixed(0)}',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                    color: colorScheme.primary,
-                                                  ),
+                                                  style: textTheme.titleMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            colorScheme.primary,
+                                                      ),
                                                 ),
                                                 const SizedBox(width: 8),
                                                 const Icon(
@@ -234,27 +247,29 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
     );
   }
 
-  Widget _buildOverviewCard(ColorScheme colorScheme) {
+  Widget _buildOverviewCard(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppShapes.largeRadius,
         border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
           Text(
             'Total Spending ($_selectedPeriod)',
-            style: const TextStyle(fontSize: 14),
+            style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
           Text(
             '₹${_grandTotal.toStringAsFixed(0)}',
-            style: TextStyle(
-              fontSize: 32,
+            style: textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: colorScheme.primary,
             ),

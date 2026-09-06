@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
 import 'history_screen.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {
@@ -56,7 +57,9 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -81,8 +84,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                  shape: AppShapes.mediumShape.copyWith(
                     side: BorderSide(color: colorScheme.outlineVariant),
                   ),
                   child: ListTile(
@@ -99,16 +101,20 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                     ),
                     title: Text(
                       DateFormat('MMMM yyyy').format(date),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    subtitle: Text('${spendings.length} entries'),
+                    subtitle: Text(
+                      '${spendings.length} entries',
+                      style: textTheme.bodySmall,
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           '₹${monthlyTotal.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.primary,
                           ),
@@ -134,3 +140,4 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     );
   }
 }
+

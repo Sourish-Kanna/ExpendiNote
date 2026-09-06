@@ -7,7 +7,7 @@ class ColorUtils {
   }
 
   static int colorToInt(Color color) {
-    return color.value;
+    return color.toARGB32();
   }
 
   static List<Color> getAvailableColors() {

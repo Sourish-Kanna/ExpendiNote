@@ -4,12 +4,12 @@ import 'package:intl/intl.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
 import '../services/export_service.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import 'category_summary_screen.dart';
 import 'daily_summary_screen.dart';
 import 'history_screen.dart';
 import 'monthly_summary_screen.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
 
 class UnifiedSummaryScreen extends StatefulWidget {
   final ValueNotifier<int> refreshNotifier;
@@ -169,7 +169,6 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
       children: top3.map((entry) {
         final stat = entry.value;
         return Card(
-          color: colorScheme.surfaceContainerLow,
           child: ListTile(
             onTap: () async {
               final result = await Navigator.push(
@@ -185,20 +184,25 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
               }
             },
             leading: CircleAvatar(
-              backgroundColor: ColorUtils.fromInt(stat.color).withValues(alpha: 0.2),
+              backgroundColor: ColorUtils.fromInt(
+                stat.color,
+              ).withValues(alpha: 0.2),
               child: Icon(
                 IconUtils.fromString(stat.icon),
                 color: ColorUtils.fromInt(stat.color),
                 size: 20,
               ),
             ),
-            title: Text(stat.name),
+            title: Text(
+              stat.name,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '₹${stat.total.toStringAsFixed(0)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(width: 8),
                 const Icon(Icons.chevron_right, size: 16),
@@ -225,7 +229,6 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     return Column(
       children: top2.map((entry) {
         return Card(
-          color: colorScheme.surfaceContainerLow,
           child: ListTile(
             onTap: () async {
               final result = await Navigator.push(
@@ -239,16 +242,18 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                 widget.refreshNotifier.value++;
               }
             },
-            title: Text(entry.key),
+            title: Text(
+              entry.key,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '₹${entry.value.toStringAsFixed(0)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.primary,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(color: colorScheme.primary),
                 ),
                 const SizedBox(width: 8),
                 const Icon(Icons.chevron_right, size: 16),
@@ -276,7 +281,6 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
       children: top3.map((entry) {
         final date = DateTime.parse(entry.key);
         return Card(
-          color: colorScheme.surfaceContainerLow,
           child: ListTile(
             onTap: () async {
               final result = await Navigator.push(
@@ -290,13 +294,16 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                 widget.refreshNotifier.value++;
               }
             },
-            title: Text(DateFormat('EEEE, MMM dd').format(date)),
+            title: Text(
+              DateFormat('EEEE, MMM dd').format(date),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '₹${entry.value.toStringAsFixed(0)}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(width: 8),
                 const Icon(Icons.chevron_right, size: 16),

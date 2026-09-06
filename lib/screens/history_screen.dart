@@ -88,6 +88,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _confirmDelete(txmodel.Transaction spending) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -105,7 +109,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             },
             child: Text(
               'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: textTheme.labelLarge?.copyWith(color: colorScheme.error),
             ),
           ),
         ],
@@ -119,7 +123,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     final sortedDates = _groupedSpendings.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
@@ -173,18 +180,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               DateFormat('EEEE, MMM dd').format(date),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
-                                  ),
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.primary,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Total: ₹${dailyTotal.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -193,8 +200,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       (s) => Card(
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: ColorUtils.fromInt(s.categoryColor)
-                                .withValues(alpha: 0.2),
+                            backgroundColor: ColorUtils.fromInt(
+                              s.categoryColor,
+                            ).withValues(alpha: 0.2),
                             child: Icon(
                               IconUtils.fromString(s.categoryIcon),
                               color: ColorUtils.fromInt(s.categoryColor),
@@ -204,6 +212,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             s.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                           subtitle: s.description != null
                               ? Tooltip(
@@ -212,10 +223,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     s.description!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
+                                    style: textTheme.bodyMedium,
                                   ),
                                 )
                               : null,
-                          trailing: Text('₹${s.amount.toStringAsFixed(2)}'),
+                          trailing: Text(
+                            '₹${s.amount.toStringAsFixed(2)}',
+                            style: textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           onTap: () async {
                             final result = await Navigator.push(
                               context,

@@ -5,6 +5,7 @@ import '../models/category.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart' as txrepo;
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'category_management_screen.dart';
@@ -172,7 +173,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
               const SizedBox(height: 16),
               InkWell(
                 onTap: _presentDatePicker,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: AppShapes.mediumRadius,
                 child: InputDecorator(
                   decoration: InputDecoration(
                     labelText: 'Date',
@@ -213,7 +214,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                         _loadCategories();
                       }
                     },
-                    icon: const Icon(Icons.settings, size: 16),
+                    icon: const Icon(Icons.settings_outlined, size: 16),
                     label: const Text('Manage'),
                   ),
                 ],
@@ -244,6 +245,9 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                               ? colorScheme.onPrimary
                               : colorScheme.onSurface,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppShapes.smallRadius,
+                        ),
                         onSelected: (selected) {
                           if (selected) {
                             setState(() {
@@ -270,10 +274,12 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                icon: Icon(isEditing ? Icons.update : Icons.save),
+                icon: Icon(isEditing ? Icons.edit : Icons.save),
                 label: Text(
                   isEditing ? 'Update Spending' : 'Save Spending',
-                  style: const TextStyle(fontSize: 18),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                  ),
                 ),
               ),
             ],

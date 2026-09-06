@@ -67,7 +67,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -81,11 +83,11 @@ class _SearchScreenState extends State<SearchScreen> {
           decoration: InputDecoration(
             hintText: 'Search title or category...',
             border: InputBorder.none,
-            hintStyle: TextStyle(
+            hintStyle: textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurfaceVariant.withAlpha(150),
             ),
           ),
-          style: TextStyle(color: colorScheme.onSurface, fontSize: 18),
+          style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface),
         ),
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
@@ -102,8 +104,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 return Card(
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: ColorUtils.fromInt(s.categoryColor)
-                          .withValues(alpha: 0.2),
+                      backgroundColor: ColorUtils.fromInt(
+                        s.categoryColor,
+                      ).withValues(alpha: 0.2),
                       child: Icon(
                         IconUtils.fromString(s.categoryIcon),
                         color: ColorUtils.fromInt(s.categoryColor),
@@ -114,14 +117,17 @@ class _SearchScreenState extends State<SearchScreen> {
                       s.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     subtitle: Text(
                       '${s.categoryName ?? 'Other'} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
+                      style: textTheme.bodyMedium,
                     ),
                     trailing: Text(
                       '₹${s.amount.toStringAsFixed(2)}',
-                      style: TextStyle(
+                      style: textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.error,
                       ),

@@ -3,11 +3,12 @@ import 'package:intl/intl.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'add_spending_screen.dart';
-import 'category_management_screen.dart';
 import 'search_screen.dart';
+import 'settings_screen.dart';
 import 'spending_detail_screen.dart';
 import 'unified_summary_screen.dart';
 
@@ -159,17 +160,15 @@ class _HomeTabState extends State<_HomeTab> {
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.category_outlined),
-            onPressed: () async {
-              final result = await Navigator.push(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const CategoryManagementScreen(),
-                ),
-              );
-              if (result == true) {
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              ).then((_) {
+                // Refresh data in case categories were merged/deleted
                 widget.refreshNotifier.value++;
-              }
+              });
             },
           ),
         ],
@@ -233,7 +232,6 @@ class _HomeTabState extends State<_HomeTab> {
                                 vertical: 4,
                               ),
                               child: Card(
-                                color: colorScheme.surfaceContainerLow,
                                 child: ListTile(
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -252,9 +250,9 @@ class _HomeTabState extends State<_HomeTab> {
                                     spending.title,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleMedium,
                                   ),
                                   subtitle: Text(
                                     '${spending.categoryName ?? 'Other'} • ${DateFormat('hh:mm a').format(spending.date)}',
@@ -264,11 +262,10 @@ class _HomeTabState extends State<_HomeTab> {
                                   ),
                                   trailing: Text(
                                     '₹${spending.amount.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: colorScheme.error,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(color: colorScheme.error),
                                   ),
                                   onTap: () async {
                                     final result = await Navigator.push(
@@ -297,16 +294,17 @@ class _HomeTabState extends State<_HomeTab> {
   }
 
   Widget _buildTotalCard(ColorScheme colorScheme) {
+    final textTheme = Theme.of(context).textTheme;
     return InkWell(
       onTap: widget.onShowAnalysis,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: AppShapes.largeRadius,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: AppShapes.largeRadius,
         ),
         child: Row(
           children: [
@@ -315,17 +313,17 @@ class _HomeTabState extends State<_HomeTab> {
                 children: [
                   Text(
                     "Today",
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
-                      fontSize: 14,
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer.withValues(
+                        alpha: 0.8,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '₹${_todayTotal.toStringAsFixed(0)}',
-                    style: TextStyle(
+                    style: textTheme.headlineMedium?.copyWith(
                       color: colorScheme.onPrimaryContainer,
-                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -342,17 +340,17 @@ class _HomeTabState extends State<_HomeTab> {
                 children: [
                   Text(
                     "This Month",
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
-                      fontSize: 14,
+                    style: textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onPrimaryContainer.withValues(
+                        alpha: 0.8,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '₹${_monthlyTotal.toStringAsFixed(0)}',
-                    style: TextStyle(
+                    style: textTheme.headlineMedium?.copyWith(
                       color: colorScheme.onPrimaryContainer,
-                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

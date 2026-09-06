@@ -93,7 +93,9 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
@@ -109,13 +111,13 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildSourceCard(colorScheme),
+                  _buildSourceCard(theme),
                   const SizedBox(height: 16),
                   const Center(child: Icon(Icons.arrow_downward, size: 32)),
                   const SizedBox(height: 16),
                   Text(
                     'Into Destination Category',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -135,7 +137,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                             ? colorScheme.primaryContainer.withValues(
                                 alpha: 0.3,
                               )
-                            : colorScheme.surfaceContainerLow,
+                            : null,
                         child: RadioListTile<int>(
                           value: c.id!,
                           groupValue: _selectedDestination?.id,
@@ -146,7 +148,9 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                           },
                           title: Text(
                             c.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           secondary: CircleAvatar(
                             backgroundColor: ColorUtils.fromInt(
@@ -172,10 +176,12 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                     label: const Text('Merge Categories'),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'This moves all associated transactions and deletes the source category.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    style: textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
                 ],
               ),
@@ -183,14 +189,17 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
     );
   }
 
-  Widget _buildSourceCard(ColorScheme colorScheme) {
+  Widget _buildSourceCard(ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Card(
       color: colorScheme.surfaceContainerHigh,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            const Text('Merge From (Source)'),
+            Text('Merge From (Source)', style: textTheme.labelLarge),
             const SizedBox(height: 12),
             ListTile(
               leading: CircleAvatar(
@@ -204,9 +213,14 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
               ),
               title: Text(
                 widget.sourceCategory.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              subtitle: Text('${widget.txCount} transactions will be moved'),
+              subtitle: Text(
+                '${widget.txCount} transactions will be moved',
+                style: textTheme.bodyMedium,
+              ),
             ),
           ],
         ),
