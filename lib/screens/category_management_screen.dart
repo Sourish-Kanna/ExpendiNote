@@ -189,11 +189,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               Navigator.pop(context);
               try {
                 await _categoryRepository.deleteCategory(category.id!);
-                if (context.mounted) {
+                if (mounted) {
                   _loadCategories();
                 }
               } catch (e) {
-                if (!mounted) return;
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(SnackBar(content: Text(e.toString())));

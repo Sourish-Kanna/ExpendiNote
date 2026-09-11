@@ -130,11 +130,22 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 24),
           _buildSectionHeader(context, 'Data Management'),
           Card(
-            child: ListTile(
-              leading: const Icon(Icons.ios_share_outlined),
-              title: const Text('Export Data'),
-              subtitle: const Text('Export transactions to CSV'),
-              onTap: () => _exportData(context),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.ios_share_outlined),
+                  title: const Text('Export Data'),
+                  subtitle: const Text('Export transactions to CSV'),
+                  onTap: () => _exportData(context),
+                ),
+                // const Divider(height: 1),
+                // ListTile(
+                //   leading: const Icon(Icons.file_download_outlined),
+                //   title: const Text('Import Data'),
+                //   subtitle: const Text('Import transactions from JSON'),
+                //   onTap: () => _importData(context),
+                // ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -180,6 +191,35 @@ class SettingsScreen extends StatelessWidget {
 
     await ExportService().exportToCSV(data);
   }
+
+  // Future<void> _importData(BuildContext context) async {
+  //   // Show loading dialog
+  //   showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) => const Center(
+  //       child: Card(
+  //         child: Padding(
+  //           padding: EdgeInsets.all(24.0),
+  //           child: CircularProgressIndicator(),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  //
+  //   final success = await ImportService().importFromJSON();
+  //
+  //   if (!context.mounted) return;
+  //   Navigator.pop(context); // Close loading dialog
+  //
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(
+  //         success ? 'Data imported successfully' : 'Import failed or cancelled',
+  //       ),
+  //     ),
+  //   );
+  // }
 
   String _getThemeModeName(ThemeMode mode) {
     switch (mode) {

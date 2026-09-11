@@ -1,3 +1,4 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
 import '../repositories/settings_repository.dart';
@@ -28,10 +29,22 @@ class AppThemeController extends ChangeNotifier {
       );
     }
 
-    _customThemeEnabled = await _settingsRepository.getBool(
+    final customThemePref = await _settingsRepository.get(
       'custom_theme_enabled',
-      defaultValue: false,
     );
+    if (customThemePref == null) {
+      // If no preference is saved, check if device supports dynamic colors
+      final corePalette = await DynamicColorPlugin.getCorePalette();
+      // If no dynamic color support, default to enabling custom theme
+      _customThemeEnabled = (corePalette == null);
+      // Persist the default choice
+      await _settingsRepository.setBool(
+        'custom_theme_enabled',
+        _customThemeEnabled,
+      );
+    } else {
+      _customThemeEnabled = customThemePref.toLowerCase() == 'true';
+    }
 
     final colorName = await _settingsRepository.get('selected_theme_color');
     _selectedThemeColor = AppThemeColor.fromName(colorName);

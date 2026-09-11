@@ -20,6 +20,21 @@ class TransactionRepository {
     );
   }
 
+  Future<void> insertTransactionsBatch(List<Transaction> transactions) async {
+    final db = await _dbService.database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final tx in transactions) {
+        batch.insert(
+          DbTables.transactions,
+          tx.toMap(),
+          conflictAlgorithm: sql.ConflictAlgorithm.replace,
+        );
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
   Future<int> updateTransaction(Transaction tx) async {
     if (tx.id == null) {
       throw ArgumentError('Transaction id is required for update');

@@ -61,6 +61,42 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
         actions: [
+          // IconButton(
+          //   icon: const Icon(Icons.file_download_outlined),
+          //   tooltip: 'Import JSON',
+          //   onPressed: () async {
+          //     // Show loading dialog
+          //     showDialog(
+          //       context: context,
+          //       barrierDismissible: false,
+          //       builder: (context) => const Center(
+          //         child: Card(
+          //           child: Padding(
+          //             padding: EdgeInsets.all(24.0),
+          //             child: CircularProgressIndicator(),
+          //           ),
+          //         ),
+          //       ),
+          //     );
+          //
+          //     final success = await ImportService().importFromJSON();
+          //
+          //     if (!context.mounted) return;
+          //     Navigator.pop(context); // Close loading dialog
+          //
+          //     if (success) {
+          //       _loadData();
+          //       widget.refreshNotifier.value++;
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         const SnackBar(content: Text('Data imported successfully')),
+          //       );
+          //     } else {
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         const SnackBar(content: Text('Import failed or cancelled')),
+          //       );
+          //     }
+          //   },
+          // ),
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Share CSV',

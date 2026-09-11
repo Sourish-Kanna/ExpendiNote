@@ -13,15 +13,27 @@ class DatabaseService {
   static DatabaseService get instance => _instance;
 
   static Database? _database;
+  static Future<Database>? _initializationFuture;
 
   Future<Database> get database async {
     if (_database != null && _database!.isOpen) return _database!;
-    _database = await _initDatabase();
-    return _database!;
+
+    _initializationFuture ??= _initDatabase();
+
+    try {
+      final db = await _initializationFuture!;
+      _database = db;
+      return db;
+    } catch (e) {
+      // Reset the future so a subsequent call can retry initialization
+      _initializationFuture = null;
+      rethrow;
+    }
   }
 
   /// Closes the database connection and resets the singleton instance cache.
   Future<void> closeDatabase() async {
+    _initializationFuture = null;
     if (_database != null && _database!.isOpen) {
       await _database!.close();
       _database = null;
