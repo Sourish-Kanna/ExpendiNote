@@ -178,7 +178,7 @@ These are **future possibilities, not commitments for v2.0.0**.
 
 ## 📄 License
 
-MIT License
+[MIT License](LICENSE)
 
 ---
 
