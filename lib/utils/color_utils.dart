@@ -1,8 +1,22 @@
 import 'package:flutter/material.dart';
 
 class ColorUtils {
+  static List<Color> colors = [
+    Colors.red,
+    Colors.purple,
+    Colors.deepPurple,
+    Colors.indigo,
+    Colors.blue,
+    Colors.teal,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange,
+    Colors.deepOrange,
+    Colors.blueGrey,
+  ];
+
   static Color fromInt(int? value) {
-    if (value == null) return Colors.blue;
+    if (value == null) return colors[5];
     return Color(value);
   }
 
@@ -11,26 +25,6 @@ class ColorUtils {
   }
 
   static List<Color> getAvailableColors() {
-    return [
-      Colors.red,
-      Colors.pink,
-      Colors.purple,
-      Colors.deepPurple,
-      Colors.indigo,
-      Colors.blue,
-      Colors.lightBlue,
-      Colors.cyan,
-      Colors.teal,
-      Colors.green,
-      Colors.lightGreen,
-      Colors.lime,
-      Colors.yellow,
-      Colors.amber,
-      Colors.orange,
-      Colors.deepOrange,
-      Colors.brown,
-      Colors.grey,
-      Colors.blueGrey,
-    ];
+    return colors;
   }
 }

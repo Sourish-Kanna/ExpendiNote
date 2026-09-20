@@ -36,12 +36,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Future<void> _loadHistory() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final allSpendings = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final allSpendings = await TransactionRepository.getAllTransactions();
 
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
@@ -82,7 +77,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _deleteSpending(int id) async {
-    await TransactionRepository().deleteTransaction(id);
+    await TransactionRepository.deleteTransaction(id);
     _hasChanged = true;
     _loadHistory();
   }

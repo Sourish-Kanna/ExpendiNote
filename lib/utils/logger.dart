@@ -4,12 +4,12 @@ class AppLogger {
   // Initialize the logger with a PrettyPrinter for clean, formatted console output.
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
-      methodCount: 0, // Number of method calls to display
+      methodCount: 1, // Number of method calls to display
       errorMethodCount: 8, // Number of method calls if stacktrace is provided
       lineLength: 100, // Width of the output
       colors: true, // Colorful log messages
       printEmojis: true, // Print an emoji for each log message
-      dateTimeFormat: DateTimeFormat.none,
+      dateTimeFormat: DateTimeFormat.dateAndTime,
     ),
   );
 

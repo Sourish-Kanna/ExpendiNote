@@ -26,12 +26,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
   Future<void> _loadMonthlySummary() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final allSpendings = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final allSpendings = await TransactionRepository.getAllTransactions();
 
     Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {
@@ -140,4 +135,3 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     );
   }
 }
-

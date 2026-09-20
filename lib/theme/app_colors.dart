@@ -14,7 +14,7 @@ enum AppThemeColor {
   static AppThemeColor fromName(String? name) {
     return AppThemeColor.values.firstWhere(
       (c) => c.name == name,
-      orElse: () => AppThemeColor.blue,
+      orElse: () => AppThemeColor.green,
     );
   }
 }

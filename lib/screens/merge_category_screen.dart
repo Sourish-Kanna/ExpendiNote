@@ -19,7 +19,6 @@ class MergeCategoryScreen extends StatefulWidget {
 }
 
 class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
-  final CategoryRepository _categoryRepository = CategoryRepository();
   List<Category> _otherCategories = [];
   Category? _selectedDestination;
   bool _isLoading = true;
@@ -31,7 +30,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final all = await _categoryRepository.getAllCategories();
+    final all = await CategoryRepository.getAllCategories();
     setState(() {
       _otherCategories = all
           .where((c) => c.id != widget.sourceCategory.id)
@@ -73,7 +72,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
     if (confirmed == true) {
       if (mounted) setState(() => _isLoading = true);
       try {
-        await _categoryRepository.mergeCategories(
+        await CategoryRepository.mergeCategories(
           widget.sourceCategory.id!,
           _selectedDestination!.id!,
         );
@@ -131,37 +130,43 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                       ),
                     )
                   else
-                    ..._otherCategories.map(
-                      (c) => Card(
-                        color: _selectedDestination?.id == c.id
-                            ? colorScheme.primaryContainer.withValues(
-                                alpha: 0.3,
-                              )
-                            : null,
-                        child: RadioListTile<int>(
-                          value: c.id!,
-                          groupValue: _selectedDestination?.id,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedDestination = c;
-                            });
-                          },
-                          title: Text(
-                            c.name,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                    RadioGroup<int>(
+                      groupValue: _selectedDestination?.id,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedDestination = _otherCategories.firstWhere(
+                            (cat) => cat.id == value,
+                          );
+                        });
+                      },
+                      child: Column(
+                        children: _otherCategories.map((c) {
+                          return Card(
+                            color: _selectedDestination?.id == c.id
+                                ? colorScheme.primaryContainer.withValues(
+                                    alpha: 0.3,
+                                  )
+                                : null,
+                            child: RadioListTile<int>(
+                              value: c.id!,
+                              title: Text(
+                                c.name,
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              secondary: CircleAvatar(
+                                backgroundColor: ColorUtils.fromInt(
+                                  c.color,
+                                ).withValues(alpha: 0.2),
+                                child: Icon(
+                                  IconUtils.fromString(c.icon),
+                                  color: ColorUtils.fromInt(c.color),
+                                ),
+                              ),
                             ),
-                          ),
-                          secondary: CircleAvatar(
-                            backgroundColor: ColorUtils.fromInt(
-                              c.color,
-                            ).withValues(alpha: 0.2),
-                            child: Icon(
-                              IconUtils.fromString(c.icon),
-                              color: ColorUtils.fromInt(c.color),
-                            ),
-                          ),
-                        ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   const SizedBox(height: 48),

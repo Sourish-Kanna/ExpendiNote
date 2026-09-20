@@ -43,7 +43,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
             onPressed: () async {
               Navigator.pop(dialogContext);
 
-              await TransactionRepository().deleteTransaction(
+              await TransactionRepository.deleteTransaction(
                 _currentSpending.id!,
               );
 
@@ -87,15 +87,12 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               );
               if (result == true) {
                 // Refresh data
-                final maps = await TransactionRepository()
-                    .getAllWithCategoryName();
-                final allData = maps
-                    .map((m) => txmodel.Transaction.fromMap(m))
-                    .toList();
-                final updated = allData.firstWhere(
-                  (s) => s.id == _currentSpending.id,
+                final updated = await TransactionRepository.getById(
+                  _currentSpending.id!,
                 );
-                setState(() => _currentSpending = updated);
+                if (updated != null) {
+                  setState(() => _currentSpending = updated);
+                }
               }
             },
           ),

@@ -36,12 +36,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
+    final data = await TransactionRepository.getAllTransactions();
 
-    final data = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
     setState(() {
       _allSpendings = data;
       _filteredSpendings = _allSpendings.where((s) {

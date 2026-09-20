@@ -5,12 +5,9 @@ import '../models/category.dart';
 import '../services/database_service.dart';
 
 class CategoryRepository {
-  final DatabaseService _dbService;
+  static DatabaseService get _dbService => DatabaseService.instance;
 
-  CategoryRepository({DatabaseService? dbService})
-    : _dbService = dbService ?? DatabaseService();
-
-  Future<int> createCategory(Category category) async {
+  static Future<int> createCategory(Category category) async {
     final db = await _dbService.database;
     return await db.insert(
       DbTables.categories,
@@ -19,7 +16,7 @@ class CategoryRepository {
     );
   }
 
-  Future<int> updateCategory(Category category) async {
+  static Future<int> updateCategory(Category category) async {
     if (category.id == null) {
       throw ArgumentError('Category id is required for update');
     }
@@ -32,7 +29,7 @@ class CategoryRepository {
     );
   }
 
-  Future<List<Category>> getAllCategories({
+  static Future<List<Category>> getAllCategories({
     bool includeArchived = false,
   }) async {
     final db = await _dbService.database;
@@ -44,7 +41,7 @@ class CategoryRepository {
     return maps.map((m) => Category.fromMap(m)).toList();
   }
 
-  Future<List<Map<String, dynamic>>> getCategoriesWithStats() async {
+  static Future<List<Map<String, dynamic>>> getCategoriesWithStats() async {
     final db = await _dbService.database;
     return await db.rawQuery('''
       SELECT 
@@ -59,7 +56,7 @@ class CategoryRepository {
     ''');
   }
 
-  Future<Category?> getById(int id) async {
+  static Future<Category?> getById(int id) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       DbTables.categories,
@@ -71,7 +68,7 @@ class CategoryRepository {
     return Category.fromMap(maps.first);
   }
 
-  Future<bool> isNameTaken(String name, {int? excludeId}) async {
+  static Future<bool> isNameTaken(String name, {int? excludeId}) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> found = await db.query(
       DbTables.categories,
@@ -82,7 +79,7 @@ class CategoryRepository {
     return found.isNotEmpty;
   }
 
-  Future<int> ensureCategoryByName(String name) async {
+  static Future<int> ensureCategoryByName(String name) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> found = await db.query(
       DbTables.categories,
@@ -101,7 +98,7 @@ class CategoryRepository {
     });
   }
 
-  Future<void> mergeCategories(int sourceId, int destinationId) async {
+  static Future<void> mergeCategories(int sourceId, int destinationId) async {
     final db = await _dbService.database;
     await db.transaction((txn) async {
       // 1. Reassign all transactions
@@ -121,7 +118,7 @@ class CategoryRepository {
     });
   }
 
-  Future<int> deleteCategory(int id) async {
+  static Future<int> deleteCategory(int id) async {
     final db = await _dbService.database;
     // Prevent deleting categories that are currently referenced by transactions
     final inUse = await db.rawQuery(

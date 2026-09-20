@@ -9,16 +9,6 @@ import '../repositories/transaction_repository.dart';
 import '../utils/logger.dart';
 
 class ImportService {
-  final CategoryRepository _categoryRepository;
-  final TransactionRepository _transactionRepository;
-
-  ImportService({
-    CategoryRepository? categoryRepository,
-    TransactionRepository? transactionRepository,
-  }) : _categoryRepository = categoryRepository ?? CategoryRepository(),
-       _transactionRepository =
-           transactionRepository ?? TransactionRepository();
-
   Future<bool> importFromJSON() async {
     try {
       // Use FileType.any because some Android versions fail to filter .json correctly
@@ -55,7 +45,7 @@ class ImportService {
           final date = DateTime.tryParse(dateStr) ?? DateTime.now();
 
           // 1. Ensure category exists (this is still one by one, but usually categories are few)
-          final categoryId = await _categoryRepository.ensureCategoryByName(
+          final categoryId = await CategoryRepository.ensureCategoryByName(
             categoryName,
           );
 
@@ -73,7 +63,7 @@ class ImportService {
       }
 
       if (transactionsToImport.isNotEmpty) {
-        await _transactionRepository.insertTransactionsBatch(
+        await TransactionRepository.insertTransactionsBatch(
           transactionsToImport,
         );
       }

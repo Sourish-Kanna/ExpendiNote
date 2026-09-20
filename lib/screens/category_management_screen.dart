@@ -16,7 +16,6 @@ class CategoryManagementScreen extends StatefulWidget {
 }
 
 class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
-  final CategoryRepository _categoryRepository = CategoryRepository();
   List<Map<String, dynamic>> _categoriesWithStats = [];
   bool _isLoading = true;
 
@@ -28,7 +27,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   Future<void> _loadCategories() async {
     setState(() => _isLoading = true);
-    final stats = await _categoryRepository.getCategoriesWithStats();
+    final stats = await CategoryRepository.getCategoriesWithStats();
     setState(() {
       _categoriesWithStats = stats;
       _isLoading = false;
@@ -126,10 +125,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _editCategory(null),
-        icon: const Icon(Icons.add),
-        label: const Text('New Category'),
+        child: const Icon(Icons.add),
+        // label: const Text('New Category'),
       ),
     );
   }
@@ -188,7 +187,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             onPressed: () async {
               Navigator.pop(context);
               try {
-                await _categoryRepository.deleteCategory(category.id!);
+                await CategoryRepository.deleteCategory(category.id!);
                 if (mounted) {
                   _loadCategories();
                 }

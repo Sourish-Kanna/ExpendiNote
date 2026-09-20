@@ -5,12 +5,9 @@ import '../models/transaction.dart';
 import '../services/database_service.dart';
 
 class TransactionRepository {
-  final DatabaseService _dbService;
+  static DatabaseService get _dbService => DatabaseService.instance;
 
-  TransactionRepository({DatabaseService? dbService})
-    : _dbService = dbService ?? DatabaseService();
-
-  Future<int> insertTransaction(Transaction tx) async {
+  static Future<int> insertTransaction(Transaction tx) async {
     final db = await _dbService.database;
     final map = tx.toMap();
     return await db.insert(
@@ -20,7 +17,9 @@ class TransactionRepository {
     );
   }
 
-  Future<void> insertTransactionsBatch(List<Transaction> transactions) async {
+  static Future<void> insertTransactionsBatch(
+    List<Transaction> transactions,
+  ) async {
     final db = await _dbService.database;
     await db.transaction((txn) async {
       final batch = txn.batch();
@@ -35,7 +34,7 @@ class TransactionRepository {
     });
   }
 
-  Future<int> updateTransaction(Transaction tx) async {
+  static Future<int> updateTransaction(Transaction tx) async {
     if (tx.id == null) {
       throw ArgumentError('Transaction id is required for update');
     }
@@ -49,7 +48,7 @@ class TransactionRepository {
     );
   }
 
-  Future<List<Transaction>> getAllTransactions({
+  static Future<List<Transaction>> getAllTransactions({
     int? limit,
     int? offset,
   }) async {
@@ -71,7 +70,7 @@ class TransactionRepository {
   }
 
   /// Returns raw maps joined with category name for legacy UI components
-  Future<List<Map<String, dynamic>>> getAllWithCategoryName({
+  static Future<List<Map<String, dynamic>>> getAllWithCategoryName({
     int? limit,
     int? offset,
   }) async {
@@ -92,7 +91,7 @@ class TransactionRepository {
     return maps;
   }
 
-  Future<Transaction?> getById(int id) async {
+  static Future<Transaction?> getById(int id) async {
     final db = await _dbService.database;
     final List<Map<String, dynamic>> maps = await db.rawQuery(
       '''
@@ -111,7 +110,7 @@ class TransactionRepository {
     return Transaction.fromMap(maps.first);
   }
 
-  Future<int> deleteTransaction(int id) async {
+  static Future<int> deleteTransaction(int id) async {
     final db = await _dbService.database;
     return await db.delete(
       DbTables.transactions,
@@ -120,7 +119,9 @@ class TransactionRepository {
     );
   }
 
-  Future<List<Map<String, dynamic>>> searchTransactions(String keyword) async {
+  static Future<List<Map<String, dynamic>>> searchTransactions(
+    String keyword,
+  ) async {
     final db = await _dbService.database;
     final searchPattern = '%${keyword.trim().toLowerCase()}%';
 

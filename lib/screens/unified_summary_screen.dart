@@ -38,12 +38,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final data = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final data = await TransactionRepository.getAllTransactions();
     setState(() {
       _allSpendings = data;
       _isLoading = false;

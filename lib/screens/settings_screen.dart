@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
-import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
 import '../services/export_service.dart';
+import '../services/import_service.dart';
 import '../theme/app_colors.dart';
 import 'category_management_screen.dart';
 
@@ -138,13 +138,13 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: const Text('Export transactions to CSV'),
                   onTap: () => _exportData(context),
                 ),
-                // const Divider(height: 1),
-                // ListTile(
-                //   leading: const Icon(Icons.file_download_outlined),
-                //   title: const Text('Import Data'),
-                //   subtitle: const Text('Import transactions from JSON'),
-                //   onTap: () => _importData(context),
-                // ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.file_download_outlined),
+                  title: const Text('Import Data'),
+                  subtitle: const Text('Import transactions from JSON'),
+                  onTap: () => _importData(context),
+                ),
               ],
             ),
           ),
@@ -176,9 +176,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _exportData(BuildContext context) async {
-    final trRepo = TransactionRepository();
-    final rawMaps = await trRepo.getAllWithCategoryName();
-    final data = rawMaps.map((m) => txmodel.Transaction.fromMap(m)).toList();
+    final data = await TransactionRepository.getAllTransactions();
 
     if (data.isEmpty) {
       if (context.mounted) {
@@ -192,34 +190,34 @@ class SettingsScreen extends StatelessWidget {
     await ExportService().exportToCSV(data);
   }
 
-  // Future<void> _importData(BuildContext context) async {
-  //   // Show loading dialog
-  //   showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) => const Center(
-  //       child: Card(
-  //         child: Padding(
-  //           padding: EdgeInsets.all(24.0),
-  //           child: CircularProgressIndicator(),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  //
-  //   final success = await ImportService().importFromJSON();
-  //
-  //   if (!context.mounted) return;
-  //   Navigator.pop(context); // Close loading dialog
-  //
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: Text(
-  //         success ? 'Data imported successfully' : 'Import failed or cancelled',
-  //       ),
-  //     ),
-  //   );
-  // }
+  Future<void> _importData(BuildContext context) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      ),
+    );
+
+    final success = await ImportService().importFromJSON();
+
+    if (!context.mounted) return;
+    Navigator.pop(context); // Close loading dialog
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'Data imported successfully' : 'Import failed or cancelled',
+        ),
+      ),
+    );
+  }
 
   String _getThemeModeName(ThemeMode mode) {
     switch (mode) {
@@ -237,21 +235,23 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Select Theme Mode'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: ThemeMode.values.map((mode) {
-            return RadioListTile<ThemeMode>(
-              title: Text(_getThemeModeName(mode)),
-              value: mode,
-              groupValue: controller.themeMode,
-              onChanged: (value) {
-                if (value != null) {
-                  controller.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-            );
-          }).toList(),
+        content: RadioGroup<ThemeMode>(
+          groupValue: controller.themeMode,
+          onChanged: (value) {
+            if (value != null) {
+              controller.setThemeMode(value);
+              Navigator.pop(context);
+            }
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: ThemeMode.values.map((mode) {
+              return RadioListTile<ThemeMode>(
+                title: Text(_getThemeModeName(mode)),
+                value: mode,
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

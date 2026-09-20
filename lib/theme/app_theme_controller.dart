@@ -5,14 +5,11 @@ import '../repositories/settings_repository.dart';
 import 'app_colors.dart';
 
 class AppThemeController extends ChangeNotifier {
-  final SettingsRepository _settingsRepository;
-
   ThemeMode _themeMode = ThemeMode.system;
   bool _customThemeEnabled = false;
   AppThemeColor _selectedThemeColor = AppThemeColor.blue;
 
-  AppThemeController({SettingsRepository? settingsRepository})
-    : _settingsRepository = settingsRepository ?? SettingsRepository() {
+  AppThemeController() {
     _loadSettings();
   }
 
@@ -21,7 +18,7 @@ class AppThemeController extends ChangeNotifier {
   AppThemeColor get selectedThemeColor => _selectedThemeColor;
 
   Future<void> _loadSettings() async {
-    final modeStr = await _settingsRepository.get('theme_mode');
+    final modeStr = await SettingsRepository.get('theme_mode');
     if (modeStr != null) {
       _themeMode = ThemeMode.values.firstWhere(
         (m) => m.name == modeStr,
@@ -29,7 +26,7 @@ class AppThemeController extends ChangeNotifier {
       );
     }
 
-    final customThemePref = await _settingsRepository.get(
+    final customThemePref = await SettingsRepository.get(
       'custom_theme_enabled',
     );
     if (customThemePref == null) {
@@ -38,7 +35,7 @@ class AppThemeController extends ChangeNotifier {
       // If no dynamic color support, default to enabling custom theme
       _customThemeEnabled = (corePalette == null);
       // Persist the default choice
-      await _settingsRepository.setBool(
+      await SettingsRepository.setBool(
         'custom_theme_enabled',
         _customThemeEnabled,
       );
@@ -46,7 +43,7 @@ class AppThemeController extends ChangeNotifier {
       _customThemeEnabled = customThemePref.toLowerCase() == 'true';
     }
 
-    final colorName = await _settingsRepository.get('selected_theme_color');
+    final colorName = await SettingsRepository.get('selected_theme_color');
     _selectedThemeColor = AppThemeColor.fromName(colorName);
 
     notifyListeners();
@@ -56,20 +53,20 @@ class AppThemeController extends ChangeNotifier {
     if (_themeMode == mode) return;
     _themeMode = mode;
     notifyListeners();
-    await _settingsRepository.set('theme_mode', mode.name);
+    await SettingsRepository.set('theme_mode', mode.name);
   }
 
   Future<void> setCustomThemeEnabled(bool enabled) async {
     if (_customThemeEnabled == enabled) return;
     _customThemeEnabled = enabled;
     notifyListeners();
-    await _settingsRepository.setBool('custom_theme_enabled', enabled);
+    await SettingsRepository.setBool('custom_theme_enabled', enabled);
   }
 
   Future<void> setSelectedThemeColor(AppThemeColor color) async {
     if (_selectedThemeColor == color) return;
     _selectedThemeColor = color;
     notifyListeners();
-    await _settingsRepository.set('selected_theme_color', color.name);
+    await SettingsRepository.set('selected_theme_color', color.name);
   }
 }

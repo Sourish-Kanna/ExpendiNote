@@ -37,12 +37,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
   Future<void> _loadSummary() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final allSpendings = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final allSpendings = await TransactionRepository.getAllTransactions();
 
     Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {

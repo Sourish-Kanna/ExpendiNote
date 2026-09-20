@@ -56,6 +56,7 @@ class IconUtils {
       Icons.local_pizza,
       Icons.local_shipping,
       Icons.local_taxi,
+      Icons.commute,
     ];
   }
 }

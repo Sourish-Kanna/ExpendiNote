@@ -21,8 +21,6 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   late Color _selectedColor;
   late bool _isPinned;
 
-  final CategoryRepository _categoryRepository = CategoryRepository();
-
   @override
   void initState() {
     super.initState();
@@ -43,7 +41,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       final name = _nameController.text.trim();
 
       // Validation: Check if name is taken (case-insensitive)
-      final isTaken = await _categoryRepository.isNameTaken(
+      final isTaken = await CategoryRepository.isNameTaken(
         name,
         excludeId: widget.category?.id,
       );
@@ -68,9 +66,9 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       );
 
       if (widget.category == null) {
-        await _categoryRepository.createCategory(category);
+        await CategoryRepository.createCategory(category);
       } else {
-        await _categoryRepository.updateCategory(category);
+        await CategoryRepository.updateCategory(category);
       }
 
       if (mounted) {

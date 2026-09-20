@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' show DateFormat;
 
-import '../models/transaction.dart' as txmodel;
-import '../repositories/transaction_repository.dart';
-import '../theme/app_shapes.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
-import 'add_spending_screen.dart';
-import 'search_screen.dart';
-import 'settings_screen.dart';
-import 'spending_detail_screen.dart';
+import '../models/transaction.dart' as txmodel show Transaction;
+import '../repositories/transaction_repository.dart' show TransactionRepository;
+import '../theme/app_shapes.dart' show AppShapes;
+import '../utils/color_utils.dart' show ColorUtils;
+import '../utils/icon_utils.dart' show IconUtils;
+import 'add_spending_screen.dart' show AddSpendingScreen;
+import 'search_screen.dart' show SearchScreen;
+import 'settings_screen.dart' show SettingsScreen;
+import 'spending_detail_screen.dart' show SpendingDetailScreen;
 import 'unified_summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,111 +20,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-  final ValueNotifier<int> _refreshNotifier = ValueNotifier<int>(0);
-
-  late final List<Widget> _tabs;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs = [
-      _HomeTab(
-        refreshNotifier: _refreshNotifier,
-        onShowAnalysis: () {
-          setState(() {
-            _selectedIndex = 1;
-          });
-        },
-      ),
-      UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
-      body: IndexedStack(index: _selectedIndex, children: _tabs),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Analysis',
-          ),
-        ],
-      ),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton.large(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddSpendingScreen(),
-                  ),
-                );
-                if (result == true) {
-                  _refreshNotifier.value++;
-                }
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
-    );
-  }
-}
-
-class _HomeTab extends StatefulWidget {
-  final ValueNotifier<int> refreshNotifier;
-  final VoidCallback onShowAnalysis;
-  const _HomeTab({required this.refreshNotifier, required this.onShowAnalysis});
-
-  @override
-  State<_HomeTab> createState() => _HomeTabState();
-}
-
-class _HomeTabState extends State<_HomeTab> {
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
   bool _isLoading = true;
+  final ValueNotifier<int> _refreshNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
     super.initState();
     _refreshSpendings();
-    widget.refreshNotifier.addListener(_refreshSpendings);
+    _refreshNotifier.addListener(_refreshSpendings);
   }
 
   @override
   void dispose() {
-    widget.refreshNotifier.removeListener(_refreshSpendings);
+    _refreshNotifier.removeListener(_refreshSpendings);
+    _refreshNotifier.dispose();
     super.dispose();
   }
 
   Future<void> _refreshSpendings() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final data = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final data = await TransactionRepository.getAllTransactions();
 
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
@@ -155,7 +74,7 @@ class _HomeTabState extends State<_HomeTab> {
     return Scaffold(
       backgroundColor: colorScheme.surfaceContainer,
       appBar: AppBar(
-        title: const Text('ExpendNote'),
+        title: const Text('Expendi Note'),
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
         actions: [
@@ -166,8 +85,7 @@ class _HomeTabState extends State<_HomeTab> {
                 context,
                 MaterialPageRoute(builder: (context) => const SettingsScreen()),
               ).then((_) {
-                // Refresh data in case categories were merged/deleted
-                widget.refreshNotifier.value++;
+                _refreshNotifier.value++;
               });
             },
           ),
@@ -197,7 +115,7 @@ class _HomeTabState extends State<_HomeTab> {
                             ),
                           );
                           if (result == true) {
-                            widget.refreshNotifier.value++;
+                            _refreshNotifier.value++;
                           }
                         },
                       ),
@@ -278,7 +196,7 @@ class _HomeTabState extends State<_HomeTab> {
                                       ),
                                     );
                                     if (result == true) {
-                                      widget.refreshNotifier.value++;
+                                      _refreshNotifier.value++;
                                     }
                                   },
                                   onLongPress: () => _confirmDelete(spending),
@@ -290,13 +208,34 @@ class _HomeTabState extends State<_HomeTab> {
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton.large(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddSpendingScreen()),
+          );
+          if (result == true) {
+            _refreshNotifier.value++;
+          }
+        },
+        // label: const Text("Add"),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
   Widget _buildTotalCard(ColorScheme colorScheme) {
     final textTheme = Theme.of(context).textTheme;
     return InkWell(
-      onTap: widget.onShowAnalysis,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
+          ),
+        );
+      },
       borderRadius: AppShapes.largeRadius,
       child: Container(
         width: double.infinity,
@@ -374,7 +313,7 @@ class _HomeTabState extends State<_HomeTab> {
             color: colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          const Text('No spendings noted yet.'),
+          const Text('No spending noted yet.'),
         ],
       ),
     );
@@ -394,8 +333,8 @@ class _HomeTabState extends State<_HomeTab> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              await TransactionRepository().deleteTransaction(spending.id!);
-              widget.refreshNotifier.value++;
+              await TransactionRepository.deleteTransaction(spending.id!);
+              _refreshNotifier.value++;
             },
             child: Text(
               'Delete',

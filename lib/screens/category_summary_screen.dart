@@ -29,12 +29,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
 
   Future<void> _loadCategoryData() async {
     setState(() => _isLoading = true);
-    final List<Map<String, dynamic>> rawDataMaps = await TransactionRepository()
-        .getAllWithCategoryName();
-
-    final allSpendings = rawDataMaps
-        .map((m) => txmodel.Transaction.fromMap(m))
-        .toList();
+    final allSpendings = await TransactionRepository.getAllTransactions();
 
     final now = DateTime.now();
     final monthStr = DateFormat('yyyy-MM').format(now);

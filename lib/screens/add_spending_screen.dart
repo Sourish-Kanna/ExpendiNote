@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/category.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/category_repository.dart';
-import '../repositories/transaction_repository.dart' as txrepo;
+import '../repositories/transaction_repository.dart';
 import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
@@ -26,7 +26,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   int? _selectedCategoryId;
   late DateTime _selectedDate;
 
-  final CategoryRepository _categoryRepository = CategoryRepository();
   List<Category> _categories = [];
   bool _isLoadingCategories = true;
 
@@ -46,7 +45,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final cats = await _categoryRepository.getAllCategories();
+    final cats = await CategoryRepository.getAllCategories();
     if (mounted) {
       setState(() {
         _categories = cats;
@@ -69,8 +68,6 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         return;
       }
 
-      final trRepo = txrepo.TransactionRepository();
-
       final tx = txmodel.Transaction(
         id: widget.transaction?.id,
         title: _titleController.text,
@@ -83,9 +80,9 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       );
 
       if (widget.transaction == null) {
-        await trRepo.insertTransaction(tx);
+        await TransactionRepository.insertTransaction(tx);
       } else {
-        await trRepo.updateTransaction(tx);
+        await TransactionRepository.updateTransaction(tx);
       }
 
       if (mounted) {
@@ -303,9 +300,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
-              await txrepo.TransactionRepository().deleteTransaction(
-                spending.id!,
-              );
+              await TransactionRepository.deleteTransaction(spending.id!);
 
               if (mounted) {
                 Navigator.pop(context, true);
