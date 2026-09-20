@@ -1,5 +1,5 @@
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
@@ -27,8 +27,8 @@ class MyApp extends StatelessWidget {
         builder: (context, _) {
           return DynamicColorBuilder(
             builder: (lightDynamic, darkDynamic) {
-              ColorScheme lightScheme;
-              ColorScheme darkScheme;
+              ColorScheme? lightScheme;
+              ColorScheme? darkScheme;
 
               if (themeController.customThemeEnabled) {
                 lightScheme = ColorScheme.fromSeed(
