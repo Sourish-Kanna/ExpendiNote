@@ -1,9 +1,8 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel show Transaction;
 import '../repositories/transaction_repository.dart' show TransactionRepository;
-import '../theme/app_shapes.dart' show AppShapes;
 import '../utils/color_utils.dart' show ColorUtils;
 import '../utils/icon_utils.dart' show IconUtils;
 import 'add_spending_screen.dart' show AddSpendingScreen;
@@ -12,14 +11,14 @@ import 'settings_screen.dart' show SettingsScreen;
 import 'spending_detail_screen.dart' show SpendingDetailScreen;
 import 'unified_summary_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class NewHomeScreen extends StatefulWidget {
+  const NewHomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<NewHomeScreen> createState() => _NewHomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _NewHomeScreenState extends State<NewHomeScreen> {
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
@@ -51,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final todayTotal = data
         .where((s) => DateFormat('yyyy-MM-dd').format(s.date) == todayStr)
-        .toList().fold(0.0, (sum, item) => sum + item.amount);
+        .fold(0.0, (sum, item) => sum + item.amount);
 
     final monthlyTotal = data
         .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)
@@ -66,19 +65,37 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _navigateToAnalysis() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      // backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Expendi Note'),
-        // backgroundColor: colorScheme.surfaceContainer,
-        // scrolledUnderElevation: 0,
+        title: Text(
+          'Expendi Note',
+          style: textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: colorScheme.surface,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
@@ -96,15 +113,21 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _refreshSpendings,
               child: CustomScrollView(
                 slivers: [
+                  // Search Bar
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: SearchBar(
-                        hintText: 'Search spending...',
-                        leading: const Icon(Icons.search),
+                        hintText: 'Search Expense',
+                        trailing: const [Icon(Icons.search)],
                         elevation: WidgetStateProperty.all(0),
                         backgroundColor: WidgetStateProperty.all(
-                          colorScheme.surfaceContainerHigh,
+                          colorScheme.surfaceContainerHighest.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         onTap: () async {
                           final result = await Navigator.push(
@@ -120,90 +143,200 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(child: _buildTotalCard(colorScheme)),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverToBoxAdapter(
-                      child: Text(
-                        'Recent Activity',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+
+                  // Analysis Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: InkWell(
+                        onTap: _navigateToAnalysis,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Analysis',
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, size: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                  // Analysis Card
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: InkWell(
+                        onTap: _navigateToAnalysis,
+                        borderRadius: BorderRadius.circular(28),
+                        child: Card(
+                          elevation: 0,
+                          color: colorScheme.primaryContainer.withValues(
+                            alpha: 0.4,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          "Today",
+                                          style: textTheme.labelLarge?.copyWith(
+                                            color: colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _todayTotal.toStringAsFixed(2),
+                                          style: textTheme.headlineMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme.primary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  VerticalDivider(
+                                    color: colorScheme.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    thickness: 2,
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          "This Month",
+                                          style: textTheme.labelLarge?.copyWith(
+                                            color: colorScheme.primary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _monthlyTotal.toStringAsFixed(2),
+                                          style: textTheme.headlineMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: colorScheme.primary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Recent Activity Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Recent Activity',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward, size: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Activity List
                   _recentSpendings.isEmpty
                       ? SliverFillRemaining(
                           hasScrollBody: false,
                           child: _buildEmptyState(colorScheme),
                         )
-                      : SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final spending = _recentSpendings[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Card(
-                                child: ListTile(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
+                      : SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final spending = _recentSpendings[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Card(
+                                  elevation: 0,
+                                  color: _getCategoryColor(
+                                    spending,
+                                  ).withValues(alpha: 0.12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-                                  leading: CircleAvatar(
-                                    backgroundColor: _getCategoryColor(
-                                      spending,
-                                    ).withValues(alpha: 0.2),
-                                    child: Icon(
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    leading: Icon(
                                       _getCategoryIcon(spending),
                                       color: _getCategoryColor(spending),
                                     ),
-                                  ),
-                                  title: Text(
-                                    spending.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                  ),
-                                  subtitle: Text(
-                                    '${spending.categoryName ?? 'Other'} • ${DateFormat('hh:mm a').format(spending.date)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                  trailing: Text(
-                                    '₹${spending.amount.toStringAsFixed(0)}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(color: colorScheme.error),
-                                  ),
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SpendingDetailScreen(
-                                              transaction: spending,
-                                            ),
+                                    title: Text(
+                                      '${spending.title} | ₹${spending.amount.toStringAsFixed(0)}',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    );
-                                    if (result == true) {
-                                      _refreshNotifier.value++;
-                                    }
-                                  },
-                                  onLongPress: () => _confirmDelete(spending),
+                                    ),
+                                    subtitle: Text(
+                                      '${spending.categoryName ?? 'Other'} | ${DateFormat('d/M').format(spending.date)} | ${DateFormat('hh:mm a').format(spending.date)}',
+                                      style: textTheme.bodySmall,
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.more_vert),
+                                      onPressed: () =>
+                                          _showItemActions(spending),
+                                    ),
+                                    onTap: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              SpendingDetailScreen(
+                                                transaction: spending,
+                                              ),
+                                        ),
+                                      );
+                                      if (result == true) {
+                                        _refreshNotifier.value++;
+                                      }
+                                    },
+                                  ),
                                 ),
-                              ),
-                            );
-                          }, childCount: _recentSpendings.length),
+                              );
+                            }, childCount: _recentSpendings.length),
+                          ),
                         ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
             ),
@@ -217,86 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _refreshNotifier.value++;
           }
         },
-        // label: const Text("Add"),
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildTotalCard(ColorScheme colorScheme) {
-    final textTheme = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
-          ),
-        );
-      },
-      borderRadius: AppShapes.largeRadius,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colorScheme.primaryContainer,
-          borderRadius: AppShapes.largeRadius,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    "Today",
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer.withValues(
-                        alpha: 0.8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹${_todayTotal.toStringAsFixed(2)}',
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 1,
-              height: 40,
-              color: colorScheme.onPrimaryContainer.withAlpha(51),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  Text(
-                    "This Month",
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer.withValues(
-                        alpha: 0.8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹${_monthlyTotal.toStringAsFixed(0)}',
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -313,6 +367,42 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           const Text('No spending noted yet.'),
+        ],
+      ),
+    );
+  }
+
+  void _showItemActions(txmodel.Transaction spending) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit_outlined),
+            title: const Text('Edit'),
+            onTap: () async {
+              Navigator.pop(context);
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AddSpendingScreen(transaction: spending),
+                ),
+              );
+              if (result == true) {
+                _refreshNotifier.value++;
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_outline, color: Colors.red),
+            title: const Text('Delete', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _confirmDelete(spending);
+            },
+          ),
         ],
       ),
     );

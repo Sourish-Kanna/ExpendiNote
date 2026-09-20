@@ -1,10 +1,9 @@
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:expend_note/screens/new_home_screen.dart';
+import 'package:expend_note/services/database_service.dart';
+import 'package:expend_note/theme/app_theme.dart';
+import 'package:expend_note/theme/app_theme_controller.dart';
 import 'package:material_ui/material_ui.dart';
-
-import 'screens/home_screen.dart';
-import 'services/database_service.dart';
-import 'theme/app_theme.dart';
-import 'theme/app_theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -110,7 +109,8 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
       future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          return const HomeScreen();
+          // return const HomeScreen();
+          return const NewHomeScreen();
         }
 
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
