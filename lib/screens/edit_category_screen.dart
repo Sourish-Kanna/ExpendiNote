@@ -1,9 +1,9 @@
-import 'package:material_ui/material_ui.dart';
 import 'dart:math' show Random;
+
+import 'package:material_ui/material_ui.dart';
 
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
-import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 
@@ -27,6 +27,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.category?.name);
+    _nameController.addListener(() => setState(() {}));
 
     if (widget.category == null) {
       final random = Random();
@@ -54,7 +55,6 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text.trim();
 
-      // Validation: Check if name is taken (case-insensitive)
       final isTaken = await CategoryRepository.isNameTaken(
         name,
         excludeId: widget.category?.id,
@@ -99,187 +99,240 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     final textTheme = theme.textTheme;
     final isEditing = widget.category != null;
 
+    final inputDecorationTheme = InputDecorationTheme(
+      filled: true,
+      fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: _selectedColor, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Category' : 'New Category'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          isEditing ? 'Edit Category' : 'New Category',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Category Name',
-                  prefixIcon: const Icon(Icons.label_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: AppShapes.smallRadius,
+      body: Theme(
+        data: theme.copyWith(
+          colorScheme: colorScheme.copyWith(primary: _selectedColor),
+          inputDecorationTheme: inputDecorationTheme,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. Preview Card
+                Card(
+                  elevation: 0,
+                  color: _selectedColor.withValues(alpha: 0.15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  filled: true,
-                  fillColor: colorScheme.surfaceContainerLow,
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Icon',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 60,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: IconUtils.getAvailableIcons().length,
-                  itemBuilder: (context, index) {
-                    final icon = IconUtils.getAvailableIcons()[index];
-                    final isSelected = _selectedIcon == icon;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedIcon = icon),
-                        borderRadius: AppShapes.smallRadius,
-                        child: Container(
-                          width: 60,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colorScheme.primaryContainer
-                                : colorScheme.surfaceContainerLow,
-                            borderRadius: AppShapes.smallRadius,
-                            border: Border.all(
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : Colors.transparent,
-                            ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 24,
+                      horizontal: 16,
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(_selectedIcon, size: 48, color: _selectedColor),
+                        const SizedBox(height: 12),
+                        Text(
+                          _nameController.text.isEmpty
+                              ? 'Category Name'
+                              : _nameController.text,
+                          style: textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: _selectedColor,
                           ),
-                          child: Icon(
-                            icon,
-                            color: isSelected
-                                ? colorScheme.onPrimaryContainer
-                                : colorScheme.onSurfaceVariant,
-                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
-                    );
-                  },
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Color',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 50,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: ColorUtils.getAvailableColors().length,
-                  itemBuilder: (context, index) {
-                    final color = ColorUtils.getAvailableColors()[index];
-                    final isSelected = _selectedColor == color;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: InkWell(
-                        onTap: () => setState(() => _selectedColor = color),
-                        customBorder: const CircleBorder(),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? colorScheme.onSurface
-                                  : Colors.transparent,
-                              width: 2,
-                            ),
-                          ),
-                          child: isSelected
-                              ? Icon(
-                                  Icons.check,
-                                  color: color.computeLuminance() > 0.5
-                                      ? Colors.black
-                                      : Colors.white,
-                                  size: 20,
-                                )
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 32),
-              SwitchListTile(
-                title: const Text('Pin category'),
-                subtitle: const Text('Pinned categories appear first in lists'),
-                value: _isPinned,
-                onChanged: (value) => setState(() => _isPinned = value),
-                secondary: Icon(
-                  _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
-                  color: _isPinned ? colorScheme.primary : null,
-                ),
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile(
-                title: const Text('Include in spending analysis by default'),
-                subtitle: const Text(
-                  'New transactions in this category will default to this setting',
-                ),
-                value: _includeInSpendingAnalysis,
-                onChanged: (value) =>
-                    setState(() => _includeInSpendingAnalysis = value),
-                secondary: Icon(
-                  Icons.analytics_outlined,
-                  color: _includeInSpendingAnalysis
-                      ? colorScheme.primary
-                      : null,
-                ),
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 48),
-              FilledButton.icon(
-                onPressed: _save,
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                icon: Icon(isEditing ? Icons.update : Icons.save),
-                label: Text(
-                  isEditing ? 'Update Category' : 'Save Category',
+                const SizedBox(height: 24),
+
+                // 2. Name
+                Text(
+                  'Name',
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              if (!isEditing) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter category name...',
+                    prefixIcon: Icon(Icons.label),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                // 3. Icon
                 Text(
-                  'Categories cannot be deleted because they may be used by existing transactions. You can rename or merge a category instead.',
-                  textAlign: TextAlign.center,
-                  style: textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
+                  'Icon',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: IconUtils.getAvailableIcons().map((icon) {
+                    final isSelected = _selectedIcon == icon;
+                    return InkWell(
+                      onTap: () => setState(() => _selectedIcon = icon),
+                      borderRadius: BorderRadius.circular(16),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? _selectedColor.withValues(alpha: 0.2)
+                              : colorScheme.surfaceContainerHighest.withValues(
+                                  alpha: 0.3,
+                                ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected
+                                ? _selectedColor
+                                : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: isSelected
+                              ? _selectedColor
+                              : colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 24),
+
+                // 4. Color
+                Text(
+                  'Color',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: ColorUtils.getAvailableColors().map((color) {
+                    final isSelected = _selectedColor == color;
+                    return InkWell(
+                      onTap: () => setState(() => _selectedColor = color),
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? colorScheme.onSurface
+                                : Colors.transparent,
+                            width: 3,
+                          ),
+                        ),
+                        child: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: color.computeLuminance() > 0.5
+                                    ? Colors.black
+                                    : Colors.white,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 32),
+
+                // 5. Switches
+                SwitchListTile(
+                  title: const Text('Pin category'),
+                  subtitle: const Text(
+                    'Pinned categories appear first in lists',
+                  ),
+                  value: _isPinned,
+                  onChanged: (value) => setState(() => _isPinned = value),
+                  secondary: Icon(_isPinned ? Icons.push_pin : Icons.push_pin),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Include in spending analysis by default'),
+                  subtitle: const Text(
+                    'New transactions in this category will default to this setting',
+                  ),
+                  value: _includeInSpendingAnalysis,
+                  onChanged: (value) =>
+                      setState(() => _includeInSpendingAnalysis = value),
+                  secondary: Icon(Icons.analytics),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 40),
+
+                // 6. Save Button
+                FilledButton.icon(
+                  onPressed: _save,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: _selectedColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: Icon(
+                    isEditing ? Icons.check : Icons.save,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  label: Text(
+                    isEditing ? 'Update Category' : 'Save Category',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),

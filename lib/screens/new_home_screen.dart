@@ -368,11 +368,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: colorScheme.outline,
-          ),
+          Icon(Icons.receipt_long, size: 64, color: colorScheme.outline),
           const SizedBox(height: 16),
           const Text('No spending noted yet.'),
         ],
@@ -387,7 +383,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            leading: const Icon(Icons.edit_outlined),
+            leading: const Icon(Icons.edit),
             title: const Text('Edit'),
             onTap: () async {
               Navigator.pop(context);
@@ -404,7 +400,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.red),
+            leading: const Icon(Icons.delete, color: Colors.red),
             title: const Text('Delete', style: TextStyle(color: Colors.red)),
             onTap: () {
               Navigator.pop(context);

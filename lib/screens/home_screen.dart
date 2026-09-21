@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel show Transaction;
 import '../repositories/transaction_repository.dart' show TransactionRepository;
@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
@@ -315,11 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64,
-            color: colorScheme.outline,
-          ),
+          Icon(Icons.receipt_long, size: 64, color: colorScheme.outline),
           const SizedBox(height: 16),
           const Text('No spending noted yet.'),
         ],

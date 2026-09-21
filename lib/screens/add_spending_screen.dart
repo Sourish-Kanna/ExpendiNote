@@ -219,7 +219,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         actions: isEditing
             ? [
                 IconButton(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: const Icon(Icons.delete),
                   color: colorScheme.error,
                   onPressed: () => _confirmDelete(widget.transaction!),
                 ),
@@ -361,7 +361,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   maxLines: 2,
                   decoration: const InputDecoration(
                     hintText: 'Add extra details...',
-                    prefixIcon: Icon(Icons.description_outlined),
+                    prefixIcon: Icon(Icons.description),
                   ),
                   onFieldSubmitted: (_) {
                     FocusScope.of(context).unfocus();
@@ -382,7 +382,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   borderRadius: BorderRadius.circular(16),
                   child: InputDecorator(
                     decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.calendar_today_outlined),
+                      prefixIcon: Icon(Icons.calendar_today),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -435,7 +435,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                           _loadCategories();
                         }
                       },
-                      icon: const Icon(Icons.settings_outlined, size: 16),
+                      icon: const Icon(Icons.settings, size: 16),
                       label: const Text('Manage'),
                     ),
                   ],
@@ -589,12 +589,12 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                         ButtonSegment<bool>(
                           value: true,
                           label: Text('Include'),
-                          icon: Icon(Icons.analytics_outlined),
+                          icon: Icon(Icons.analytics),
                         ),
                         ButtonSegment<bool>(
                           value: false,
                           label: Text('Exclude'),
-                          icon: Icon(Icons.block_outlined),
+                          icon: Icon(Icons.block),
                         ),
                       ],
                       selected: {_includeInSpendingAnalysis},

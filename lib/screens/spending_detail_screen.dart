@@ -81,7 +81,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(Icons.edit),
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -101,7 +101,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete),
             color: colorScheme.error,
             onPressed: _confirmDelete,
           ),
@@ -182,7 +182,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                     // Date row
                     _buildDetailItem(
                       context: context,
-                      icon: Icons.calendar_today_outlined,
+                      icon: Icons.calendar_today,
                       label: 'Date',
                       value: DateFormat(
                         'EEEE, MMM dd, yyyy',
@@ -197,7 +197,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                     // Time row
                     _buildDetailItem(
                       context: context,
-                      icon: Icons.access_time_outlined,
+                      icon: Icons.access_time,
                       label: 'Time',
                       value: DateFormat(
                         'hh:mm a',
@@ -212,7 +212,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                     // Spending Analysis row matching standard plain row layout
                     _buildDetailItem(
                       context: context,
-                      icon: Icons.analytics_outlined,
+                      icon: Icons.analytics,
                       label: 'Spending Analysis',
                       value: _currentSpending.includeInSpendingAnalysis
                           ? 'Included'
@@ -229,7 +229,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                       ),
                       _buildDetailItem(
                         context: context,
-                        icon: Icons.description_outlined,
+                        icon: Icons.description,
                         label: 'Description',
                         value: _currentSpending.description!,
                       ),

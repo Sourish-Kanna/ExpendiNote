@@ -37,7 +37,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const Divider(height: 1),
                 SwitchListTile(
-                  secondary: const Icon(Icons.palette_outlined),
+                  secondary: const Icon(Icons.palette),
                   title: const Text('Use Custom Theme'),
                   subtitle: const Text('Override system or dynamic colors'),
                   value: themeController.customThemeEnabled,
@@ -113,7 +113,7 @@ class SettingsScreen extends StatelessWidget {
           _buildSectionHeader(context, 'Preferences'),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.category_outlined),
+              leading: const Icon(Icons.category),
               title: const Text('Categories'),
               subtitle: const Text('Manage your spending categories'),
               trailing: const Icon(Icons.chevron_right),
@@ -133,14 +133,14 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.ios_share_outlined),
+                  leading: const Icon(Icons.ios_share),
                   title: const Text('Export Data'),
                   subtitle: const Text('Export transactions to CSV'),
                   onTap: () => _exportData(context),
                 ),
                 const Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.file_download_outlined),
+                  leading: const Icon(Icons.file_download),
                   title: const Text('Import Data'),
                   subtitle: const Text('Import transactions from JSON'),
                   onTap: () => _importData(context),

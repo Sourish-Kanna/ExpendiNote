@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
@@ -68,7 +68,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         leading: BackButton(
           onPressed: () => Navigator.pop(context, _hasChanged),
@@ -80,12 +80,12 @@ class _SearchScreenState extends State<SearchScreen> {
             hintText: 'Search title or category...',
             border: InputBorder.none,
             hintStyle: textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant.withAlpha(150),
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ),
-          style: textTheme.titleLarge?.copyWith(color: colorScheme.onSurface),
+          style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface),
         ),
-        backgroundColor: colorScheme.surfaceContainer,
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
       body: _isLoading
@@ -93,54 +93,59 @@ class _SearchScreenState extends State<SearchScreen> {
           : _filteredSpendings.isEmpty
           ? const Center(child: Text('No results found.'))
           : ListView.builder(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: _filteredSpendings.length,
               itemBuilder: (context, index) {
                 final s = _filteredSpendings[index];
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: ColorUtils.fromInt(
-                        s.categoryColor,
-                      ).withValues(alpha: 0.2),
-                      child: Icon(
+                final catColor = ColorUtils.fromInt(s.categoryColor);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    elevation: 0,
+                    color: catColor.withValues(alpha: 0.12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: Icon(
                         IconUtils.fromString(s.categoryIcon),
-                        color: ColorUtils.fromInt(s.categoryColor),
-                        size: 20,
+                        color: catColor,
+                        size: 24,
                       ),
-                    ),
-                    title: Text(
-                      s.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      '${s.categoryName ?? 'Other'} • ${DateFormat('MMM dd, yyyy').format(s.date)}',
-                      style: textTheme.bodyMedium,
-                    ),
-                    trailing: Text(
-                      '₹${s.amount.toStringAsFixed(2)}',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.error,
-                      ),
-                    ),
-                    onTap: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              SpendingDetailScreen(transaction: s),
+                      title: Text(
+                        '${s.title} | ₹${s.amount.toStringAsFixed(0)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurface,
                         ),
-                      );
-                      if (result == true) {
-                        _hasChanged = true;
-                        _loadData();
-                      }
-                    },
+                      ),
+                      subtitle: Text(
+                        '${s.categoryName ?? 'Other'} | ${DateFormat('d/M').format(s.date)} | ${DateFormat('hh:mm a').format(s.date)}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                SpendingDetailScreen(transaction: s),
+                          ),
+                        );
+                        if (result == true) {
+                          _hasChanged = true;
+                          _loadData();
+                        }
+                      },
+                    ),
                   ),
                 );
               },

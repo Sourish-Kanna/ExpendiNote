@@ -36,13 +36,18 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Manage Categories'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Manage Categories',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
       body: _isLoading
@@ -50,85 +55,100 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           : _categoriesWithStats.isEmpty
           ? const Center(child: Text('No categories found.'))
           : ListView.builder(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               itemCount: _categoriesWithStats.length,
               itemBuilder: (context, index) {
                 final catMap = _categoriesWithStats[index];
                 final category = Category.fromMap(catMap);
                 final txCount = catMap['transactionCount'] ?? 0;
                 final totalAmount = catMap['totalAmount'] ?? 0.0;
+                final catColor = ColorUtils.fromInt(category.color);
 
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: ColorUtils.fromInt(
-                        category.color,
-                      ).withValues(alpha: 0.2),
-                      child: Icon(
-                        IconUtils.fromString(category.icon),
-                        color: ColorUtils.fromInt(category.color),
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Card(
+                    elevation: 0,
+                    color: catColor.withValues(alpha: 0.12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
                       ),
-                    ),
-                    title: Row(
-                      children: [
-                        Text(
-                          category.name,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (category.isPinned) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.push_pin,
-                            size: 16,
-                            color: colorScheme.primary,
+                      leading: Icon(
+                        IconUtils.fromString(category.icon),
+                        color: catColor,
+                        size: 24,
+                      ),
+                      title: Row(
+                        children: [
+                          Text(
+                            category.name,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
                           ),
+                          if (category.isPinned) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.push_pin, size: 14, color: catColor),
+                          ],
                         ],
-                      ],
-                    ),
-                    subtitle: Text(
-                      '$txCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) =>
-                          _handleMenuSelection(value, category, txCount),
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: ListTile(
-                            leading: Icon(Icons.edit_outlined),
-                            title: Text('Edit'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
+                      ),
+                      subtitle: Text(
+                        '$txCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
-                        const PopupMenuItem(
-                          value: 'merge',
-                          child: ListTile(
-                            leading: Icon(Icons.merge_type),
-                            title: Text('Merge'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        if (txCount == 0)
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) =>
+                            _handleMenuSelection(value, category, txCount),
+                        itemBuilder: (context) => [
                           const PopupMenuItem(
-                            value: 'delete',
+                            value: 'edit',
                             child: ListTile(
-                              leading: Icon(Icons.delete_outline),
-                              title: Text('Delete'),
+                              leading: Icon(Icons.edit),
+                              title: Text('Edit'),
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
-                      ],
+                          const PopupMenuItem(
+                            value: 'merge',
+                            child: ListTile(
+                              leading: Icon(Icons.merge_type),
+                              title: Text('Merge'),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          if (txCount == 0)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: ListTile(
+                                leading: Icon(Icons.delete, color: Colors.red),
+                                title: Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ),
+                        ],
+                      ),
+                      onTap: () => _editCategory(category),
                     ),
-                    onTap: () => _editCategory(category),
                   ),
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.large(
         onPressed: () => _editCategory(null),
+        backgroundColor: colorScheme.primaryContainer,
+        foregroundColor: colorScheme.onPrimaryContainer,
+        elevation: 0,
         child: const Icon(Icons.add),
-        // label: const Text('New Category'),
       ),
     );
   }
