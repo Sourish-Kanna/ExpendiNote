@@ -47,7 +47,9 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
   }
 
   double _calculateMonthlyTotal(List<txmodel.Transaction> spendings) {
-    return spendings.fold(0, (sum, item) => sum + item.amount);
+    return spendings
+        .where((s) => s.includeInSpendingAnalysis)
+        .fold(0.0, (sum, item) => sum + item.amount);
   }
 
   @override

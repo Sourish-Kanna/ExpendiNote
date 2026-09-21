@@ -162,6 +162,15 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               'Time',
               DateFormat('hh:mm a').format(_currentSpending.date),
             ),
+            const Divider(height: 32),
+            _buildDetailRow(
+              context,
+              Icons.analytics_outlined,
+              'Spending Analysis',
+              _currentSpending.includeInSpendingAnalysis
+                  ? 'Included'
+                  : 'Excluded',
+            ),
             if (_currentSpending.description != null &&
                 _currentSpending.description!.isNotEmpty) ...[
               const Divider(height: 32),

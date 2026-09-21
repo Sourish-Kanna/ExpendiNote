@@ -90,11 +90,13 @@ class CategoryRepository {
     if (found.isNotEmpty) return found.first[DbCols.id] as int;
 
     final now = DateTime.now().toIso8601String();
+    final isInvestment = name.trim().toLowerCase() == 'investment';
     return await db.insert(DbTables.categories, {
       DbCols.name: name.trim(),
       DbCols.createdAt: now,
       DbCols.isPinned: 0,
       DbCols.isArchived: 0,
+      DbCols.includeInSpendingAnalysis: isInvestment ? 0 : 1,
     });
   }
 

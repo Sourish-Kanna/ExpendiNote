@@ -73,16 +73,20 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 
   double _calculateDailyTotal(List<txmodel.Transaction> spendings) {
-    return spendings.fold(0, (sum, item) => sum + item.amount);
+    return spendings
+        .where((s) => s.includeInSpendingAnalysis)
+        .fold(0.0, (sum, item) => sum + item.amount);
   }
 
   _TopCategory _getTopCategory(List<txmodel.Transaction> spendings) {
-    if (spendings.isEmpty) {
+    final included =
+        spendings.where((s) => s.includeInSpendingAnalysis).toList();
+    if (included.isEmpty) {
       return _TopCategory(name: 'None', icon: null, color: null);
     }
     Map<int, double> categoryTotals = {};
     Map<int, txmodel.Transaction> sampleTransactions = {};
-    for (var s in spendings) {
+    for (var s in included) {
       final id = s.categoryId ?? -1;
       categoryTotals[id] = (categoryTotals[id] ?? 0) + s.amount;
       sampleTransactions[id] = s;

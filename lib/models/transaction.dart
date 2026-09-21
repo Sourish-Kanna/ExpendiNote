@@ -13,6 +13,7 @@ class Transaction {
   final String? categoryIcon;
   final int? categoryColor;
   final String? description;
+  final bool includeInSpendingAnalysis;
   final DateTime createdAt;
 
   Transaction({
@@ -25,6 +26,7 @@ class Transaction {
     this.categoryIcon,
     this.categoryColor,
     this.description,
+    this.includeInSpendingAnalysis = true,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -37,6 +39,7 @@ class Transaction {
       DbCols.date: date.toIso8601String(),
       DbCols.categoryId: categoryId,
       DbCols.description: description,
+      DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
       DbCols.createdAt: createdAt.toIso8601String(),
     };
   }
@@ -60,6 +63,8 @@ class Transaction {
       return 0.0;
     }
 
+    final rawInclude = map[DbCols.includeInSpendingAnalysis];
+
     return Transaction(
       id: map[DbCols.id] as int?,
       title: map[DbCols.title] as String? ?? '',
@@ -74,6 +79,9 @@ class Transaction {
           map['categoryIcon'] as String? ?? map[DbCols.icon] as String?,
       categoryColor: map['categoryColor'] as int? ?? map[DbCols.color] as int?,
       description: map[DbCols.description] as String?,
+      includeInSpendingAnalysis: rawInclude == null
+          ? true
+          : (rawInclude == 1 || rawInclude == true),
       createdAt: parseDate(map[DbCols.createdAt]),
     );
   }
@@ -88,6 +96,7 @@ class Transaction {
     String? categoryIcon,
     int? categoryColor,
     String? description,
+    bool? includeInSpendingAnalysis,
     DateTime? createdAt,
   }) {
     return Transaction(
@@ -100,6 +109,8 @@ class Transaction {
       categoryIcon: categoryIcon ?? this.categoryIcon,
       categoryColor: categoryColor ?? this.categoryColor,
       description: description ?? this.description,
+      includeInSpendingAnalysis:
+          includeInSpendingAnalysis ?? this.includeInSpendingAnalysis,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -117,6 +128,7 @@ class Transaction {
         other.categoryIcon == categoryIcon &&
         other.categoryColor == categoryColor &&
         other.description == description &&
+        other.includeInSpendingAnalysis == includeInSpendingAnalysis &&
         other.createdAt == createdAt;
   }
 
@@ -132,6 +144,7 @@ class Transaction {
       categoryIcon,
       categoryColor,
       description,
+      includeInSpendingAnalysis,
       createdAt,
     );
   }

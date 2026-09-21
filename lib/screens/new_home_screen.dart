@@ -49,11 +49,19 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     final monthStr = DateFormat('yyyy-MM').format(now);
 
     final todayTotal = data
-        .where((s) => DateFormat('yyyy-MM-dd').format(s.date) == todayStr)
+        .where(
+          (s) =>
+              s.includeInSpendingAnalysis &&
+              DateFormat('yyyy-MM-dd').format(s.date) == todayStr,
+        )
         .fold(0.0, (sum, item) => sum + item.amount);
 
     final monthlyTotal = data
-        .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)
+        .where(
+          (s) =>
+              s.includeInSpendingAnalysis &&
+              DateFormat('yyyy-MM').format(s.date) == monthStr,
+        )
         .fold(0.0, (sum, item) => sum + item.amount);
 
     if (!mounted) return;

@@ -248,6 +248,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
   Widget _buildMonthlyOverview(ColorScheme colorScheme) {
     Map<String, double> monthlyTotals = {};
     for (var s in _allSpendings) {
+      if (!s.includeInSpendingAnalysis) continue;
       final month = DateFormat('MMM yyyy').format(s.date);
       monthlyTotals[month] = (monthlyTotals[month] ?? 0) + s.amount;
     }
@@ -299,6 +300,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
   Widget _buildDailyOverview(ColorScheme colorScheme) {
     Map<String, double> dailyTotals = {};
     for (var s in _allSpendings) {
+      if (!s.includeInSpendingAnalysis) continue;
       final day = DateFormat('yyyy-MM-dd').format(s.date);
       dailyTotals[day] = (dailyTotals[day] ?? 0) + s.amount;
     }

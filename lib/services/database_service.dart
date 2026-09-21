@@ -67,6 +67,9 @@ class DatabaseService {
         if (oldVersion < 3) {
           await _migrateV2toV3(db);
         }
+        if (oldVersion < 4) {
+          await _migrateV3toV4(db);
+        }
       },
     );
   }
@@ -80,6 +83,7 @@ class DatabaseService {
         ${DbCols.color} INTEGER,
         ${DbCols.isPinned} INTEGER DEFAULT 0,
         ${DbCols.isArchived} INTEGER DEFAULT 0,
+        ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
         ${DbCols.createdAt} TEXT NOT NULL
       )
     ''');
@@ -92,6 +96,7 @@ class DatabaseService {
         ${DbCols.date} TEXT NOT NULL,
         ${DbCols.categoryId} INTEGER,
         ${DbCols.description} TEXT,
+        ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
         ${DbCols.createdAt} TEXT NOT NULL,
         FOREIGN KEY(${DbCols.categoryId}) REFERENCES ${DbTables.categories}(id)
       )
@@ -134,12 +139,14 @@ class DatabaseService {
 
     final batch = db.batch();
     for (final name in defaults) {
+      final isInvestment = name.toLowerCase() == 'investment';
       batch.insert(DbTables.categories, {
         DbCols.name: name,
         DbCols.icon: null,
         DbCols.color: null,
         DbCols.isPinned: 0,
         DbCols.isArchived: 0,
+        DbCols.includeInSpendingAnalysis: isInvestment ? 0 : 1,
         DbCols.createdAt: now,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     }
@@ -334,5 +341,60 @@ class DatabaseService {
       }
     }
     AppLogger.info('Migration v2 -> v3 completed.');
+  }
+
+  /// Migrates the database from version 3 to version 4.
+  /// Adds includeInSpendingAnalysis column to categories and transactions tables.
+  static Future<void> _migrateV3toV4(Database db) async {
+    AppLogger.info('Starting database migration: v3 -> v4');
+
+    final catTableInfo = await db.rawQuery(
+      'PRAGMA table_info(${DbTables.categories})',
+    );
+    final catCols = catTableInfo.map((c) => c['name'] as String).toSet();
+    if (!catCols.contains(DbCols.includeInSpendingAnalysis)) {
+      await db.execute(
+        'ALTER TABLE ${DbTables.categories} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
+      );
+      AppLogger.info(
+        'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.categories}',
+      );
+    }
+
+    final txTableInfo = await db.rawQuery(
+      'PRAGMA table_info(${DbTables.transactions})',
+    );
+    final txCols = txTableInfo.map((c) => c['name'] as String).toSet();
+    if (!txCols.contains(DbCols.includeInSpendingAnalysis)) {
+      await db.execute(
+        'ALTER TABLE ${DbTables.transactions} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
+      );
+      AppLogger.info(
+        'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.transactions}',
+      );
+    }
+
+    // Set Investment category default to 0 (excluded from spending analysis)
+    await db.execute(
+      "UPDATE ${DbTables.categories} SET ${DbCols.includeInSpendingAnalysis} = 0 WHERE LOWER(${DbCols.name}) = 'investment'",
+    );
+
+    // Ensure 'Investment' category exists if missing
+    final now = DateTime.now().toIso8601String();
+    await db.insert(
+      DbTables.categories,
+      {
+        DbCols.name: 'Investment',
+        DbCols.icon: null,
+        DbCols.color: null,
+        DbCols.isPinned: 0,
+        DbCols.isArchived: 0,
+        DbCols.includeInSpendingAnalysis: 0,
+        DbCols.createdAt: now,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+
+    AppLogger.info('Migration v3 -> v4 completed.');
   }
 }
