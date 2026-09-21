@@ -97,23 +97,33 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Merge Category'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Merge Category',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSourceCard(theme),
-                  const SizedBox(height: 16),
-                  const Center(child: Icon(Icons.arrow_downward, size: 32)),
-                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_downward,
+                        size: 32,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
                   Text(
                     'Into Destination Category',
                     style: textTheme.titleMedium?.copyWith(
@@ -123,10 +133,11 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                   const SizedBox(height: 12),
                   if (_otherCategories.isEmpty)
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
+                      padding: EdgeInsets.symmetric(vertical: 40),
                       child: Text(
-                        'No other categories available to merge into. Create another category first.',
+                        'No other categories available to merge into.\nCreate another category first.',
                         textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
                       ),
                     )
                   else
@@ -141,27 +152,35 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                       },
                       child: Column(
                         children: _otherCategories.map((c) {
-                          return Card(
-                            color: _selectedDestination?.id == c.id
-                                ? colorScheme.primaryContainer.withValues(
-                                    alpha: 0.3,
-                                  )
-                                : null,
-                            child: RadioListTile<int>(
-                              value: c.id!,
-                              title: Text(
-                                c.name,
-                                style: textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                          final isSelected = _selectedDestination?.id == c.id;
+                          final catColor = ColorUtils.fromInt(c.color);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Card(
+                              elevation: 0,
+                              color: isSelected
+                                  ? catColor.withValues(alpha: 0.2)
+                                  : catColor.withValues(alpha: 0.08),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: isSelected
+                                    ? BorderSide(color: catColor, width: 2)
+                                    : BorderSide.none,
                               ),
-                              secondary: CircleAvatar(
-                                backgroundColor: ColorUtils.fromInt(
-                                  c.color,
-                                ).withValues(alpha: 0.2),
-                                child: Icon(
+                              child: RadioListTile<int>(
+                                value: c.id!,
+                                title: Text(
+                                  c.name,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                secondary: Icon(
                                   IconUtils.fromString(c.icon),
-                                  color: ColorUtils.fromInt(c.color),
+                                  color: catColor,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
                             ),
@@ -169,25 +188,30 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                         }).toList(),
                       ),
                     ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
                   FilledButton.icon(
                     onPressed: _selectedDestination == null ? null : _merge,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: colorScheme.errorContainer,
-                      foregroundColor: colorScheme.onErrorContainer,
+                      backgroundColor: colorScheme.error,
+                      foregroundColor: colorScheme.onError,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
-                    icon: const Icon(Icons.merge_type),
+                    icon: const Icon(Icons.merge),
                     label: const Text('Merge Categories'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Text(
                     'This moves all associated transactions and deletes the source category.',
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
+                      color: colorScheme.outline,
                     ),
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -197,34 +221,51 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
   Widget _buildSourceCard(ThemeData theme) {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final catColor = ColorUtils.fromInt(widget.sourceCategory.color);
 
     return Card(
-      color: colorScheme.surfaceContainerHigh,
+      elevation: 0,
+      color: catColor.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: catColor.withValues(alpha: 0.3)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         child: Column(
           children: [
-            Text('Merge From (Source)', style: textTheme.labelLarge),
-            const SizedBox(height: 12),
+            Text(
+              'Merge From (Source)',
+              style: textTheme.labelLarge?.copyWith(
+                color: catColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
             ListTile(
-              leading: CircleAvatar(
-                backgroundColor: ColorUtils.fromInt(
-                  widget.sourceCategory.color,
-                ).withValues(alpha: 0.2),
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: catColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(
                   IconUtils.fromString(widget.sourceCategory.icon),
-                  color: ColorUtils.fromInt(widget.sourceCategory.color),
+                  color: catColor,
+                  size: 28,
                 ),
               ),
               title: Text(
                 widget.sourceCategory.name,
-                style: textTheme.titleMedium?.copyWith(
+                style: textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               subtitle: Text(
                 '${widget.txCount} transactions will be moved',
-                style: textTheme.bodyMedium,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

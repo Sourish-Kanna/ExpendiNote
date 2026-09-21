@@ -13,20 +13,30 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = AppThemeScope.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Settings'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Settings',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
           _buildSectionHeader(context, 'Appearance'),
           Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             child: Column(
               children: [
                 ListTile(
@@ -34,8 +44,17 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('Theme Mode'),
                   subtitle: Text(_getThemeModeName(themeController.themeMode)),
                   onTap: () => _showThemeModeDialog(context, themeController),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
                 ),
-                const Divider(height: 1),
+                Divider(
+                  height: 1,
+                  indent: 56,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
                 SwitchListTile(
                   secondary: const Icon(Icons.palette),
                   title: const Text('Use Custom Theme'),
@@ -43,23 +62,38 @@ class SettingsScreen extends StatelessWidget {
                   value: themeController.customThemeEnabled,
                   onChanged: (value) =>
                       themeController.setCustomThemeEnabled(value),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(24),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           _buildSectionHeader(context, 'Theme Color'),
           Opacity(
             opacity: themeController.customThemeEnabled ? 1.0 : 0.5,
             child: Card(
+              elevation: 0,
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: AbsorbPointer(
                 absorbing: !themeController.customThemeEnabled,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 16,
+                  ),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 12,
+                        runSpacing: 12,
                         children: AppThemeColor.values.map((themeColor) {
                           final isSelected =
                               themeController.selectedThemeColor == themeColor;
@@ -67,8 +101,9 @@ class SettingsScreen extends StatelessWidget {
                             onTap: () => themeController.setSelectedThemeColor(
                               themeColor,
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
+                            borderRadius: BorderRadius.circular(24),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -81,13 +116,15 @@ class SettingsScreen extends StatelessWidget {
                               ),
                               child: CircleAvatar(
                                 backgroundColor: themeColor.seed,
-                                radius: 20,
+                                radius: 22,
                                 child: isSelected
                                     ? Icon(
                                         Icons.check,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.8,
-                                        ),
+                                        color:
+                                            themeColor.seed.computeLuminance() >
+                                                0.5
+                                            ? Colors.black
+                                            : Colors.white,
                                       )
                                     : null,
                               ),
@@ -97,10 +134,12 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       if (!themeController.customThemeEnabled)
                         Padding(
-                          padding: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.only(top: 12),
                           child: Text(
                             'Enable "Use Custom Theme" to change color',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.outline,
+                            ),
                           ),
                         ),
                     ],
@@ -109,14 +148,22 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           _buildSectionHeader(context, 'Preferences'),
           Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             child: ListTile(
               leading: const Icon(Icons.category),
               title: const Text('Categories'),
               subtitle: const Text('Manage your spending categories'),
               trailing: const Icon(Icons.chevron_right),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
@@ -127,9 +174,14 @@ class SettingsScreen extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           _buildSectionHeader(context, 'Data Management'),
           Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
             child: Column(
               children: [
                 ListTile(
@@ -137,26 +189,49 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('Export Data'),
                   subtitle: const Text('Export transactions to CSV'),
                   onTap: () => _exportData(context),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
                 ),
-                const Divider(height: 1),
+                Divider(
+                  height: 1,
+                  indent: 56,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
                 ListTile(
                   leading: const Icon(Icons.file_download),
                   title: const Text('Import Data'),
                   subtitle: const Text('Import transactions from JSON'),
                   onTap: () => _importData(context),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(24),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           _buildSectionHeader(context, 'About'),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
+          Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const ListTile(
+              leading: Icon(Icons.info),
               title: Text('ExpendiNote'),
-              subtitle: Text('Version 2.0.0'),
+              subtitle: Text('Version 2.0.1'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(24)),
+              ),
             ),
           ),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -164,12 +239,13 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
+      padding: const EdgeInsets.only(left: 8, bottom: 12, top: 8),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: Theme.of(context).colorScheme.primary,
           fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -180,9 +256,12 @@ class SettingsScreen extends StatelessWidget {
 
     if (data.isEmpty) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('No data to export')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No data to export'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
       return;
     }
@@ -191,7 +270,6 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _importData(BuildContext context) async {
-    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -215,6 +293,7 @@ class SettingsScreen extends StatelessWidget {
         content: Text(
           success ? 'Data imported successfully' : 'Import failed or cancelled',
         ),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
