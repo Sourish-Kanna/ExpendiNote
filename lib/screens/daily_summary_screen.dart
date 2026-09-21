@@ -81,13 +81,12 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   _TopCategory _getTopCategory(List<txmodel.Transaction> spendings) {
     final included =
         spendings.where((s) => s.includeInSpendingAnalysis).toList();
-    final itemsToEvaluate = included.isNotEmpty ? included : spendings;
-    if (itemsToEvaluate.isEmpty) {
+    if (included.isEmpty) {
       return _TopCategory(name: 'None', icon: null, color: null);
     }
     Map<int, double> categoryTotals = {};
     Map<int, txmodel.Transaction> sampleTransactions = {};
-    for (var s in itemsToEvaluate) {
+    for (var s in included) {
       final id = s.categoryId ?? -1;
       categoryTotals[id] = (categoryTotals[id] ?? 0) + s.amount;
       sampleTransactions[id] = s;
