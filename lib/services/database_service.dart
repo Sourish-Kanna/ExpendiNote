@@ -1,6 +1,4 @@
-import 'dart:math' show Random;
-
-import 'package:flutter/material.dart' show IconData;
+import 'package:flutter/material.dart' show Color, IconData;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -139,7 +137,6 @@ class DatabaseService {
       'Others',
     ];
 
-    final random = Random();
     final colors = ColorUtils.getAvailableColors();
     final icons = IconUtils.getAvailableIcons();
 
@@ -148,38 +145,45 @@ class DatabaseService {
       final isInvestment = name.toLowerCase() == 'investment';
 
       IconData icon;
+      Color color;
       switch (name.toLowerCase()) {
         case 'food':
-          icon = icons[1];
-          break; // Icons.restaurant
+          icon = icons[1]; // Icons.restaurant
+          color = colors[5]; // Colors.deepOrange
+          break;
         case 'transport':
-          icon = icons[8];
-          break; // Icons.commute
+          icon = icons[8]; // Icons.commute
+          color = colors[3]; // Colors.blue
+          break;
         case 'shopping':
-          icon = icons[2];
-          break; // Icons.shopping_bag
+          icon = icons[2]; // Icons.shopping_bag
+          color = colors[0]; // Colors.purple
+          break;
         case 'bills':
-          icon = icons[6];
-          break; // Icons.home
+          icon = icons[6]; // Icons.home
+          color = colors[2]; // Colors.indigo
+          break;
         case 'entertainment':
-          icon = icons[3];
-          break; // Icons.movie
+          icon = icons[3]; // Icons.movie
+          color = colors[1]; // Colors.deepPurple
+          break;
         case 'healthcare':
-          icon = icons[4];
-          break; // Icons.medical_services
+          icon = icons[4]; // Icons.medical_services
+          color = colors[4]; // Colors.teal
+          break;
         case 'investment':
-          icon = icons[7];
-          break; // Icons.trending_up
+          icon = icons[7]; // Icons.trending_up
+          color = colors[6]; // Colors.blueGrey
+          break;
         default:
           icon = icons[0]; // Icons.category
+          color = colors[6]; // Colors.blueGrey
       }
 
       batch.insert(DbTables.categories, {
         DbCols.name: name,
         DbCols.icon: IconUtils.iconToString(icon),
-        DbCols.color: ColorUtils.colorToInt(
-          colors[random.nextInt(colors.length)],
-        ),
+        DbCols.color: ColorUtils.colorToInt(color),
         DbCols.isPinned: 0,
         DbCols.isArchived: 0,
         DbCols.includeInSpendingAnalysis: isInvestment ? 0 : 1,
