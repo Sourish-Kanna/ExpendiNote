@@ -25,6 +25,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
   late TextEditingController _descriptionController;
   int? _selectedCategoryId;
   late DateTime _selectedDate;
+  late bool _includeInSpendingAnalysis;
 
   List<Category> _categories = [];
   bool _isLoadingCategories = true;
@@ -41,6 +42,8 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     );
     _selectedCategoryId = widget.transaction?.categoryId;
     _selectedDate = widget.transaction?.date ?? DateTime.now();
+    _includeInSpendingAnalysis =
+        widget.transaction?.includeInSpendingAnalysis ?? true;
     _loadCategories();
   }
 
@@ -51,11 +54,58 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         _categories = cats;
         _isLoadingCategories = false;
         // If editing and has category, ensure it's selected.
-        // If adding new, select first pinned category or first category if available.
+        // If adding new, select first category if available.
         if (_selectedCategoryId == null && _categories.isNotEmpty) {
           _selectedCategoryId = _categories.first.id;
+          if (widget.transaction == null) {
+            _includeInSpendingAnalysis =
+                _categories.first.includeInSpendingAnalysis;
+          }
         }
       });
+    }
+  }
+
+  void _onCategorySelected(Category category) {
+    if (_selectedCategoryId == category.id) return;
+
+    if (widget.transaction == null) {
+      setState(() {
+        _selectedCategoryId = category.id;
+        _includeInSpendingAnalysis = category.includeInSpendingAnalysis;
+      });
+    } else {
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Update Spending Analysis Setting?'),
+          content: Text(
+            'Would you like to apply the default spending analysis setting for "${category.name}" (${category.includeInSpendingAnalysis ? 'Included' : 'Excluded'}), or keep the current setting (${_includeInSpendingAnalysis ? 'Included' : 'Excluded'})?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                setState(() {
+                  _selectedCategoryId = category.id;
+                });
+              },
+              child: const Text('Keep Current'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                setState(() {
+                  _selectedCategoryId = category.id;
+                  _includeInSpendingAnalysis =
+                      category.includeInSpendingAnalysis;
+                });
+              },
+              child: const Text('Apply Default'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -77,6 +127,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
         description: _descriptionController.text.isEmpty
             ? null
             : _descriptionController.text,
+        includeInSpendingAnalysis: _includeInSpendingAnalysis,
       );
 
       if (widget.transaction == null) {
@@ -247,15 +298,30 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                         ),
                         onSelected: (selected) {
                           if (selected) {
-                            setState(() {
-                              _selectedCategoryId = category.id;
-                            });
+                            _onCategorySelected(category);
                           }
                         },
                       );
                     }),
                   ],
                 ),
+              const SizedBox(height: 24),
+              SwitchListTile(
+                title: const Text('Include in spending analysis'),
+                subtitle: const Text(
+                  'Controls whether this transaction affects normal spending totals',
+                ),
+                value: _includeInSpendingAnalysis,
+                onChanged: (value) =>
+                    setState(() => _includeInSpendingAnalysis = value),
+                secondary: Icon(
+                  Icons.analytics_outlined,
+                  color: _includeInSpendingAnalysis
+                      ? colorScheme.primary
+                      : null,
+                ),
+                contentPadding: EdgeInsets.zero,
+              ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _descriptionController,

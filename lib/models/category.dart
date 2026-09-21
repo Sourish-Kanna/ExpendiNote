@@ -10,6 +10,7 @@ class Category {
   final int? color;
   final bool isPinned;
   final bool isArchived;
+  final bool includeInSpendingAnalysis;
   final DateTime createdAt;
 
   Category({
@@ -19,6 +20,7 @@ class Category {
     this.color,
     this.isPinned = false,
     this.isArchived = false,
+    this.includeInSpendingAnalysis = true,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -31,6 +33,7 @@ class Category {
       DbCols.color: color,
       DbCols.isPinned: isPinned ? 1 : 0,
       DbCols.isArchived: isArchived ? 1 : 0,
+      DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
       DbCols.createdAt: createdAt.toIso8601String(),
     };
   }
@@ -44,6 +47,8 @@ class Category {
       return DateTime.now();
     }
 
+    final rawInclude = map[DbCols.includeInSpendingAnalysis];
+
     return Category(
       id: map[DbCols.id] as int?,
       name: map[DbCols.name] as String? ?? '',
@@ -51,6 +56,9 @@ class Category {
       color: map[DbCols.color] as int?,
       isPinned: map[DbCols.isPinned] == 1 || map[DbCols.isPinned] == true,
       isArchived: map[DbCols.isArchived] == 1 || map[DbCols.isArchived] == true,
+      includeInSpendingAnalysis: rawInclude == null
+          ? true
+          : (rawInclude == 1 || rawInclude == true),
       createdAt: parseDate(map[DbCols.createdAt]),
     );
   }
@@ -62,6 +70,7 @@ class Category {
     int? color,
     bool? isPinned,
     bool? isArchived,
+    bool? includeInSpendingAnalysis,
     DateTime? createdAt,
   }) {
     return Category(
@@ -71,6 +80,8 @@ class Category {
       color: color ?? this.color,
       isPinned: isPinned ?? this.isPinned,
       isArchived: isArchived ?? this.isArchived,
+      includeInSpendingAnalysis:
+          includeInSpendingAnalysis ?? this.includeInSpendingAnalysis,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -85,11 +96,21 @@ class Category {
         other.color == color &&
         other.isPinned == isPinned &&
         other.isArchived == isArchived &&
+        other.includeInSpendingAnalysis == includeInSpendingAnalysis &&
         other.createdAt == createdAt;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, name, icon, color, isPinned, isArchived, createdAt);
+    return Object.hash(
+      id,
+      name,
+      icon,
+      color,
+      isPinned,
+      isArchived,
+      includeInSpendingAnalysis,
+      createdAt,
+    );
   }
 }

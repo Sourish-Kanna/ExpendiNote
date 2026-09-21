@@ -50,12 +50,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final monthStr = DateFormat('yyyy-MM').format(now);
 
     final todayData = data
-        .where((s) => DateFormat('yyyy-MM-dd').format(s.date) == todayStr)
+        .where(
+          (s) =>
+              s.includeInSpendingAnalysis &&
+              DateFormat('yyyy-MM-dd').format(s.date) == todayStr,
+        )
         .toList();
     final total = todayData.fold(0.0, (sum, item) => sum + item.amount);
 
     final monthlyTotal = data
-        .where((s) => DateFormat('yyyy-MM').format(s.date) == monthStr)
+        .where(
+          (s) =>
+              s.includeInSpendingAnalysis &&
+              DateFormat('yyyy-MM').format(s.date) == monthStr,
+        )
         .fold(0.0, (sum, item) => sum + item.amount);
 
     if (!mounted) return;

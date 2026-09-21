@@ -40,6 +40,12 @@ class ImportService {
           final dateStr = item['date'] as String?;
           final categoryName = item['category'] as String? ?? 'Others';
           final description = item['description'] as String?;
+          final rawInclude =
+              item['includeInSpendingAnalysis'] ??
+              item['include_in_spending_analysis'];
+          final bool? includeInSpendingAnalysis = rawInclude is bool
+              ? rawInclude
+              : (rawInclude is num ? rawInclude == 1 : null);
 
           if (dateStr == null) continue;
           final date = DateTime.tryParse(dateStr) ?? DateTime.now();
@@ -57,6 +63,7 @@ class ImportService {
               date: date,
               categoryId: categoryId,
               description: description,
+              includeInSpendingAnalysis: includeInSpendingAnalysis ?? true,
             ),
           );
         }

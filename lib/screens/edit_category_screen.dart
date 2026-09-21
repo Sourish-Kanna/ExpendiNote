@@ -20,6 +20,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   late IconData _selectedIcon;
   late Color _selectedColor;
   late bool _isPinned;
+  late bool _includeInSpendingAnalysis;
 
   @override
   void initState() {
@@ -28,6 +29,8 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
     _selectedIcon = IconUtils.fromString(widget.category?.icon);
     _selectedColor = ColorUtils.fromInt(widget.category?.color);
     _isPinned = widget.category?.isPinned ?? false;
+    _includeInSpendingAnalysis =
+        widget.category?.includeInSpendingAnalysis ?? true;
   }
 
   @override
@@ -62,6 +65,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
         color: ColorUtils.colorToInt(_selectedColor),
         isPinned: _isPinned,
         isArchived: widget.category?.isArchived ?? false,
+        includeInSpendingAnalysis: _includeInSpendingAnalysis,
         createdAt: widget.category?.createdAt,
       );
 
@@ -220,6 +224,23 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                 secondary: Icon(
                   _isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                   color: _isPinned ? colorScheme.primary : null,
+                ),
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Include in spending analysis by default'),
+                subtitle: const Text(
+                  'New transactions in this category will default to this setting',
+                ),
+                value: _includeInSpendingAnalysis,
+                onChanged: (value) =>
+                    setState(() => _includeInSpendingAnalysis = value),
+                secondary: Icon(
+                  Icons.analytics_outlined,
+                  color: _includeInSpendingAnalysis
+                      ? colorScheme.primary
+                      : null,
                 ),
                 contentPadding: EdgeInsets.zero,
               ),

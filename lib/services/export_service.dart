@@ -27,6 +27,7 @@ class ExportService {
         'Category ID',
         'Category Name',
         'Description',
+        'Include In Spending Analysis',
       ]);
 
       // Populate rows using v2 Transaction schema fields
@@ -41,6 +42,7 @@ class ExportService {
           t.categoryId ?? '',
           t.categoryName ?? 'Uncategorized',
           t.description ?? '',
+          t.includeInSpendingAnalysis,
         ]);
       }
 

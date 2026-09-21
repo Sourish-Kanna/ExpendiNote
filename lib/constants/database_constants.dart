@@ -17,10 +17,11 @@ class DbCols {
   static const color = 'color';
   static const isPinned = 'isPinned';
   static const isArchived = 'isArchived';
+  static const includeInSpendingAnalysis = 'includeInSpendingAnalysis';
   static const createdAt = 'createdAt';
 }
 
 class DbConfig {
-  static const databaseVersion = 3;
+  static const databaseVersion = 4;
   static const databaseFile = 'spending_database.db';
 }
