@@ -1,8 +1,11 @@
 import 'package:sqflite/sqflite.dart' as sql;
+import 'dart:math' show Random;
 
 import '../constants/database_constants.dart';
 import '../models/category.dart';
 import '../services/database_service.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 
 class CategoryRepository {
   static DatabaseService get _dbService => DatabaseService.instance;
@@ -91,8 +94,21 @@ class CategoryRepository {
 
     final now = DateTime.now().toIso8601String();
     final isInvestment = name.trim().toLowerCase() == 'investment';
+
+    final random = Random();
+    final icons = IconUtils.getAvailableIcons();
+    final colors = ColorUtils.getAvailableColors();
+    final randomIcon = IconUtils.iconToString(
+      icons[random.nextInt(icons.length)],
+    );
+    final randomColor = ColorUtils.colorToInt(
+      colors[random.nextInt(colors.length)],
+    );
+
     return await db.insert(DbTables.categories, {
       DbCols.name: name.trim(),
+      DbCols.icon: randomIcon,
+      DbCols.color: randomColor,
       DbCols.createdAt: now,
       DbCols.isPinned: 0,
       DbCols.isArchived: 0,

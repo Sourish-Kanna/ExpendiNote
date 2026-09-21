@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
@@ -47,7 +47,6 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                 _currentSpending.id!,
               );
 
-              // Correct guard for State.context inside a StatefulWidget
               if (mounted) {
                 Navigator.pop(context, true);
               }
@@ -68,11 +67,17 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    final catColor = ColorUtils.fromInt(_currentSpending.categoryColor);
+    final catIcon = IconUtils.fromString(_currentSpending.categoryIcon);
+
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Details'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Details',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
@@ -86,7 +91,6 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
                 ),
               );
               if (result == true) {
-                // Refresh data
                 final updated = await TransactionRepository.getById(
                   _currentSpending.id!,
                 );
@@ -104,103 +108,165 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: ColorUtils.fromInt(
-                      _currentSpending.categoryColor,
-                    ).withValues(alpha: 0.2),
-                    child: Icon(
-                      IconUtils.fromString(_currentSpending.categoryIcon),
-                      size: 40,
-                      color: ColorUtils.fromInt(_currentSpending.categoryColor),
+            // 1. Primary Amount Card (Matches Home/Add Spending layout but using Category Color matching theme)
+            Card(
+              elevation: 0,
+              color: catColor.withValues(alpha: 0.15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 28,
+                  horizontal: 16,
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      _currentSpending.title,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: catColor,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    '₹${_currentSpending.amount.toStringAsFixed(2)}',
-                    style: textTheme.displayMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.currency_rupee, size: 38, color: catColor),
+                        Text(
+                          _currentSpending.amount.toStringAsFixed(2),
+                          style: textTheme.displayMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: catColor,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _currentSpending.title,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 40),
-            _buildDetailRow(
-              context,
-              Icons.category_outlined,
-              'Category',
-              _currentSpending.categoryName ?? 'Other',
-            ),
-            const Divider(height: 32),
-            _buildDetailRow(
-              context,
-              Icons.calendar_today_outlined,
-              'Date',
-              DateFormat('EEEE, MMM dd, yyyy').format(_currentSpending.date),
-            ),
-            const Divider(height: 32),
-            _buildDetailRow(
-              context,
-              Icons.access_time,
-              'Time',
-              DateFormat('hh:mm a').format(_currentSpending.date),
-            ),
-            const Divider(height: 32),
-            _buildDetailRow(
-              context,
-              Icons.analytics_outlined,
-              'Spending Analysis',
-              _currentSpending.includeInSpendingAnalysis
-                  ? 'Included'
-                  : 'Excluded',
-            ),
-            if (_currentSpending.description != null &&
-                _currentSpending.description!.isNotEmpty) ...[
-              const Divider(height: 32),
-              _buildDetailRow(
-                context,
-                Icons.description_outlined,
-                'Description',
-                _currentSpending.description!,
+            const SizedBox(height: 20),
+
+            // 2. Info Grid / Section Container
+            Card(
+              elevation: 0,
+              color: catColor.withValues(alpha: 0.05),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
               ),
-            ],
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    // Category row matching standard plain row layout
+                    _buildDetailItem(
+                      context: context,
+                      icon: catIcon,
+                      label: 'Category',
+                      value: _currentSpending.categoryName ?? 'Other',
+                    ),
+                    Divider(
+                      height: 32,
+                      thickness: 1,
+                      color: catColor.withValues(alpha: 0.15),
+                    ),
+
+                    // Date row
+                    _buildDetailItem(
+                      context: context,
+                      icon: Icons.calendar_today_outlined,
+                      label: 'Date',
+                      value: DateFormat(
+                        'EEEE, MMM dd, yyyy',
+                      ).format(_currentSpending.date),
+                    ),
+                    Divider(
+                      height: 32,
+                      thickness: 1,
+                      color: catColor.withValues(alpha: 0.15),
+                    ),
+
+                    // Time row
+                    _buildDetailItem(
+                      context: context,
+                      icon: Icons.access_time_outlined,
+                      label: 'Time',
+                      value: DateFormat(
+                        'hh:mm a',
+                      ).format(_currentSpending.date),
+                    ),
+                    Divider(
+                      height: 32,
+                      thickness: 1,
+                      color: catColor.withValues(alpha: 0.15),
+                    ),
+
+                    // Spending Analysis row matching standard plain row layout
+                    _buildDetailItem(
+                      context: context,
+                      icon: Icons.analytics_outlined,
+                      label: 'Spending Analysis',
+                      value: _currentSpending.includeInSpendingAnalysis
+                          ? 'Included'
+                          : 'Excluded',
+                    ),
+
+                    // Optional Description block
+                    if (_currentSpending.description != null &&
+                        _currentSpending.description!.trim().isNotEmpty) ...[
+                      Divider(
+                        height: 32,
+                        thickness: 1,
+                        color: catColor.withValues(alpha: 0.15),
+                      ),
+                      _buildDetailItem(
+                        context: context,
+                        icon: Icons.description_outlined,
+                        label: 'Description',
+                        value: _currentSpending.description!,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDetailRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
+  Widget _buildDetailItem({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    String? value,
+    Widget? customValueWidget,
+  }) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
+    final catColor = ColorUtils.fromInt(_currentSpending.categoryColor);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: colorScheme.primary, size: 24),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: catColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: catColor, size: 20),
+        ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -209,16 +275,20 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               Text(
                 label,
                 style: textTheme.labelMedium?.copyWith(
-                  color: colorScheme.outline,
+                  color: catColor.withValues(alpha: 0.8),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
+              const SizedBox(height: 6),
+              if (customValueWidget != null)
+                customValueWidget
+              else
+                Text(
+                  value ?? '',
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

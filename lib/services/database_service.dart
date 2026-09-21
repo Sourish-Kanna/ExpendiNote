@@ -1,7 +1,12 @@
+import 'dart:math' show Random;
+
+import 'package:flutter/material.dart' show IconData;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../constants/database_constants.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import '../utils/logger.dart';
 
 class DatabaseService {
@@ -53,21 +58,21 @@ class DatabaseService {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
-        AppLogger.info(
-          'Creating v2 schema (transactions, categories, settings)...',
-        );
+        AppLogger.info('Creating database tables for version $version...');
         await _createTables(db);
         await _seedDefaultCategories(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
-        AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
         if (oldVersion < 2) {
+          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
           await _migrateV1toV2(db);
         }
         if (oldVersion < 3) {
+          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
           await _migrateV2toV3(db);
         }
         if (oldVersion < 4) {
+          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
           await _migrateV3toV4(db);
         }
       },
@@ -129,21 +134,52 @@ class DatabaseService {
       'Shopping',
       'Bills',
       'Entertainment',
-      'Education',
       'Healthcare',
-      'Housing',
       'Investment',
-      'Income',
       'Others',
     ];
+
+    final random = Random();
+    final colors = ColorUtils.getAvailableColors();
+    final icons = IconUtils.getAvailableIcons();
 
     final batch = db.batch();
     for (final name in defaults) {
       final isInvestment = name.toLowerCase() == 'investment';
+
+      IconData icon;
+      switch (name.toLowerCase()) {
+        case 'food':
+          icon = icons[1];
+          break; // Icons.restaurant
+        case 'transport':
+          icon = icons[8];
+          break; // Icons.commute
+        case 'shopping':
+          icon = icons[2];
+          break; // Icons.shopping_bag
+        case 'bills':
+          icon = icons[6];
+          break; // Icons.home
+        case 'entertainment':
+          icon = icons[3];
+          break; // Icons.movie
+        case 'healthcare':
+          icon = icons[4];
+          break; // Icons.medical_services
+        case 'investment':
+          icon = icons[7];
+          break; // Icons.trending_up
+        default:
+          icon = icons[0]; // Icons.category
+      }
+
       batch.insert(DbTables.categories, {
         DbCols.name: name,
-        DbCols.icon: null,
-        DbCols.color: null,
+        DbCols.icon: IconUtils.iconToString(icon),
+        DbCols.color: ColorUtils.colorToInt(
+          colors[random.nextInt(colors.length)],
+        ),
         DbCols.isPinned: 0,
         DbCols.isArchived: 0,
         DbCols.includeInSpendingAnalysis: isInvestment ? 0 : 1,
@@ -381,19 +417,15 @@ class DatabaseService {
 
     // Ensure 'Investment' category exists if missing
     final now = DateTime.now().toIso8601String();
-    await db.insert(
-      DbTables.categories,
-      {
-        DbCols.name: 'Investment',
-        DbCols.icon: null,
-        DbCols.color: null,
-        DbCols.isPinned: 0,
-        DbCols.isArchived: 0,
-        DbCols.includeInSpendingAnalysis: 0,
-        DbCols.createdAt: now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore,
-    );
+    await db.insert(DbTables.categories, {
+      DbCols.name: 'Investment',
+      DbCols.icon: null,
+      DbCols.color: null,
+      DbCols.isPinned: 0,
+      DbCols.isArchived: 0,
+      DbCols.includeInSpendingAnalysis: 0,
+      DbCols.createdAt: now,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
 
     AppLogger.info('Migration v3 -> v4 completed.');
   }

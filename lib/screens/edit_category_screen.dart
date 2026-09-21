@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'dart:math' show Random;
 
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
@@ -26,8 +27,18 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.category?.name);
-    _selectedIcon = IconUtils.fromString(widget.category?.icon);
-    _selectedColor = ColorUtils.fromInt(widget.category?.color);
+
+    if (widget.category == null) {
+      final random = Random();
+      final icons = IconUtils.getAvailableIcons();
+      final colors = ColorUtils.getAvailableColors();
+      _selectedIcon = icons[random.nextInt(icons.length)];
+      _selectedColor = colors[random.nextInt(colors.length)];
+    } else {
+      _selectedIcon = IconUtils.fromString(widget.category?.icon);
+      _selectedColor = ColorUtils.fromInt(widget.category?.color);
+    }
+
     _isPinned = widget.category?.isPinned ?? false;
     _includeInSpendingAnalysis =
         widget.category?.includeInSpendingAnalysis ?? true;

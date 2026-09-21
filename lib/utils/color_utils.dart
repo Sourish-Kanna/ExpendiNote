@@ -2,15 +2,11 @@ import 'package:material_ui/material_ui.dart';
 
 class ColorUtils {
   static List<Color> colors = [
-    Colors.red,
     Colors.purple,
     Colors.deepPurple,
     Colors.indigo,
     Colors.blue,
     Colors.teal,
-    Colors.green,
-    Colors.yellow,
-    Colors.orange,
     Colors.deepOrange,
     Colors.blueGrey,
   ];
