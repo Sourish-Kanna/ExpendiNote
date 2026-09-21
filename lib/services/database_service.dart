@@ -353,18 +353,12 @@ class DatabaseService {
     );
     final catCols = catTableInfo.map((c) => c['name'] as String).toSet();
     if (!catCols.contains(DbCols.includeInSpendingAnalysis)) {
-      try {
-        await db.execute(
-          'ALTER TABLE ${DbTables.categories} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
-        );
-        AppLogger.info(
-          'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.categories}',
-        );
-      } catch (e) {
-        AppLogger.error(
-          'Failed to add column ${DbCols.includeInSpendingAnalysis} to categories: $e',
-        );
-      }
+      await db.execute(
+        'ALTER TABLE ${DbTables.categories} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
+      );
+      AppLogger.info(
+        'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.categories}',
+      );
     }
 
     final txTableInfo = await db.rawQuery(
@@ -372,18 +366,12 @@ class DatabaseService {
     );
     final txCols = txTableInfo.map((c) => c['name'] as String).toSet();
     if (!txCols.contains(DbCols.includeInSpendingAnalysis)) {
-      try {
-        await db.execute(
-          'ALTER TABLE ${DbTables.transactions} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
-        );
-        AppLogger.info(
-          'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.transactions}',
-        );
-      } catch (e) {
-        AppLogger.error(
-          'Failed to add column ${DbCols.includeInSpendingAnalysis} to transactions: $e',
-        );
-      }
+      await db.execute(
+        'ALTER TABLE ${DbTables.transactions} ADD COLUMN ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1',
+      );
+      AppLogger.info(
+        'Added column ${DbCols.includeInSpendingAnalysis} to ${DbTables.transactions}',
+      );
     }
 
     // Set Investment category default to 0 (excluded from spending analysis)
