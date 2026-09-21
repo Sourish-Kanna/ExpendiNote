@@ -60,6 +60,17 @@ class MyApp extends StatelessWidget {
                 darkTheme: AppTheme.buildTheme(darkScheme),
                 themeMode: themeController.themeMode,
                 home: const AppInitializationWrapper(),
+                builder: (context, child) {
+                  return Builder(
+                    builder: (context) {
+                      final theme = Theme.of(context);
+                      return ColoredBox(
+                        color: theme.colorScheme.surface,
+                        child: SafeArea(child: child!),
+                      );
+                    },
+                  );
+                },
               );
             },
           );
