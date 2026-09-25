@@ -73,6 +73,10 @@ class DatabaseService {
           AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
           await _migrateV3toV4(db);
         }
+        if (oldVersion < 5) {
+          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          await _migrateV4toV5(db);
+        }
       },
     );
   }
@@ -434,3 +438,28 @@ class DatabaseService {
     AppLogger.info('Migration v3 -> v4 completed.');
   }
 }
+
+
+  /// Migrates the database from version 4 to version 5.
+  /// Replaces persisted Material icon code points with stable icon names.
+  static Future<void> _migrateV4toV5(Database db) async {
+    AppLogger.info('Starting database migration: v4 -> v5');
+
+    await db.execute('''
+      UPDATE ${DbTables.categories}
+      SET ${DbCols.icon} = CASE ${DbCols.icon}
+        WHEN '57672' THEN 'category'
+        WHEN '58674' THEN 'restaurant'
+        WHEN '58778' THEN 'shopping_bag'
+        WHEN '58381' THEN 'movie'
+        WHEN '58328' THEN 'medical_services'
+        WHEN '58713' THEN 'school'
+        WHEN '58136' THEN 'home'
+        WHEN '59007' THEN 'trending_up'
+        WHEN '57728' THEN 'commute'
+        ELSE 'category'
+      END
+    ''');
+
+    AppLogger.info('Migration v4 -> v5 completed.');
+  }
