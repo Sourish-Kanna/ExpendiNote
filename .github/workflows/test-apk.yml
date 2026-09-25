@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build Fat APK
-        run: flutter build apk --release --no-split-per-abi
+      - name: Build APK
+        run: flutter build apk --release
 
       - name: Rename APK
         run: |
