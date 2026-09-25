@@ -22,6 +22,6 @@ class DbCols {
 }
 
 class DbConfig {
-  static const databaseVersion = 4;
+  static const databaseVersion = 5;
   static const databaseFile = 'spending_database.db';
 }
