@@ -9,15 +9,17 @@ class AppThemeController extends ChangeNotifier {
   bool _customThemeEnabled = false;
   AppThemeColor _selectedThemeColor = AppThemeColor.blue;
 
+  Future<void>? loadFuture;
+
   AppThemeController() {
-    _loadSettings();
+    loadFuture = loadSettings();
   }
 
   ThemeMode get themeMode => _themeMode;
   bool get customThemeEnabled => _customThemeEnabled;
   AppThemeColor get selectedThemeColor => _selectedThemeColor;
 
-  Future<void> _loadSettings() async {
+  Future<void> loadSettings() async {
     final modeStr = await SettingsRepository.get('theme_mode');
     if (modeStr != null) {
       _themeMode = ThemeMode.values.firstWhere(
