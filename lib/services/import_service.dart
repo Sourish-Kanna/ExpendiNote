@@ -1,87 +1,306 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' show Random;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:sqflite/sqflite.dart' as sql;
 
-import '../models/transaction.dart';
-import '../repositories/category_repository.dart';
-import '../repositories/transaction_repository.dart';
+import '../constants/database_constants.dart';
+import '../services/database_service.dart';
+import '../services/export_migrations/export_migration_service.dart';
+import '../utils/color_utils.dart';
+import '../utils/icon_utils.dart';
 import '../utils/logger.dart';
 
+class RestoreResult {
+  final bool isSuccess;
+  final bool isCancelled;
+  final int transactionsRestored;
+  final String? errorMessage;
+  final bool isUnsupportedVersion;
+
+  const RestoreResult.success({required this.transactionsRestored})
+    : isSuccess = true,
+      isCancelled = false,
+      errorMessage = null,
+      isUnsupportedVersion = false;
+
+  const RestoreResult.cancelled()
+    : isSuccess = false,
+      isCancelled = true,
+      transactionsRestored = 0,
+      errorMessage = null,
+      isUnsupportedVersion = false;
+
+  const RestoreResult.failure(
+    this.errorMessage, {
+    this.isUnsupportedVersion = false,
+  }) : isSuccess = false,
+       isCancelled = false,
+       transactionsRestored = 0;
+}
+
 class ImportService {
-  Future<bool> importFromJSON() async {
+  /// Prompts user to pick a JSON backup file and restores it atomically.
+  Future<RestoreResult> restoreFromJSON() async {
     try {
-      // Use FileType.any because some Android versions fail to filter .json correctly
+      // 1. Pick JSON backup file
       final result = await FilePicker.pickFiles(type: FileType.any);
 
       if (result.isEmpty || result.first.path == null) {
-        return false;
+        AppLogger.info('Restore cancelled: no file selected.');
+        return const RestoreResult.cancelled();
       }
 
       final fileInfo = result.first;
 
-      // Strict check for .json extension only
       if (!fileInfo.name.toLowerCase().endsWith('.json')) {
         AppLogger.warning('Selected file is not a JSON file: ${fileInfo.name}');
-        return false;
+        return const RestoreResult.failure(
+          'Selected file is not a JSON backup file (.json).',
+        );
       }
 
       final file = File(fileInfo.path!);
       final content = await file.readAsString();
-      final List<dynamic> jsonList = json.decode(content);
 
-      AppLogger.info('Importing ${jsonList.length} transactions from JSON...');
-
-      final List<Transaction> transactionsToImport = [];
-      for (final item in jsonList) {
-        if (item is Map<String, dynamic>) {
-          final title = item['title'] as String? ?? '';
-          final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
-          final dateStr = item['date'] as String?;
-          final categoryName = item['category'] as String? ?? 'Others';
-          final description = item['description'] as String?;
-          final rawInclude =
-              item['includeInSpendingAnalysis'] ??
-              item['include_in_spending_analysis'];
-          final bool? includeInSpendingAnalysis = rawInclude is bool
-              ? rawInclude
-              : (rawInclude is num ? rawInclude == 1 : null);
-
-          if (dateStr == null) continue;
-          final date = DateTime.tryParse(dateStr) ?? DateTime.now();
-
-          // 1. Ensure category exists (this is still one by one, but usually categories are few)
-          final categoryId = await CategoryRepository.ensureCategoryByName(
-            categoryName,
-          );
-
-          // 2. Prepare transaction
-          transactionsToImport.add(
-            Transaction(
-              title: title,
-              amount: amount,
-              date: date,
-              categoryId: categoryId,
-              description: description,
-              includeInSpendingAnalysis: includeInSpendingAnalysis ?? true,
-            ),
-          );
-        }
-      }
-
-      if (transactionsToImport.isNotEmpty) {
-        await TransactionRepository.insertTransactionsBatch(
-          transactionsToImport,
+      dynamic parsedJson;
+      try {
+        parsedJson = json.decode(content);
+      } catch (e) {
+        AppLogger.warning('Failed to parse JSON file: $e');
+        return const RestoreResult.failure(
+          'Failed to parse file: Invalid JSON format.',
         );
       }
 
-      AppLogger.info(
-        'Import completed. Imported ${transactionsToImport.length} items.',
+      // 2. Migrate JSON to latest Export Version format
+      Map<String, dynamic> migratedData;
+      try {
+        migratedData = ExportMigrationService.migrateToLatest(parsedJson);
+      } on UnsupportedExportVersionException catch (e) {
+        AppLogger.warning('Unsupported export version: ${e.version}');
+        return RestoreResult.failure(e.toString(), isUnsupportedVersion: true);
+      } catch (e) {
+        AppLogger.warning('Migration error: $e');
+        return RestoreResult.failure('Backup format error: $e');
+      }
+
+      // 3. Validate backup data structure
+      final validationError = ExportMigrationService.validateBackupData(
+        migratedData,
       );
-      return true;
+      if (validationError != null) {
+        AppLogger.warning('Validation failed: $validationError');
+        return RestoreResult.failure(
+          'Invalid backup structure: $validationError',
+        );
+      }
+
+      // 4. Perform atomic database restore
+      final restoredCount = await _executeDatabaseRestore(migratedData);
+
+      AppLogger.info(
+        'Restore completed successfully. $restoredCount transactions restored.',
+      );
+      return RestoreResult.success(transactionsRestored: restoredCount);
     } catch (e, stackTrace) {
-      AppLogger.error('JSON import failed', e, stackTrace);
-      return false;
+      AppLogger.error('Restore failed unexpectedly', e, stackTrace);
+      return RestoreResult.failure('Restore failed: ${e.toString()}');
     }
+  }
+
+  /// Executes atomic restore inside a single SQLite transaction.
+  Future<int> _executeDatabaseRestore(
+    Map<String, dynamic> backupDataMap,
+  ) async {
+    final db = await DatabaseService.instance.database;
+
+    final data = Map<String, dynamic>.from(backupDataMap['data'] as Map);
+    final rawCategories = data['categories'] as List? ?? [];
+    final rawTransactions = data['transactions'] as List? ?? [];
+    final rawSettings = data['settings'] as List? ?? [];
+
+    int restoredCount = 0;
+
+    await db.transaction((txn) async {
+      // Step A: Wipe current transaction and category data
+      await txn.delete(DbTables.transactions);
+      await txn.delete(DbTables.categories);
+
+      // Step B: Insert categories & build ID and name lookup maps
+      final categoryIdMap = <int, int>{};
+      final categoryNameMap = <String, int>{};
+
+      final random = Random();
+      final availableIcons = IconUtils.getAvailableIcons();
+      final availableColors = ColorUtils.getAvailableColors();
+
+      for (final rawCat in rawCategories) {
+        if (rawCat is! Map) continue;
+        final catMap = Map<String, dynamic>.from(rawCat);
+
+        final oldId = catMap['id'] as int?;
+        final name = (catMap['name'] as String? ?? 'Others').trim();
+
+        var icon = catMap['icon'] as String?;
+        if (icon == null || icon.trim().isEmpty) {
+          icon = IconUtils.iconToString(
+            availableIcons[random.nextInt(availableIcons.length)],
+          );
+        }
+
+        var color = catMap['color'] as int?;
+        if (color == null) {
+          color = ColorUtils.colorToInt(
+            availableColors[random.nextInt(availableColors.length)],
+          );
+        }
+
+        final isPinnedVal = catMap['is_pinned'] ?? catMap['isPinned'];
+        final isPinned = isPinnedVal == true || isPinnedVal == 1;
+
+        final isArchivedVal = catMap['is_archived'] ?? catMap['isArchived'];
+        final isArchived = isArchivedVal == true || isArchivedVal == 1;
+
+        final rawInclude =
+            catMap['include_in_spending_analysis'] ??
+            catMap['includeInSpendingAnalysis'];
+        final includeInSpendingAnalysis = rawInclude == null
+            ? true
+            : (rawInclude == true || rawInclude == 1);
+
+        final createdAt =
+            catMap['created_at'] as String? ??
+            catMap['createdAt'] as String? ??
+            DateTime.now().toIso8601String();
+
+        final insertedId = await txn.insert(DbTables.categories, {
+          DbCols.id: ?oldId,
+          DbCols.name: name,
+          DbCols.icon: icon,
+          DbCols.color: color,
+          DbCols.isPinned: isPinned ? 1 : 0,
+          DbCols.isArchived: isArchived ? 1 : 0,
+          DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
+          DbCols.createdAt: createdAt,
+        }, conflictAlgorithm: sql.ConflictAlgorithm.replace);
+
+        final finalCatId = oldId ?? insertedId;
+        if (oldId != null) {
+          categoryIdMap[oldId] = finalCatId;
+        }
+        categoryNameMap[name.toLowerCase()] = finalCatId;
+      }
+
+      // Step C: Insert transactions
+      for (final rawTx in rawTransactions) {
+        if (rawTx is! Map) continue;
+        final txMap = Map<String, dynamic>.from(rawTx);
+
+        final oldTxId = txMap['id'] as int?;
+        final title = (txMap['title'] as String? ?? '').trim();
+
+        final rawAmount = txMap['amount'];
+        final amount = (rawAmount is num)
+            ? rawAmount.toDouble()
+            : double.tryParse(rawAmount?.toString() ?? '0') ?? 0.0;
+
+        final dateStr =
+            txMap['date'] as String? ?? DateTime.now().toIso8601String();
+
+        final rawCatId = txMap['category_id'] ?? txMap['categoryId'];
+        final rawCatName =
+            txMap['category_name'] ??
+            txMap['categoryName'] ??
+            txMap['category'];
+
+        int? categoryId;
+        if (rawCatId != null &&
+            rawCatId is int &&
+            categoryIdMap.containsKey(rawCatId)) {
+          categoryId = categoryIdMap[rawCatId];
+        } else if (rawCatName != null &&
+            rawCatName is String &&
+            categoryNameMap.containsKey(rawCatName.trim().toLowerCase())) {
+          categoryId = categoryNameMap[rawCatName.trim().toLowerCase()];
+        }
+
+        // Dynamically create category if transaction specifies a category name missing from category table
+        if (categoryId == null &&
+            rawCatName != null &&
+            rawCatName is String &&
+            rawCatName.trim().isNotEmpty) {
+          final catNameClean = rawCatName.trim();
+          final catKey = catNameClean.toLowerCase();
+          if (categoryNameMap.containsKey(catKey)) {
+            categoryId = categoryNameMap[catKey];
+          } else {
+            final nowStr = DateTime.now().toIso8601String();
+            final randomIcon = IconUtils.iconToString(
+              availableIcons[random.nextInt(availableIcons.length)],
+            );
+            final randomColor = ColorUtils.colorToInt(
+              availableColors[random.nextInt(availableColors.length)],
+            );
+            final newCatId = await txn.insert(DbTables.categories, {
+              DbCols.name: catNameClean,
+              DbCols.icon: randomIcon,
+              DbCols.color: randomColor,
+              DbCols.createdAt: nowStr,
+              DbCols.includeInSpendingAnalysis: catKey == 'investment' ? 0 : 1,
+            }, conflictAlgorithm: sql.ConflictAlgorithm.ignore);
+            categoryId = newCatId;
+            categoryNameMap[catKey] = newCatId;
+          }
+        }
+
+        final description = txMap['description'] as String?;
+
+        final rawInclude =
+            txMap['include_in_spending_analysis'] ??
+            txMap['includeInSpendingAnalysis'];
+        final includeInSpendingAnalysis = rawInclude == null
+            ? true
+            : (rawInclude == true || rawInclude == 1);
+
+        final createdAt =
+            txMap['created_at'] as String? ??
+            txMap['createdAt'] as String? ??
+            DateTime.now().toIso8601String();
+
+        await txn.insert(DbTables.transactions, {
+          DbCols.id: ?oldTxId,
+          DbCols.title: title,
+          DbCols.amount: amount,
+          DbCols.date: dateStr,
+          DbCols.categoryId: categoryId,
+          DbCols.description: description,
+          DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
+          DbCols.createdAt: createdAt,
+        }, conflictAlgorithm: sql.ConflictAlgorithm.replace);
+
+        restoredCount++;
+      }
+
+      // Step D: Update settings if provided
+      if (rawSettings.isNotEmpty) {
+        for (final rawSetting in rawSettings) {
+          if (rawSetting is! Map) continue;
+          final settingMap = Map<String, dynamic>.from(rawSetting);
+          final key = settingMap['key'] as String?;
+          final value = settingMap['value'] as String?;
+
+          if (key != null && key.trim().isNotEmpty) {
+            await txn.insert(DbTables.settings, {
+              'key': key.trim(),
+              'value': value,
+            }, conflictAlgorithm: sql.ConflictAlgorithm.replace);
+          }
+        }
+      }
+    });
+
+    return restoredCount;
   }
 }

@@ -1,7 +1,11 @@
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../constants/app_constants.dart';
 import '../main.dart';
 import '../repositories/transaction_repository.dart';
+import '../services/backup_service.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
 import '../theme/app_colors.dart';
@@ -185,10 +189,10 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.ios_share),
-                  title: const Text('Export Data'),
-                  subtitle: const Text('Export transactions to CSV'),
-                  onTap: () => _exportData(context),
+                  leading: const Icon(Icons.backup_outlined),
+                  title: const Text('Backup Data'),
+                  subtitle: const Text('Create and share a JSON backup file'),
+                  onTap: () => _backupData(context),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(24),
@@ -201,10 +205,21 @@ class SettingsScreen extends StatelessWidget {
                   color: colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.file_download),
-                  title: const Text('Import Data'),
-                  subtitle: const Text('Import transactions from JSON'),
-                  onTap: () => _importData(context),
+                  leading: const Icon(Icons.restore),
+                  title: const Text('Restore Data'),
+                  subtitle: const Text('Restore data from a JSON backup file'),
+                  onTap: () => _restoreData(context),
+                ),
+                Divider(
+                  height: 1,
+                  indent: 56,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.table_chart_outlined),
+                  title: const Text('Export CSV'),
+                  subtitle: const Text('Export transactions to CSV file'),
+                  onTap: () => _exportCSV(context),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
                       bottom: Radius.circular(24),
@@ -222,11 +237,17 @@ class SettingsScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
-            child: const ListTile(
-              leading: Icon(Icons.info),
-              title: Text('ExpendiNote'),
-              subtitle: Text('Version 2.0.1'),
-              shape: RoundedRectangleBorder(
+            child: ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('ExpendiNote'),
+              subtitle: FutureBuilder<String>(
+                future: AppConstants.getAppVersion(),
+                builder: (context, snapshot) {
+                  final version = snapshot.data ?? AppConstants.appVersion;
+                  return Text('Version $version');
+                },
+              ),
+              shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(24)),
               ),
             ),
@@ -251,7 +272,127 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _exportData(BuildContext context) async {
+  Future<void> _backupData(BuildContext context) async {
+    try {
+      final result = await BackupService().createBackupFile();
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Backup created successfully\nSaved to ${result.displayPath}',
+          ),
+          duration: const Duration(seconds: 6),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Share',
+            onPressed: () {
+              SharePlus.instance.share(
+                ShareParams(
+                  files: [XFile(result.file.path)],
+                  subject: 'ExpendiNote Backup',
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup failed: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreData(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Restore Data?'),
+        content: const Text(
+          'Restoring a backup will replace your current local transactions and categories with the contents of the backup file.\n\nThis action cannot be undone. Are you sure you want to proceed?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Restore'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ImportService().restoreFromJSON();
+
+    if (!context.mounted) return;
+
+    if (result.isCancelled) {
+      return;
+    }
+
+    if (result.isSuccess) {
+      final formattedCount = NumberFormat(
+        '#,##0',
+      ).format(result.transactionsRestored);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Backup Restored Successfully'),
+          content: Text(
+            '$formattedCount ${result.transactionsRestored == 1 ? "transaction" : "transactions"} imported.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else if (result.isUnsupportedVersion) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Unsupported backup version'),
+          content: const Text(
+            'This backup was created with a newer version of ExpendiNote. Please update the app to import this backup.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Restore Failed'),
+          content: Text(result.errorMessage ?? 'An unknown error occurred.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> _exportCSV(BuildContext context) async {
     final data = await TransactionRepository.getAllTransactions();
 
     if (data.isEmpty) {
@@ -266,36 +407,40 @@ class SettingsScreen extends StatelessWidget {
       return;
     }
 
-    await ExportService().exportToCSV(data);
-  }
+    try {
+      final result = await ExportService().exportToCSV(data);
+      if (!context.mounted) return;
 
-  Future<void> _importData(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24.0),
-            child: CircularProgressIndicator(),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'CSV exported successfully\nSaved to ${result.displayPath}',
+          ),
+          duration: const Duration(seconds: 6),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'Share',
+            onPressed: () {
+              SharePlus.instance.share(
+                ShareParams(
+                  files: [XFile(result.file.path)],
+                  subject: 'Transactions Export',
+                ),
+              );
+            },
           ),
         ),
-      ),
-    );
-
-    final success = await ImportService().importFromJSON();
-
-    if (!context.mounted) return;
-    Navigator.pop(context); // Close loading dialog
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success ? 'Data imported successfully' : 'Import failed or cancelled',
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('CSV export failed: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   String _getThemeModeName(ThemeMode mode) {
