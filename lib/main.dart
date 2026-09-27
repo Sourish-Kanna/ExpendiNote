@@ -1,4 +1,5 @@
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:expend_note/constants/app_constants.dart';
 import 'package:expend_note/screens/new_home_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/theme/app_theme.dart';
@@ -7,6 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppConstants.init();
 
   final themeController = AppThemeController();
 
@@ -110,8 +112,11 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
   @override
   void initState() {
     super.initState();
-    // Trigger database init after frame rendering schedule starts
-    _initFuture = DatabaseService.instance.database.then((_) => null);
+    // Trigger database and app constants init after frame rendering schedule starts
+    _initFuture = Future.wait([
+      DatabaseService.instance.database,
+      AppConstants.init(),
+    ]).then((_) => null);
   }
 
   @override

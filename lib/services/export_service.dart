@@ -2,17 +2,23 @@ import 'dart:io';
 
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../models/transaction.dart' as txmodel;
+import '../utils/file_export_helper.dart';
 import '../utils/logger.dart';
 
+class ExportResult {
+  final File file;
+  final String displayPath;
+
+  const ExportResult({required this.file, required this.displayPath});
+}
+
 class ExportService {
-  Future<void> exportToCSV(List<txmodel.Transaction> transactions) async {
-    AppLogger.info(
-      'Exporting ${transactions.length} v2 transactions to CSV...',
-    );
+  Future<ExportResult> exportToCSV(
+    List<txmodel.Transaction> transactions,
+  ) async {
+    AppLogger.info('Exporting ${transactions.length} transactions to CSV...');
     try {
       final List<List<dynamic>> rows = [];
 
@@ -23,45 +29,43 @@ class ExportService {
         'Amount',
         'Date',
         'Time',
-        'Day',
-        'Category ID',
-        'Category Name',
+        'Category',
         'Description',
-        'Include In Spending Analysis',
+        'Include in Spending Analysis',
+        'Created At',
       ]);
 
-      // Populate rows using v2 Transaction schema fields
+      final dateFormat = DateFormat('yyyy-MM-dd');
+      final timeFormat = DateFormat('HH:mm:ss');
+      final dateTimeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+      // Populate rows using normalized Transaction schema fields
       for (final t in transactions) {
         rows.add([
-          t.id,
+          t.id ?? '',
           t.title,
           t.amount,
-          DateFormat('yyyy-MM-dd').format(t.date),
-          DateFormat('HH:mm:ss').format(t.date),
-          DateFormat('EEEE').format(t.date),
-          t.categoryId ?? '',
+          dateFormat.format(t.date),
+          timeFormat.format(t.date),
           t.categoryName ?? 'Uncategorized',
           t.description ?? '',
-          t.includeInSpendingAnalysis,
+          t.includeInSpendingAnalysis ? 'Yes' : 'No',
+          dateTimeFormat.format(t.createdAt),
         ]);
       }
 
       final String csvString = csv.encode(rows);
 
-      final directory = await getTemporaryDirectory();
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final file = File('${directory.path}/transactions_$dateStamp.csv');
-      await file.writeAsString(csvString);
+      final fileName = 'expendinote_transactions_$dateStamp.csv';
 
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          text: 'Transactions Export - $dateStamp',
-          subject: 'Transactions Export',
-        ),
+      final file = await FileExportHelper.saveToDownloads(fileName, csvString);
+
+      AppLogger.info('CSV export completed successfully at ${file.path}');
+      return ExportResult(
+        file: file,
+        displayPath: 'Downloads/ExpendiNote/$fileName',
       );
-
-      AppLogger.info('CSV export completed successfully.');
     } catch (e, stackTrace) {
       AppLogger.error('CSV export failed', e, stackTrace);
       rethrow;

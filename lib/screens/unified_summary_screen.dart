@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
@@ -96,15 +97,43 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
             icon: const Icon(Icons.share),
             tooltip: 'Share CSV',
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               if (_allSpendings.isEmpty) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No data to export')),
-                  );
-                }
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('No data to export')),
+                );
                 return;
               }
-              await ExportService().exportToCSV(_allSpendings);
+              try {
+                final result = await ExportService().exportToCSV(_allSpendings);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'CSV exported successfully\nSaved to ${result.displayPath}',
+                    ),
+                    duration: const Duration(seconds: 6),
+                    behavior: SnackBarBehavior.floating,
+                    action: SnackBarAction(
+                      label: 'Share',
+                      onPressed: () {
+                        SharePlus.instance.share(
+                          ShareParams(
+                            files: [XFile(result.file.path)],
+                            subject: 'Transactions Export',
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('CSV export failed: $e'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
             },
           ),
         ],
