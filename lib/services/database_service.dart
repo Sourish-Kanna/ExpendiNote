@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter/material.dart' show Color, IconData;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,12 +17,6 @@ class DatabaseService {
 
   static Database? _database;
   static Future<Database>? _initializationFuture;
-
-  @visibleForTesting
-  static void setTestDatabase(Database? db) {
-    _database = db;
-    _initializationFuture = db != null ? Future.value(db) : null;
-  }
 
   Future<Database> get database async {
     if (_database != null && _database!.isOpen) return _database!;
@@ -64,32 +57,31 @@ class DatabaseService {
       },
       onCreate: (db, version) async {
         AppLogger.info('Creating database tables for version $version...');
-        await createTables(db);
-        await seedDefaultCategories(db);
+        await _createTables(db);
+        await _seedDefaultCategories(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
-          await migrateV1toV2(db);
+          await _migrateV1toV2(db);
         }
         if (oldVersion < 3) {
           AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
-          await migrateV2toV3(db);
+          await _migrateV2toV3(db);
         }
         if (oldVersion < 4) {
           AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
-          await migrateV3toV4(db);
+          await _migrateV3toV4(db);
         }
         if (oldVersion < 5) {
           AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
-          await migrateV4toV5(db);
+          await _migrateV4toV5(db);
         }
       },
     );
   }
 
-  @visibleForTesting
-  static Future<void> createTables(Database db) async {
+  static Future<void> _createTables(Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS ${DbTables.categories}(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,8 +128,7 @@ class DatabaseService {
     );
   }
 
-  @visibleForTesting
-  static Future<void> seedDefaultCategories(Database db) async {
+  static Future<void> _seedDefaultCategories(Database db) async {
     final now = DateTime.now().toIso8601String();
     final defaults = [
       'Food',
@@ -207,8 +198,7 @@ class DatabaseService {
   }
 
   /// Migrates the database from version 1 to version 2.
-  @visibleForTesting
-  static Future<void> migrateV1toV2(Database db) async {
+  static Future<void> _migrateV1toV2(Database db) async {
     AppLogger.info('Starting database migration: v1 -> v2');
 
     try {
@@ -362,8 +352,7 @@ class DatabaseService {
 
   /// Migrates the database from version 2 to version 3.
   /// Adds missing columns to categories table.
-  @visibleForTesting
-  static Future<void> migrateV2toV3(Database db) async {
+  static Future<void> _migrateV2toV3(Database db) async {
     AppLogger.info('Starting database migration: v2 -> v3');
 
     // Check existing columns to avoid duplicate column errors
@@ -400,8 +389,7 @@ class DatabaseService {
 
   /// Migrates the database from version 3 to version 4.
   /// Adds includeInSpendingAnalysis column to categories and transactions tables.
-  @visibleForTesting
-  static Future<void> migrateV3toV4(Database db) async {
+  static Future<void> _migrateV3toV4(Database db) async {
     AppLogger.info('Starting database migration: v3 -> v4');
 
     final catTableInfo = await db.rawQuery(
@@ -449,10 +437,9 @@ class DatabaseService {
 
     AppLogger.info('Migration v3 -> v4 completed.');
   }
-  /// Migrates the database from version 4 to version 5.
+/// Migrates the database from version 4 to version 5.
   /// Replaces persisted Material icon code points with stable icon names.
-  @visibleForTesting
-  static Future<void> migrateV4toV5(Database db) async {
+  static Future<void> _migrateV4toV5(Database db) async {
     AppLogger.info('Starting database migration: v4 -> v5');
 
     await db.execute('''

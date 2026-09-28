@@ -1,39 +1,32 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
-  late Database db;
-
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('db_service_test_');
+    databaseFactory.setDatabasesPath(tempDir.path);
   });
 
   setUp(() async {
-    db = await openDatabase(
-      inMemoryDatabasePath,
-      version: DbConfig.databaseVersion,
-      onConfigure: (database) async {
-        await database.execute('PRAGMA foreign_keys = ON');
-      },
-      onCreate: (database, version) async {
-        // Run DatabaseService createTables and seedDefaultCategories directly
-        await DatabaseService.createTables(database);
-        await DatabaseService.seedDefaultCategories(database);
-      },
-    );
-    DatabaseService.setTestDatabase(db);
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
   });
 
   tearDown(() async {
-    await db.close();
-    DatabaseService.setTestDatabase(null);
+    await DatabaseService.instance.closeDatabase();
   });
 
   group('DatabaseService Fresh Installation & Schema Tests', () {
-    test('creates required tables for v5 schema', () async {
+    test('creates required tables for v5 schema directly on fresh install', () async {
+      final db = await DatabaseService.instance.database;
+
       final tables = await db.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
       );
@@ -44,7 +37,9 @@ void main() {
       expect(tableNames, contains(DbTables.settings));
     });
 
-    test('categories table contains all expected columns', () async {
+    test('categories table contains all expected v5 columns', () async {
+      final db = await DatabaseService.instance.database;
+
       final columns = await db.rawQuery("PRAGMA table_info(${DbTables.categories})");
       final columnNames = columns.map((c) => c['name'] as String).toSet();
 
@@ -58,7 +53,9 @@ void main() {
       expect(columnNames, contains(DbCols.createdAt));
     });
 
-    test('transactions table contains all expected columns', () async {
+    test('transactions table contains all expected v5 columns', () async {
+      final db = await DatabaseService.instance.database;
+
       final columns = await db.rawQuery("PRAGMA table_info(${DbTables.transactions})");
       final columnNames = columns.map((c) => c['name'] as String).toSet();
 
@@ -72,7 +69,9 @@ void main() {
       expect(columnNames, contains(DbCols.createdAt));
     });
 
-    test('creates required indexes for performance', () async {
+    test('creates required performance indexes', () async {
+      final db = await DatabaseService.instance.database;
+
       final indexes = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='index'");
       final indexNames = indexes.map((i) => i['name'] as String).toSet();
 
@@ -81,7 +80,9 @@ void main() {
       expect(indexNames, contains('idx_categories_name'));
     });
 
-    test('seeds default categories with correct settings on fresh install', () async {
+    test('seeds default categories with correct spending analysis settings on fresh install', () async {
+      final db = await DatabaseService.instance.database;
+
       final categories = await db.query(DbTables.categories);
       final names = categories.map((c) => c[DbCols.name] as String).toList();
 
@@ -105,6 +106,8 @@ void main() {
     });
 
     test('enforces NOCASE uniqueness on category names', () async {
+      final db = await DatabaseService.instance.database;
+
       await expectLater(
         db.insert(DbTables.categories, {
           DbCols.name: 'food', // lowercase duplicate of 'Food'
@@ -115,6 +118,8 @@ void main() {
     });
 
     test('enforces foreign key constraints on transactions', () async {
+      final db = await DatabaseService.instance.database;
+
       await expectLater(
         db.insert(DbTables.transactions, {
           DbCols.title: 'Test FK',
@@ -127,7 +132,9 @@ void main() {
       );
     });
 
-    test('supports transaction CRUD operations at raw SQL level', () async {
+    test('supports transaction CRUD operations via DatabaseService instance', () async {
+      final db = await DatabaseService.instance.database;
+
       final catId = (await db.query(DbTables.categories, limit: 1)).first['id'] as int;
       final nowStr = DateTime.now().toIso8601String();
 

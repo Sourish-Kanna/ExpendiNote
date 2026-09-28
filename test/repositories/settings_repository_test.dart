@@ -1,36 +1,28 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/repositories/settings_repository.dart';
 import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
-  late Database db;
-
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('settings_repo_test_');
+    databaseFactory.setDatabasesPath(tempDir.path);
   });
 
   setUp(() async {
-    db = await openDatabase(
-      inMemoryDatabasePath,
-      version: DbConfig.databaseVersion,
-      onCreate: (d, v) async {
-        await d.execute('''
-          CREATE TABLE ${DbTables.settings}(
-            key TEXT PRIMARY KEY,
-            value TEXT
-          )
-        ''');
-      },
-    );
-    DatabaseService.setTestDatabase(db);
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
+    await DatabaseService.instance.database;
   });
 
   tearDown(() async {
-    await db.close();
-    DatabaseService.setTestDatabase(null);
+    await DatabaseService.instance.closeDatabase();
   });
 
   group('SettingsRepository Tests', () {

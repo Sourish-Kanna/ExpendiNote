@@ -159,7 +159,7 @@ void main() {
 
           await db.execute('''
             CREATE TABLE IF NOT EXISTS ${DbTables.settings}(
-              key TEXT PRIMARY KEY, 
+              key TEXT PRIMARY KEY,
               value TEXT
             )
           ''');

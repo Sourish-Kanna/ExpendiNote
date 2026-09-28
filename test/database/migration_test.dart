@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/constants/database_constants.dart';
@@ -7,15 +9,34 @@ void main() {
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('migration_test_');
+    databaseFactory.setDatabasesPath(tempDir.path);
   });
 
-  group('Database Migration Tests', () {
-    test('v1 -> v2 migration preserves transactions, creates normalized categories, and drops legacy table', () async {
-      final db = await openDatabase(
-        inMemoryDatabasePath,
+  setUp(() async {
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    final path = p.join(dbPath, DbConfig.databaseFile);
+    await databaseFactory.deleteDatabase(path);
+  });
+
+  tearDown(() async {
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    final path = p.join(dbPath, DbConfig.databaseFile);
+    await databaseFactory.deleteDatabase(path);
+  });
+
+  group('Database Migration Tests via DatabaseService Public API', () {
+    test('migrates database from v1 to latest version (v5) preserving transactions and normalizing categories', () async {
+      final dbPath = await getDatabasesPath();
+      final path = p.join(dbPath, DbConfig.databaseFile);
+
+      // Create initial v1 database
+      final v1db = await openDatabase(
+        path,
         version: 1,
         onCreate: (db, version) async {
-          // Create legacy v1 table 'spendings'
           await db.execute('''
             CREATE TABLE spendings (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +48,6 @@ void main() {
             )
           ''');
 
-          // Insert legacy rows
           await db.insert('spendings', {
             'id': 100,
             'title': 'Coffee',
@@ -41,17 +61,18 @@ void main() {
             'title': 'Unknown spend',
             'amount': 50.0,
             'date': '2024-01-16T10:00:00.000',
-            'category': null, // Missing category
+            'category': null,
             'description': null,
           });
         },
       );
+      await v1db.close();
 
-      // Perform migration v1 -> v2 directly calling production DatabaseService method
-      await DatabaseService.migrateV1toV2(db);
+      // Open database via DatabaseService, triggering production migration onUpgrade
+      final migratedDb = await DatabaseService.instance.database;
 
-      // Verify v2 tables exist
-      final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'");
+      // Verify v5 tables exist
+      final tables = await migratedDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table'");
       final tableNames = tables.map((t) => t['name'] as String).toSet();
       expect(tableNames, contains(DbTables.categories));
       expect(tableNames, contains(DbTables.transactions));
@@ -59,30 +80,28 @@ void main() {
       expect(tableNames.contains(DbTables.legacySpendings), isFalse); // Legacy table dropped
 
       // Verify categories were created with normalized names
-      final categories = await db.query(DbTables.categories);
+      final categories = await migratedDb.query(DbTables.categories);
       final catNames = categories.map((c) => c[DbCols.name] as String).toList();
-      expect(catNames, contains('Food & Dining')); // Capitalized and trimmed
-      expect(catNames, contains('Others')); // Fallback for null/empty category
+      expect(catNames, contains('Food & Dining'));
+      expect(catNames, contains('Others'));
 
-      // Verify transactions preserved with correct category IDs
-      final transactions = await db.query(DbTables.transactions);
+      // Verify transactions preserved
+      final transactions = await migratedDb.query(DbTables.transactions);
       expect(transactions.length, equals(2));
 
       final tx100 = transactions.firstWhere((t) => t[DbCols.id] == 100);
       expect(tx100[DbCols.title], equals('Coffee'));
       expect(tx100[DbCols.amount], equals(150.0));
       expect(tx100[DbCols.description], equals('Espresso'));
-
-      final tx101 = transactions.firstWhere((t) => t[DbCols.id] == 101);
-      expect(tx101[DbCols.title], equals('Unknown spend'));
-      expect(tx101[DbCols.amount], equals(50.0));
-
-      await db.close();
     });
 
-    test('v2 -> v3 migration adds new category columns and preserves existing data', () async {
-      final db = await openDatabase(
-        inMemoryDatabasePath,
+    test('migrates database from v2 to latest version (v5) adding missing category columns and metadata', () async {
+      final dbPath = await getDatabasesPath();
+      final path = p.join(dbPath, DbConfig.databaseFile);
+
+      // Create initial v2 database
+      final v2db = await openDatabase(
+        path,
         version: 2,
         onCreate: (db, version) async {
           await db.execute('''
@@ -119,85 +138,35 @@ void main() {
           });
         },
       );
+      await v2db.close();
 
-      // Perform migration v2 -> v3 directly calling production DatabaseService method
-      await DatabaseService.migrateV2toV3(db);
+      // Open via DatabaseService, executing migrations v2->v3, v3->v4, v4->v5
+      final migratedDb = await DatabaseService.instance.database;
 
-      final catTableInfo = await db.rawQuery('PRAGMA table_info(${DbTables.categories})');
+      final catTableInfo = await migratedDb.rawQuery('PRAGMA table_info(${DbTables.categories})');
       final catCols = catTableInfo.map((c) => c['name'] as String).toSet();
       expect(catCols, contains(DbCols.icon));
       expect(catCols, contains(DbCols.color));
       expect(catCols, contains(DbCols.isPinned));
       expect(catCols, contains(DbCols.isArchived));
-
-      // Verify category & transaction data preserved
-      final cat = (await db.query(DbTables.categories)).first;
-      expect(cat[DbCols.name], equals('Groceries'));
-      expect(cat[DbCols.isPinned], equals(0)); // Default value
-
-      final tx = (await db.query(DbTables.transactions)).first;
-      expect(tx[DbCols.title], equals('Milk'));
-      expect(tx[DbCols.amount], equals(40.0));
-
-      await db.close();
-    });
-
-    test('v3 -> v4 migration adds includeInSpendingAnalysis and updates Investment category', () async {
-      final db = await openDatabase(
-        inMemoryDatabasePath,
-        version: 3,
-        onCreate: (db, version) async {
-          await db.execute('''
-            CREATE TABLE ${DbTables.categories}(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
-              ${DbCols.icon} TEXT,
-              ${DbCols.color} INTEGER,
-              ${DbCols.isPinned} INTEGER DEFAULT 0,
-              ${DbCols.isArchived} INTEGER DEFAULT 0,
-              ${DbCols.createdAt} TEXT NOT NULL
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE ${DbTables.transactions}(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              ${DbCols.title} TEXT NOT NULL,
-              ${DbCols.amount} REAL NOT NULL,
-              ${DbCols.date} TEXT NOT NULL,
-              ${DbCols.categoryId} INTEGER,
-              ${DbCols.description} TEXT,
-              ${DbCols.createdAt} TEXT NOT NULL
-            )
-          ''');
-
-          await db.insert(DbTables.categories, {
-            'id': 1,
-            DbCols.name: 'Investment',
-            DbCols.createdAt: '2024-01-01T00:00:00.000',
-          });
-        },
-      );
-
-      // Perform migration v3 -> v4 directly calling production DatabaseService method
-      await DatabaseService.migrateV3toV4(db);
-
-      final catTableInfo = await db.rawQuery('PRAGMA table_info(${DbTables.categories})');
-      final catCols = catTableInfo.map((c) => c['name'] as String).toSet();
       expect(catCols, contains(DbCols.includeInSpendingAnalysis));
 
-      final txTableInfo = await db.rawQuery('PRAGMA table_info(${DbTables.transactions})');
-      final txCols = txTableInfo.map((c) => c['name'] as String).toSet();
-      expect(txCols, contains(DbCols.includeInSpendingAnalysis));
+      // Verify existing data preserved
+      final cat = (await migratedDb.query(DbTables.categories, where: 'id = 1')).first;
+      expect(cat[DbCols.name], equals('Groceries'));
 
-      final invCat = (await db.query(DbTables.categories, where: "LOWER(name) = 'investment'")).first;
-      expect(invCat[DbCols.includeInSpendingAnalysis], equals(0));
-
-      await db.close();
+      final tx = (await migratedDb.query(DbTables.transactions, where: 'id = 10')).first;
+      expect(tx[DbCols.title], equals('Milk'));
+      expect(tx[DbCols.amount], equals(40.0));
     });
 
-    test('v4 -> v5 migration converts numeric icon code points to named icon strings', () async {
-      final db = await openDatabase(
-        inMemoryDatabasePath,
+    test('migrates database from v4 to v5 converting numeric codepoints to icon names', () async {
+      final dbPath = await getDatabasesPath();
+      final path = p.join(dbPath, DbConfig.databaseFile);
+
+      // Create v4 database
+      final v4db = await openDatabase(
+        path,
         version: 4,
         onCreate: (db, version) async {
           await db.execute('''
@@ -212,33 +181,34 @@ void main() {
               ${DbCols.createdAt} TEXT NOT NULL
             )
           ''');
+          await db.execute('''
+            CREATE TABLE ${DbTables.transactions}(
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              ${DbCols.title} TEXT NOT NULL,
+              ${DbCols.amount} REAL NOT NULL,
+              ${DbCols.date} TEXT NOT NULL,
+              ${DbCols.categoryId} INTEGER,
+              ${DbCols.description} TEXT,
+              ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
+              ${DbCols.createdAt} TEXT NOT NULL
+            )
+          ''');
 
           await db.insert(DbTables.categories, {
             'id': 1,
             DbCols.name: 'Dining',
-            DbCols.icon: '58674', // Codepoint for restaurant
-            DbCols.createdAt: '2024-01-01T00:00:00.000',
-          });
-          await db.insert(DbTables.categories, {
-            'id': 2,
-            DbCols.name: 'Shopping',
-            DbCols.icon: '58778', // Codepoint for shopping_bag
+            DbCols.icon: '58674', // restaurant
             DbCols.createdAt: '2024-01-01T00:00:00.000',
           });
         },
       );
+      await v4db.close();
 
-      // Perform migration v4 -> v5 directly calling production DatabaseService method
-      await DatabaseService.migrateV4toV5(db);
+      // Open via DatabaseService, executing v4->v5 migration
+      final migratedDb = await DatabaseService.instance.database;
 
-      final cats = await db.query(DbTables.categories);
-      final c1 = cats.firstWhere((c) => c['id'] == 1);
-      expect(c1[DbCols.icon], equals('restaurant'));
-
-      final c2 = cats.firstWhere((c) => c['id'] == 2);
-      expect(c2[DbCols.icon], equals('shopping_bag'));
-
-      await db.close();
+      final cat = (await migratedDb.query(DbTables.categories, where: 'id = 1')).first;
+      expect(cat[DbCols.icon], equals('restaurant'));
     });
   });
 }

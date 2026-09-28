@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/repositories/category_repository.dart';
@@ -10,47 +12,19 @@ import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  late Database db;
 
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('add_spending_widget_test_');
+    databaseFactory.setDatabasesPath(tempDir.path);
   });
 
   setUp(() async {
-    db = await openDatabase(
-      inMemoryDatabasePath,
-      version: DbConfig.databaseVersion,
-      onCreate: (d, v) async {
-        await d.execute('''
-          CREATE TABLE ${DbTables.categories}(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
-            ${DbCols.icon} TEXT,
-            ${DbCols.color} INTEGER,
-            ${DbCols.isPinned} INTEGER DEFAULT 0,
-            ${DbCols.isArchived} INTEGER DEFAULT 0,
-            ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
-            ${DbCols.createdAt} TEXT NOT NULL
-          )
-        ''');
-
-        await d.execute('''
-          CREATE TABLE ${DbTables.transactions}(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbCols.title} TEXT NOT NULL,
-            ${DbCols.amount} REAL NOT NULL,
-            ${DbCols.date} TEXT NOT NULL,
-            ${DbCols.categoryId} INTEGER,
-            ${DbCols.description} TEXT,
-            ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
-            ${DbCols.createdAt} TEXT NOT NULL,
-            FOREIGN KEY(${DbCols.categoryId}) REFERENCES ${DbTables.categories}(id)
-          )
-        ''');
-      },
-    );
-    DatabaseService.setTestDatabase(db);
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
+    await DatabaseService.instance.database;
 
     // Seed test categories
     await CategoryRepository.createCategory(Category(id: 1, name: 'Food', icon: 'restaurant', includeInSpendingAnalysis: true));
@@ -58,8 +32,7 @@ void main() {
   });
 
   tearDown(() async {
-    await db.close();
-    DatabaseService.setTestDatabase(null);
+    await DatabaseService.instance.closeDatabase();
   });
 
   Widget createWidgetUnderTest({Transaction? transaction}) {

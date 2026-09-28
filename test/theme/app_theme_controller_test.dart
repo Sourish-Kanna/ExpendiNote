@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/repositories/settings_repository.dart';
@@ -9,7 +10,6 @@ import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  late Database db;
 
   setUpAll(() {
     sqfliteFfiInit();
@@ -17,26 +17,19 @@ void main() {
   });
 
   setUp(() async {
-    db = await openDatabase(
-      inMemoryDatabasePath,
-      version: DbConfig.databaseVersion,
-      onCreate: (d, v) async {
-        await d.execute('''
-          CREATE TABLE ${DbTables.settings}(
-            key TEXT PRIMARY KEY,
-            value TEXT
-          )
-        ''');
-      },
-    );
-    DatabaseService.setTestDatabase(db);
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
+
+    // Ensure database tables exist
+    await DatabaseService.instance.database;
+
     // Pre-seed custom_theme_enabled so DynamicColorPlugin platform channel is bypassed
     await SettingsRepository.setBool('custom_theme_enabled', true);
   });
 
   tearDown(() async {
-    await db.close();
-    DatabaseService.setTestDatabase(null);
+    await DatabaseService.instance.closeDatabase();
   });
 
   group('AppThemeController Tests', () {
@@ -46,7 +39,7 @@ void main() {
       await SettingsRepository.set('selected_theme_color', 'Purple');
 
       final controller = AppThemeController();
-      await controller.loadFuture;
+      await Future.delayed(const Duration(milliseconds: 50));
 
       expect(controller.themeMode, equals(ThemeMode.dark));
       expect(controller.customThemeEnabled, isTrue);
@@ -55,7 +48,7 @@ void main() {
 
     test('setThemeMode updates state, notifies listeners, and persists choice', () async {
       final controller = AppThemeController();
-      await controller.loadFuture;
+      await Future.delayed(const Duration(milliseconds: 50));
 
       bool listenerNotified = false;
       controller.addListener(() {
@@ -71,7 +64,7 @@ void main() {
 
     test('setCustomThemeEnabled updates state and persists setting', () async {
       final controller = AppThemeController();
-      await controller.loadFuture;
+      await Future.delayed(const Duration(milliseconds: 50));
 
       await controller.setCustomThemeEnabled(false);
       expect(controller.customThemeEnabled, isFalse);
@@ -84,7 +77,7 @@ void main() {
 
     test('setSelectedThemeColor updates color and preserves it when custom theme is disabled', () async {
       final controller = AppThemeController();
-      await controller.loadFuture;
+      await Future.delayed(const Duration(milliseconds: 50));
 
       await controller.setSelectedThemeColor(AppThemeColor.orange);
       expect(controller.selectedThemeColor, equals(AppThemeColor.orange));

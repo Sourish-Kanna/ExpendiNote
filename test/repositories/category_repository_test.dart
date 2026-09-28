@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/repositories/category_repository.dart';
@@ -8,53 +10,22 @@ import 'package:expend_note/models/transaction.dart';
 import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
-  late Database db;
-
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    final tempDir = Directory.systemTemp.createTempSync('category_repo_test_');
+    databaseFactory.setDatabasesPath(tempDir.path);
   });
 
   setUp(() async {
-    db = await openDatabase(
-      inMemoryDatabasePath,
-      version: DbConfig.databaseVersion,
-      onConfigure: (d) async => await d.execute('PRAGMA foreign_keys = ON'),
-      onCreate: (d, v) async {
-        await d.execute('''
-          CREATE TABLE ${DbTables.categories}(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbCols.name} TEXT NOT NULL UNIQUE COLLATE NOCASE,
-            ${DbCols.icon} TEXT,
-            ${DbCols.color} INTEGER,
-            ${DbCols.isPinned} INTEGER DEFAULT 0,
-            ${DbCols.isArchived} INTEGER DEFAULT 0,
-            ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
-            ${DbCols.createdAt} TEXT NOT NULL
-          )
-        ''');
-
-        await d.execute('''
-          CREATE TABLE ${DbTables.transactions}(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${DbCols.title} TEXT NOT NULL,
-            ${DbCols.amount} REAL NOT NULL,
-            ${DbCols.date} TEXT NOT NULL,
-            ${DbCols.categoryId} INTEGER,
-            ${DbCols.description} TEXT,
-            ${DbCols.includeInSpendingAnalysis} INTEGER DEFAULT 1,
-            ${DbCols.createdAt} TEXT NOT NULL,
-            FOREIGN KEY(${DbCols.categoryId}) REFERENCES ${DbTables.categories}(id)
-          )
-        ''');
-      },
-    );
-    DatabaseService.setTestDatabase(db);
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
+    await DatabaseService.instance.database;
   });
 
   tearDown(() async {
-    await db.close();
-    DatabaseService.setTestDatabase(null);
+    await DatabaseService.instance.closeDatabase();
   });
 
   group('CategoryRepository Tests', () {
