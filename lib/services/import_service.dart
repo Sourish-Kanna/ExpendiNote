@@ -110,6 +110,14 @@ class ImportService {
     }
   }
 
+  /// Restores already-migrated backup data using the selected restore mode.
+  Future<int> restoreMigratedData(
+    Map<String, dynamic> backupDataMap, {
+    RestoreMode mode = RestoreMode.replaceExistingTransactions,
+  }) {
+    return _executeDatabaseRestore(backupDataMap, mode);
+  }
+
   /// Executes atomic restore inside a single SQLite transaction.
   Future<int> _executeDatabaseRestore(
     Map<String, dynamic> backupDataMap,
