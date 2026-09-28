@@ -151,11 +151,9 @@ class ImportService {
         }
 
         var color = catMap['color'] as int?;
-        if (color == null) {
-          color = ColorUtils.colorToInt(
-            availableColors[random.nextInt(availableColors.length)],
-          );
-        }
+        color ??= ColorUtils.colorToInt(
+          availableColors[random.nextInt(availableColors.length)],
+        );
 
         final isPinnedVal = catMap['is_pinned'] ?? catMap['isPinned'];
         final isPinned = isPinnedVal == true || isPinnedVal == 1;
