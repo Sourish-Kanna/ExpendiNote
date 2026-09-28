@@ -6,11 +6,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 
 import '../constants/database_constants.dart';
+import '../repositories/category_repository.dart';
 import '../services/database_service.dart';
 import '../services/export_migrations/export_migration_service.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import '../utils/logger.dart';
+
+enum RestoreMode { merge, replaceExistingTransactions }
 
 class RestoreResult {
   final bool isSuccess;
@@ -41,8 +44,29 @@ class RestoreResult {
 }
 
 class ImportService {
+  static const _defaultCategories = [
+    'Food',
+    'Transport',
+    'Shopping',
+    'Bills',
+    'Entertainment',
+    'Healthcare',
+    'Investment',
+    'Others',
+  ];
+
+  Future<int> getCurrentTransactionCount() async {
+    final db = await DatabaseService.instance.database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) AS count FROM ${DbTables.transactions}',
+    );
+    return (result.first['count'] as int?) ?? 0;
+  }
+
   /// Prompts user to pick a JSON backup file and restores it atomically.
-  Future<RestoreResult> restoreFromJSON() async {
+  Future<RestoreResult> restoreFromJSON({
+    RestoreMode mode = RestoreMode.replaceExistingTransactions,
+  }) async {
     try {
       // 1. Pick JSON backup file
       final result = await FilePicker.pickFiles(type: FileType.any);
@@ -97,8 +121,13 @@ class ImportService {
         );
       }
 
+      // Ensure system/default categories exist only after the backup is validated.
+      for (final name in _defaultCategories) {
+        await CategoryRepository.ensureCategoryByName(name);
+      }
+
       // 4. Perform atomic database restore
-      final restoredCount = await _executeDatabaseRestore(migratedData);
+      final restoredCount = await restoreMigratedData(migratedData, mode: mode);
 
       AppLogger.info(
         'Restore completed successfully. $restoredCount transactions restored.',
@@ -110,11 +139,22 @@ class ImportService {
     }
   }
 
+  /// Restores already-migrated backup data using the selected restore mode.
+  Future<int> restoreMigratedData(
+    Map<String, dynamic> backupDataMap, {
+    RestoreMode mode = RestoreMode.replaceExistingTransactions,
+    sql.Database? database,
+  }) {
+    return _executeDatabaseRestore(backupDataMap, mode, database: database);
+  }
+
   /// Executes atomic restore inside a single SQLite transaction.
   Future<int> _executeDatabaseRestore(
     Map<String, dynamic> backupDataMap,
-  ) async {
-    final db = await DatabaseService.instance.database;
+    RestoreMode mode, {
+    sql.Database? database,
+  }) async {
+    final db = database ?? await DatabaseService.instance.database;
 
     final data = Map<String, dynamic>.from(backupDataMap['data'] as Map);
     final rawCategories = data['categories'] as List? ?? [];
@@ -124,13 +164,31 @@ class ImportService {
     int restoredCount = 0;
 
     await db.transaction((txn) async {
-      // Step A: Wipe current transaction and category data
-      await txn.delete(DbTables.transactions);
-      await txn.delete(DbTables.categories);
+      // Step A: Preserve default categories and apply the selected transaction mode.
+      final defaultCategoryNames = _defaultCategories
+          .map((name) => name.toLowerCase())
+          .toSet();
 
-      // Step B: Insert categories & build ID and name lookup maps
+      if (mode == RestoreMode.replaceExistingTransactions) {
+        await txn.delete(DbTables.transactions);
+        await txn.delete(
+          DbTables.categories,
+          where:
+              'LOWER(${DbCols.name}) NOT IN (?, ?, ?, ?, ?, ?, ?, ?)',
+          whereArgs: defaultCategoryNames.toList(),
+        );
+      }
+
+      // Step B: Build category lookup maps from categories that remain.
       final categoryIdMap = <int, int>{};
       final categoryNameMap = <String, int>{};
+      final existingCategories = await txn.query(DbTables.categories);
+      for (final category in existingCategories) {
+        final id = category[DbCols.id] as int;
+        final name = (category[DbCols.name] as String).trim();
+        categoryIdMap[id] = id;
+        categoryNameMap[name.toLowerCase()] = id;
+      }
 
       final random = Random();
       final availableIcons = IconUtils.getAvailableIcons();
@@ -173,8 +231,10 @@ class ImportService {
             catMap['createdAt'] as String? ??
             DateTime.now().toIso8601String();
 
-        final insertedId = await txn.insert(DbTables.categories, {
-          DbCols.id: ?oldId,
+        final existingCategoryId = categoryNameMap[name.toLowerCase()];
+        final finalCatId = existingCategoryId ??
+            await txn.insert(DbTables.categories, {
+          DbCols.id: null,
           DbCols.name: name,
           DbCols.icon: icon,
           DbCols.color: color,
@@ -182,9 +242,7 @@ class ImportService {
           DbCols.isArchived: isArchived ? 1 : 0,
           DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
           DbCols.createdAt: createdAt,
-        }, conflictAlgorithm: sql.ConflictAlgorithm.replace);
-
-        final finalCatId = oldId ?? insertedId;
+        }, conflictAlgorithm: sql.ConflictAlgorithm.ignore);
         if (oldId != null) {
           categoryIdMap[oldId] = finalCatId;
         }
@@ -196,7 +254,6 @@ class ImportService {
         if (rawTx is! Map) continue;
         final txMap = Map<String, dynamic>.from(rawTx);
 
-        final oldTxId = txMap['id'] as int?;
         final title = (txMap['title'] as String? ?? '').trim();
 
         final rawAmount = txMap['amount'];
@@ -268,7 +325,6 @@ class ImportService {
             DateTime.now().toIso8601String();
 
         await txn.insert(DbTables.transactions, {
-          DbCols.id: ?oldTxId,
           DbCols.title: title,
           DbCols.amount: amount,
           DbCols.date: dateStr,
@@ -276,7 +332,7 @@ class ImportService {
           DbCols.description: description,
           DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
           DbCols.createdAt: createdAt,
-        }, conflictAlgorithm: sql.ConflictAlgorithm.replace);
+        }, conflictAlgorithm: sql.ConflictAlgorithm.abort);
 
         restoredCount++;
       }

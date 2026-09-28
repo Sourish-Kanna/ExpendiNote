@@ -2,6 +2,7 @@ import 'package:expend_note/constants/app_constants.dart';
 import 'package:expend_note/constants/database_constants.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/services/export_migrations/export_migration_service.dart';
+import 'package:expend_note/services/import_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -278,5 +279,182 @@ void main() {
         expect(txCount, equals(1));
       },
     );
+   Future<void> seedDefaultCategories() async {
+      const names = [
+        'Food',
+        'Transport',
+        'Shopping',
+        'Bills',
+        'Entertainment',
+        'Healthcare',
+        'Investment',
+        'Others',
+      ];
+      for (final name in names) {
+        await db.insert(DbTables.categories, {
+          DbCols.name: name,
+          DbCols.createdAt: DateTime.now().toIso8601String(),
+        });
+      }
+    }
+
+    test('Merge preserves existing transactions and default categories', () async {
+      await seedDefaultCategories();
+      final foodId = (await db.query(
+        DbTables.categories,
+        where: '${DbCols.name} = ?',
+        whereArgs: ['Food'],
+      )).first[DbCols.id] as int;
+
+      await db.insert(DbTables.categories, {
+        DbCols.name: 'Old Custom',
+        DbCols.createdAt: DateTime.now().toIso8601String(),
+      });
+      await db.insert(DbTables.transactions, {
+        DbCols.title: 'Existing',
+        DbCols.amount: 10.0,
+        DbCols.date: '2026-09-01T10:00:00Z',
+        DbCols.categoryId: foodId,
+        DbCols.createdAt: DateTime.now().toIso8601String(),
+      });
+
+      final backup = ExportMigrationService.migrateToLatest([
+        {
+          'id': 100,
+          'title': 'Imported',
+          'amount': 20.0,
+          'date': '2026-09-02T10:00:00Z',
+          'category': 'Food',
+        },
+      ]);
+
+      final restored = await ImportService().restoreMigratedData(
+        backup,
+        mode: RestoreMode.merge,
+        database: db,
+      );
+
+      expect(restored, equals(1));
+      expect((await db.query(DbTables.transactions)).length, equals(2));
+      expect(
+        (await db.query(
+          DbTables.categories,
+          where: '${DbCols.name} = ?',
+          whereArgs: ['Food'],
+        )).length,
+        equals(1),
+      );
+      expect(
+        (await db.query(
+          DbTables.categories,
+          where: '${DbCols.name} = ?',
+          whereArgs: ['Old Custom'],
+        )).length,
+        equals(1),
+      );
+    });
+
+    test(
+      'Replace removes existing transactions and custom categories but preserves defaults',
+      () async {
+        await seedDefaultCategories();
+        final foodId = (await db.query(
+          DbTables.categories,
+          where: '${DbCols.name} = ?',
+          whereArgs: ['Food'],
+        )).first[DbCols.id] as int;
+
+        await db.insert(DbTables.categories, {
+          DbCols.name: 'Old Custom',
+          DbCols.createdAt: DateTime.now().toIso8601String(),
+        });
+        await db.insert(DbTables.transactions, {
+          DbCols.title: 'Existing',
+          DbCols.amount: 10.0,
+          DbCols.date: '2026-09-01T10:00:00Z',
+          DbCols.categoryId: foodId,
+          DbCols.createdAt: DateTime.now().toIso8601String(),
+        });
+
+        final backup = ExportMigrationService.migrateToLatest([
+          {
+            'id': 200,
+            'title': 'Imported',
+            'amount': 25.0,
+            'date': '2026-09-03T10:00:00Z',
+            'category': 'Food',
+          },
+        ]);
+
+        final restored = await ImportService().restoreMigratedData(
+          backup,
+          mode: RestoreMode.replaceExistingTransactions,
+          database: db,
+        );
+
+        expect(restored, equals(1));
+        expect((await db.query(DbTables.transactions)).length, equals(1));
+        expect(
+          (await db.query(
+            DbTables.transactions,
+            where: '${DbCols.title} = ?',
+            whereArgs: ['Imported'],
+          )).length,
+          equals(1),
+        );
+        expect(
+          (await db.query(
+            DbTables.categories,
+            where: '${DbCols.name} = ?',
+            whereArgs: ['Old Custom'],
+          )).isEmpty,
+          isTrue,
+        );
+        expect((await db.query(DbTables.categories)).length, equals(8));
+      },
+    );
+
+    test(
+      'Legacy backup with incomplete category list keeps default categories',
+      () async {
+        await seedDefaultCategories();
+
+        final backup = ExportMigrationService.migrateToLatest([
+          {
+            'id': 300,
+            'title': 'Legacy Food',
+            'amount': 30.0,
+            'date': '2026-09-04T10:00:00Z',
+            'category': 'Food',
+          },
+        ]);
+
+        await ImportService().restoreMigratedData(
+          backup,
+          mode: RestoreMode.replaceExistingTransactions,
+          database: db,
+        );
+
+        final names = (await db.query(
+          DbTables.categories,
+          columns: [DbCols.name],
+        )).map((row) => row[DbCols.name]).toSet();
+
+        expect(
+          names.containsAll({
+            'Food',
+            'Transport',
+            'Shopping',
+            'Bills',
+            'Entertainment',
+            'Healthcare',
+            'Investment',
+            'Others',
+          }),
+          isTrue,
+        );
+      },
+    );
+
   });
 }

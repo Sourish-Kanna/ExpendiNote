@@ -310,46 +310,82 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _restoreData(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restore Data?'),
-        content: const Text(
-          'Restoring a backup will replace your current local transactions and categories with the contents of the backup file.\n\nThis action cannot be undone. Are you sure you want to proceed?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    final result = await ImportService().restoreFromJSON();
+    final importService = ImportService();
+    final existingCount = await importService.getCurrentTransactionCount();
 
     if (!context.mounted) return;
 
-    if (result.isCancelled) {
-      return;
+    RestoreMode mode = RestoreMode.replaceExistingTransactions;
+
+    if (existingCount > 0) {
+      final formattedCount = NumberFormat('#,##0').format(existingCount);
+      final selectedMode = await showDialog<RestoreMode>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Existing Transactions Found'),
+          content: Text(
+            'You currently have ${formattedCount} transactions. Choose how to restore the backup.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, RestoreMode.merge),
+              child: const Text('Merge'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                context,
+                RestoreMode.replaceExistingTransactions,
+              ),
+              child: const Text('Remove & Restore'),
+            ),
+          ],
+        ),
+      );
+
+      if (selectedMode == null || !context.mounted) return;
+      mode = selectedMode;
+    } else {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Restore Data?'),
+          content: const Text(
+            'Your backup will be restored while keeping ExpendiNote default categories.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Restore'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
     }
 
-    if (result.isSuccess) {
+    final restoreResult = await importService.restoreFromJSON(mode: mode);
+
+    if (!context.mounted || restoreResult.isCancelled) return;
+
+    if (restoreResult.isSuccess) {
       final formattedCount = NumberFormat(
         '#,##0',
-      ).format(result.transactionsRestored);
+      ).format(restoreResult.transactionsRestored);
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Backup Restored Successfully'),
           content: Text(
-            '$formattedCount ${result.transactionsRestored == 1 ? "transaction" : "transactions"} imported.',
+            '${formattedCount} ${restoreResult.transactionsRestored == 1 ? "transaction" : "transactions"} imported.',
           ),
           actions: [
             TextButton(
@@ -359,7 +395,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       );
-    } else if (result.isUnsupportedVersion) {
+    } else if (restoreResult.isUnsupportedVersion) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -380,7 +416,9 @@ class SettingsScreen extends StatelessWidget {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Restore Failed'),
-          content: Text(result.errorMessage ?? 'An unknown error occurred.'),
+          content: Text(
+            restoreResult.errorMessage ?? 'An unknown error occurred.',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
