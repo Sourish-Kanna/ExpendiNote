@@ -64,7 +64,9 @@ class ImportService {
   }
 
   /// Prompts user to pick a JSON backup file and restores it atomically.
-  Future<RestoreResult> restoreFromJSON() async {
+  Future<RestoreResult> restoreFromJSON({
+    RestoreMode mode = RestoreMode.replaceExistingTransactions,
+  }) async {
     try {
       // Ensure system/default categories exist before any restore operation.
       for (final name in _defaultCategories) {
@@ -125,7 +127,7 @@ class ImportService {
       }
 
       // 4. Perform atomic database restore
-      final restoredCount = await _executeDatabaseRestore(migratedData, mode);
+      final restoredCount = await restoreMigratedData(migratedData, mode: mode);
 
       AppLogger.info(
         'Restore completed successfully. $restoredCount transactions restored.',
