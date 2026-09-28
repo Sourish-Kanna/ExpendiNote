@@ -120,8 +120,9 @@ class ImportService {
   Future<int> restoreMigratedData(
     Map<String, dynamic> backupDataMap, {
     RestoreMode mode = RestoreMode.replaceExistingTransactions,
+    sql.Database? database,
   }) {
-    return _executeDatabaseRestore(backupDataMap, mode);
+    return _executeDatabaseRestore(backupDataMap, mode, database: database);
   }
 
   /// Executes atomic restore inside a single SQLite transaction.
@@ -210,7 +211,6 @@ class ImportService {
         if (rawTx is! Map) continue;
         final txMap = Map<String, dynamic>.from(rawTx);
 
-        final oldTxId = txMap['id'] as int?;
         final title = (txMap['title'] as String? ?? '').trim();
 
         final rawAmount = txMap['amount'];
