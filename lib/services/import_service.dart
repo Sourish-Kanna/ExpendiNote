@@ -68,11 +68,6 @@ class ImportService {
     RestoreMode mode = RestoreMode.replaceExistingTransactions,
   }) async {
     try {
-      // Ensure system/default categories exist before any restore operation.
-      for (final name in _defaultCategories) {
-        await CategoryRepository.ensureCategoryByName(name);
-      }
-
       // 1. Pick JSON backup file
       final result = await FilePicker.pickFiles(type: FileType.any);
 
@@ -124,6 +119,11 @@ class ImportService {
         return RestoreResult.failure(
           'Invalid backup structure: $validationError',
         );
+      }
+
+      // Ensure system/default categories exist only after the backup is validated.
+      for (final name in _defaultCategories) {
+        await CategoryRepository.ensureCategoryByName(name);
       }
 
       // 4. Perform atomic database restore
