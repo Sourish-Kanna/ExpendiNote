@@ -325,7 +325,7 @@ class ImportService {
             DateTime.now().toIso8601String();
 
         await txn.insert(DbTables.transactions, {
-                    DbCols.title: title,
+          DbCols.title: title,
           DbCols.amount: amount,
           DbCols.date: dateStr,
           DbCols.categoryId: categoryId,
