@@ -279,12 +279,7 @@ void main() {
         expect(txCount, equals(1));
       },
     );
-  });
-
-
-
-
-}    Future<void> seedDefaultCategories() async {
+   Future<void> seedDefaultCategories() async {
       const names = [
         'Food',
         'Transport',
@@ -460,3 +455,6 @@ void main() {
         );
       },
     );
+
+  });
+}
