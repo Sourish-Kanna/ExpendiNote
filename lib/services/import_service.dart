@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 
 import '../constants/database_constants.dart';
+import '../repositories/category_repository.dart';
 import '../services/database_service.dart';
 import '../services/export_migrations/export_migration_service.dart';
 import '../utils/color_utils.dart';
@@ -44,6 +45,11 @@ class ImportService {
   /// Prompts user to pick a JSON backup file and restores it atomically.
   Future<RestoreResult> restoreFromJSON() async {
     try {
+      // Ensure system/default categories exist before any restore operation.
+      for (final name in _defaultCategories) {
+        await CategoryRepository.ensureCategoryByName(name);
+      }
+
       // 1. Pick JSON backup file
       final result = await FilePicker.pickFiles(type: FileType.any);
 
