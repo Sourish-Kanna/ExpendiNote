@@ -324,7 +324,7 @@ class SettingsScreen extends StatelessWidget {
         builder: (context) => AlertDialog(
           title: const Text('Existing Transactions Found'),
           content: Text(
-            'You currently have ${formattedCount} transactions. Choose how to restore the backup.',
+            'You currently have $formattedCount transactions. Choose how to restore the backup.',
           ),
           actions: [
             TextButton(
@@ -385,7 +385,7 @@ class SettingsScreen extends StatelessWidget {
         builder: (context) => AlertDialog(
           title: const Text('Backup Restored Successfully'),
           content: Text(
-            '${formattedCount} ${restoreResult.transactionsRestored == 1 ? "transaction" : "transactions"} imported.',
+            '$formattedCount ${restoreResult.transactionsRestored == 1 ? "transaction" : "transactions"} imported.',
           ),
           actions: [
             TextButton(

@@ -7,6 +7,7 @@ import '../theme/app_shapes.dart' show AppShapes;
 import '../utils/color_utils.dart' show ColorUtils;
 import '../utils/icon_utils.dart' show IconUtils;
 import 'add_spending_screen.dart' show AddSpendingScreen;
+import 'daily_summary_screen.dart';
 import 'search_screen.dart' show SearchScreen;
 import 'settings_screen.dart' show SettingsScreen;
 import 'spending_detail_screen.dart' show SpendingDetailScreen;
@@ -133,10 +134,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverToBoxAdapter(
-                      child: Text(
-                        'Recent Activity',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DailySummaryScreen(),
+                            ),
+                          ).then((_) {
+                            _refreshNotifier.value++;
+                          });
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              'Recent Activity',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, size: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),

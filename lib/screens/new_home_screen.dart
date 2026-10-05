@@ -6,6 +6,7 @@ import '../repositories/transaction_repository.dart' show TransactionRepository;
 import '../utils/color_utils.dart' show ColorUtils;
 import '../utils/icon_utils.dart' show IconUtils;
 import 'add_spending_screen.dart' show AddSpendingScreen;
+import 'daily_summary_screen.dart';
 import 'search_screen.dart' show SearchScreen;
 import 'settings_screen.dart' show SettingsScreen;
 import 'spending_detail_screen.dart' show SpendingDetailScreen;
@@ -81,6 +82,15 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
             UnifiedSummaryScreen(refreshNotifier: _refreshNotifier),
       ),
     );
+  }
+
+  void _navigateToDailySummary() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DailySummaryScreen()),
+    ).then((_) {
+      _refreshNotifier.value++;
+    });
   }
 
   @override
@@ -261,17 +271,20 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                         vertical: 12,
                         horizontal: 16,
                       ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Recent Activity',
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                      child: InkWell(
+                        onTap: _navigateToDailySummary,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Recent Activity',
+                              style: textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 20),
-                        ],
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, size: 20),
+                          ],
+                        ),
                       ),
                     ),
                   ),
