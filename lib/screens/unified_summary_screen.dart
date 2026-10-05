@@ -40,6 +40,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     final data = await TransactionRepository.getAllTransactions();
+    if (!mounted) return;
     setState(() {
       _allSpendings = data;
       _isLoading = false;
@@ -48,51 +49,24 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    final totalAnalysisSpending = _allSpendings
+        .where((s) => s.includeInSpendingAnalysis)
+        .fold(0.0, (sum, item) => sum + item.amount);
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Analysis'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Analysis',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.file_download),
-          //   tooltip: 'Import JSON',
-          //   onPressed: () async {
-          //     // Show loading dialog
-          //     showDialog(
-          //       context: context,
-          //       barrierDismissible: false,
-          //       builder: (context) => const Center(
-          //         child: Card(
-          //           child: Padding(
-          //             padding: EdgeInsets.all(24.0),
-          //             child: CircularProgressIndicator(),
-          //           ),
-          //         ),
-          //       ),
-          //     );
-          //
-          //     final success = await ImportService().importFromJSON();
-          //
-          //     if (!context.mounted) return;
-          //     Navigator.pop(context); // Close loading dialog
-          //
-          //     if (success) {
-          //       _loadData();
-          //       widget.refreshNotifier.value++;
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         const SnackBar(content: Text('Data imported successfully')),
-          //       );
-          //     } else {
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         const SnackBar(content: Text('Import failed or cancelled')),
-          //       );
-          //     }
-          //   },
-          // ),
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Share CSV',
@@ -143,8 +117,79 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           : RefreshIndicator(
               onRefresh: _loadData,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 children: [
+                  // Overview Primary Metric Card
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 16,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Total Spending',
+                                    style: textTheme.labelLarge?.copyWith(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '₹${totalAnalysisSpending.toStringAsFixed(2)}',
+                                    style: textTheme.headlineMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            VerticalDivider(
+                              color: colorScheme.primary.withValues(alpha: 0.2),
+                              thickness: 2,
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Total Entries',
+                                    style: textTheme.labelLarge?.copyWith(
+                                      color: colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${_allSpendings.length}',
+                                    style: textTheme.headlineMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   _buildSectionHeader(context, 'Categories', () async {
                     await Navigator.push(
                       context,
@@ -154,8 +199,9 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                     );
                     _loadData();
                   }),
-                  _buildCategoryOverview(colorScheme),
+                  _buildCategoryOverview(colorScheme, textTheme),
                   const SizedBox(height: 24),
+
                   _buildSectionHeader(context, 'Monthly Trends', () async {
                     await Navigator.push(
                       context,
@@ -165,8 +211,9 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                     );
                     _loadData();
                   }),
-                  _buildMonthlyOverview(colorScheme),
+                  _buildMonthlyOverview(colorScheme, textTheme),
                   const SizedBox(height: 24),
+
                   _buildSectionHeader(context, 'Daily Activity', () async {
                     await Navigator.push(
                       context,
@@ -176,7 +223,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                     );
                     _loadData();
                   }),
-                  _buildDailyOverview(colorScheme),
+                  _buildDailyOverview(colorScheme, textTheme),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -188,6 +236,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     String title,
     VoidCallback onSeeAll,
   ) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -195,17 +245,30 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         children: [
           Text(
             title,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-          TextButton(onPressed: onSeeAll, child: const Text('See all')),
+          TextButton(
+            onPressed: onSeeAll,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'See all',
+                  style: textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward, size: 16),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryOverview(ColorScheme colorScheme) {
+  Widget _buildCategoryOverview(ColorScheme colorScheme, TextTheme textTheme) {
     Map<int, _CategorySummary> categoryStats = {};
     for (var s in _allSpendings) {
       final id = s.categoryId ?? -1;
@@ -223,50 +286,70 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
       ..sort((a, b) => b.value.total.compareTo(a.value.total));
     final top3 = sorted.take(3).toList();
 
-    if (top3.isEmpty) return const Text('No categories recorded.');
+    if (top3.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No categories recorded.',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+        ),
+      );
+    }
 
     return Column(
       children: top3.map((entry) {
         final stat = entry.value;
-        return Card(
-          child: ListTile(
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      HistoryScreen(filterCategory: stat.name),
-                ),
-              );
-              if (result == true) {
-                _loadData();
-                widget.refreshNotifier.value++;
-              }
-            },
-            leading: CircleAvatar(
-              backgroundColor: ColorUtils.fromInt(
-                stat.color,
-              ).withValues(alpha: 0.2),
-              child: Icon(
-                IconUtils.fromString(stat.icon),
-                color: ColorUtils.fromInt(stat.color),
-                size: 20,
+        final catColor = ColorUtils.fromInt(stat.color);
+        final catIcon = IconUtils.fromString(stat.icon);
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Card(
+            elevation: 0,
+            color: catColor.withValues(alpha: 0.12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
               ),
-            ),
-            title: Text(
-              stat.name,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '₹${stat.total.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.titleMedium,
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        HistoryScreen(filterCategory: stat.name),
+                  ),
+                );
+                if (result == true) {
+                  _loadData();
+                  widget.refreshNotifier.value++;
+                }
+              },
+              leading: Icon(catIcon, color: catColor, size: 24),
+              title: Text(
+                stat.name,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16),
-              ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '₹${stat.total.toStringAsFixed(0)}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 20),
+                ],
+              ),
             ),
           ),
         );
@@ -274,7 +357,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     );
   }
 
-  Widget _buildMonthlyOverview(ColorScheme colorScheme) {
+  Widget _buildMonthlyOverview(ColorScheme colorScheme, TextTheme textTheme) {
     Map<String, double> monthlyTotals = {};
     for (var s in _allSpendings) {
       if (!s.includeInSpendingAnalysis) continue;
@@ -285,40 +368,69 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
       ..sort((a, b) => _compareMonths(b.key, a.key));
     final top2 = sorted.take(2).toList();
 
-    if (top2.isEmpty) return const Text('No monthly data.');
+    if (top2.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No monthly data.',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+        ),
+      );
+    }
 
     return Column(
       children: top2.map((entry) {
-        return Card(
-          child: ListTile(
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HistoryScreen(filterMonth: entry.key),
-                ),
-              );
-              if (result == true) {
-                _loadData();
-                widget.refreshNotifier.value++;
-              }
-            },
-            title: Text(
-              entry.key,
-              style: Theme.of(context).textTheme.titleMedium,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '₹${entry.value.toStringAsFixed(0)}',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: colorScheme.primary),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryScreen(filterMonth: entry.key),
+                  ),
+                );
+                if (result == true) {
+                  _loadData();
+                  widget.refreshNotifier.value++;
+                }
+              },
+              leading: Icon(
+                Icons.calendar_month,
+                color: colorScheme.primary,
+                size: 24,
+              ),
+              title: Text(
+                entry.key,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16),
-              ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '₹${entry.value.toStringAsFixed(0)}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 20),
+                ],
+              ),
             ),
           ),
         );
@@ -326,7 +438,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     );
   }
 
-  Widget _buildDailyOverview(ColorScheme colorScheme) {
+  Widget _buildDailyOverview(ColorScheme colorScheme, TextTheme textTheme) {
     Map<String, double> dailyTotals = {};
     for (var s in _allSpendings) {
       if (!s.includeInSpendingAnalysis) continue;
@@ -337,39 +449,70 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
       ..sort((a, b) => b.key.compareTo(a.key));
     final top3 = sorted.take(3).toList();
 
-    if (top3.isEmpty) return const Text('No daily activity.');
+    if (top3.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No daily activity.',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.outline),
+        ),
+      );
+    }
 
     return Column(
       children: top3.map((entry) {
         final date = DateTime.parse(entry.key);
-        return Card(
-          child: ListTile(
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => HistoryScreen(filterDate: entry.key),
-                ),
-              );
-              if (result == true) {
-                _loadData();
-                widget.refreshNotifier.value++;
-              }
-            },
-            title: Text(
-              DateFormat('EEEE, MMM dd').format(date),
-              style: Theme.of(context).textTheme.titleMedium,
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Card(
+            elevation: 0,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '₹${entry.value.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.titleMedium,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              onTap: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryScreen(filterDate: entry.key),
+                  ),
+                );
+                if (result == true) {
+                  _loadData();
+                  widget.refreshNotifier.value++;
+                }
+              },
+              leading: Icon(
+                Icons.calendar_today,
+                color: colorScheme.primary,
+                size: 24,
+              ),
+              title: Text(
+                DateFormat('EEEE, MMM dd').format(date),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 16),
-              ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '₹${entry.value.toStringAsFixed(0)}',
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.chevron_right, size: 20),
+                ],
+              ),
             ),
           ),
         );

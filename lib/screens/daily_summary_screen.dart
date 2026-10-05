@@ -1,9 +1,8 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
-import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'history_screen.dart';
@@ -50,6 +49,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
     final sorted = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
+    if (!mounted) return;
     setState(() {
       _groupedSpendings = grouped;
       _sortedDates = sorted;
@@ -79,8 +79,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 
   _TopCategory _getTopCategory(List<txmodel.Transaction> spendings) {
-    final included =
-        spendings.where((s) => s.includeInSpendingAnalysis).toList();
+    final included = spendings
+        .where((s) => s.includeInSpendingAnalysis)
+        .toList();
     if (included.isEmpty) {
       return _TopCategory(name: 'None', icon: null, color: null);
     }
@@ -108,11 +109,19 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
 
+    final totalDailySpend = _groupedSpendings.values
+        .expand((list) => list)
+        .where((s) => s.includeInSpendingAnalysis)
+        .fold(0.0, (sum, item) => sum + item.amount);
+
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Daily Summary'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Daily Summary',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -127,14 +136,27 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                 hintText: 'Search by title...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
+                fillColor: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
                 border: OutlineInputBorder(
-                  borderRadius: AppShapes.smallRadius,
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: EdgeInsets.zero,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 hintStyle: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withAlpha(150),
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 ),
               ),
               style: textTheme.bodyLarge?.copyWith(
@@ -147,105 +169,187 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _filteredDates.isEmpty
-          ? const Center(child: Text('No spending history found.'))
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _filteredDates.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final dateStr = _filteredDates[index];
-                final spendings = _groupedSpendings[dateStr]!;
-                final dailyTotal = _calculateDailyTotal(spendings);
-                final date = DateTime.parse(dateStr);
-                final isToday =
-                    DateFormat('yyyy-MM-dd').format(DateTime.now()) == dateStr;
-                final topCat = _getTopCategory(spendings);
-
-                return Card(
-                  elevation: 0,
-                  color: isToday
-                      ? colorScheme.primaryContainer.withAlpha(50)
-                      : null,
-                  shape: AppShapes.mediumShape.copyWith(
-                    side: BorderSide(
-                      color: isToday
-                          ? colorScheme.primary
-                          : colorScheme.outlineVariant,
-                      width: isToday ? 1 : 0.5,
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long,
+                    size: 64,
+                    color: colorScheme.outline,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No spending history found.',
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.outline,
                     ),
                   ),
-                  child: ListTile(
-                    onTap: () async {
-                      // Navigate to detail view
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              HistoryScreen(filterDate: dateStr),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadSummary,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _filteredDates.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Card(
+                        elevation: 0,
+                        color: colorScheme.primaryContainer.withValues(
+                          alpha: 0.3,
                         ),
-                      );
-                      _loadSummary();
-                    },
-                    leading: CircleAvatar(
-                      backgroundColor: isToday
-                          ? colorScheme.primary
-                          : colorScheme.secondaryContainer,
-                      child: Text(
-                        DateFormat('dd').format(date),
-                        style: textTheme.labelLarge?.copyWith(
-                          color: isToday
-                              ? colorScheme.onPrimary
-                              : colorScheme.onSecondaryContainer,
-                          fontWeight: FontWeight.bold,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                      ),
-                    ),
-                    title: Text(
-                      isToday
-                          ? 'Today'
-                          : DateFormat('EEEE, MMM dd').format(date),
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          IconUtils.fromString(topCat.icon),
-                          size: 14,
-                          color: ColorUtils.fromInt(topCat.color),
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            '${topCat.name} • ${spendings.length} items',
-                            style: textTheme.bodySmall?.copyWith(
-                              color: colorScheme.secondary,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 16,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Total Analyzed',
+                                        style: textTheme.labelLarge?.copyWith(
+                                          color: colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '₹${totalDailySpend.toStringAsFixed(2)}',
+                                        style: textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme.primary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                VerticalDivider(
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  thickness: 2,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Active Days',
+                                        style: textTheme.labelLarge?.copyWith(
+                                          color: colorScheme.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${_sortedDates.length}',
+                                        style: textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: colorScheme.primary,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
                           ),
                         ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '₹${dailyTotal.toStringAsFixed(2)}',
-                          style: textTheme.titleLarge?.copyWith(
+                      ),
+                    );
+                  }
+
+                  final dateStr = _filteredDates[index - 1];
+                  final spendings = _groupedSpendings[dateStr]!;
+                  final dailyTotal = _calculateDailyTotal(spendings);
+                  final date = DateTime.parse(dateStr);
+                  final isToday =
+                      DateFormat('yyyy-MM-dd').format(DateTime.now()) ==
+                      dateStr;
+                  final topCat = _getTopCategory(spendings);
+
+                  final catColor = topCat.color != null
+                      ? ColorUtils.fromInt(topCat.color)
+                      : colorScheme.primary;
+                  final catIcon = IconUtils.fromString(topCat.icon);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Card(
+                      elevation: 0,
+                      color: isToday
+                          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+                          : catColor.withValues(alpha: 0.12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: isToday
+                            ? BorderSide(color: colorScheme.primary, width: 1.5)
+                            : BorderSide.none,
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  HistoryScreen(filterDate: dateStr),
+                            ),
+                          );
+                          _loadSummary();
+                        },
+                        leading: Icon(catIcon, color: catColor, size: 24),
+                        title: Text(
+                          isToday
+                              ? 'Today • ${DateFormat('MMM dd').format(date)}'
+                              : DateFormat('EEEE, MMM dd').format(date),
+                          style: textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
+                            color: colorScheme.onSurface,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.chevron_right),
-                      ],
+                        subtitle: Text(
+                          '${topCat.name} • ${spendings.length} ${spendings.length == 1 ? 'item' : 'items'}',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '₹${dailyTotal.toStringAsFixed(2)}',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isToday
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.chevron_right, size: 20),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
     );
   }

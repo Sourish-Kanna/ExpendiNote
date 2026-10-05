@@ -1,10 +1,11 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
+import '../widgets/summary_card.dart';
 import 'spending_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -67,9 +68,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (!grouped.containsKey(dateStr)) {
         grouped[dateStr] = [];
       }
-      grouped[dateStr]!.add(s); // This line remains unchanged
+      grouped[dateStr]!.add(s);
     }
 
+    if (!mounted) return;
     setState(() {
       _groupedSpendings = grouped;
       _isLoading = false;
@@ -127,6 +129,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final sortedDates = _groupedSpendings.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
+    final totalFilteredAmount = sortedDates
+        .expand((d) => _groupedSpendings[d]!)
+        .where((s) => s.includeInSpendingAnalysis)
+        .fold(0.0, (sum, item) => sum + item.amount);
+    final totalEntriesCount = sortedDates
+        .expand((d) => _groupedSpendings[d]!)
+        .length;
+
     String title = 'Spending History';
     if (widget.filterDate != null) {
       title = DateFormat(
@@ -139,10 +149,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(title),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          title,
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
         leading: BackButton(
           onPressed: () => Navigator.pop(context, _hasChanged),
@@ -153,10 +166,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
           : sortedDates.isEmpty
           ? const Center(child: Text('No entries found.'))
           : ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: sortedDates.length,
+              padding: const EdgeInsets.all(16),
+              itemCount: sortedDates.length + 1,
               itemBuilder: (context, index) {
-                final dateStr = sortedDates[index];
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SummaryCard(
+                      items: [
+                        MetricItem(
+                          label: 'Filtered Spending',
+                          value: '₹${totalFilteredAmount.toStringAsFixed(2)}',
+                        ),
+                        MetricItem(
+                          label: 'Total Entries',
+                          value: '$totalEntriesCount',
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final dateStr = sortedDates[index - 1];
                 final spendings = _groupedSpendings[dateStr]!;
                 final dailyTotal = _calculateDailyTotal(spendings);
                 final date = DateTime.parse(dateStr);
@@ -193,61 +224,78 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ],
                       ),
                     ),
-                    ...spendings.map(
-                      (s) => Card(
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: ColorUtils.fromInt(
-                              s.categoryColor,
-                            ).withValues(alpha: 0.2),
-                            child: Icon(
-                              IconUtils.fromString(s.categoryIcon),
-                              color: ColorUtils.fromInt(s.categoryColor),
-                            ),
+                    ...spendings.map((s) {
+                      final catColor = ColorUtils.fromInt(s.categoryColor);
+                      final catIcon = IconUtils.fromString(s.categoryIcon);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Card(
+                          elevation: 0,
+                          color: catColor.withValues(alpha: 0.12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          title: Text(
-                            s.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
                             ),
-                          ),
-                          subtitle: s.description != null
-                              ? Tooltip(
-                                  message: s.description!,
-                                  child: Text(
+                            leading: Icon(
+                              catIcon,
+                              color: catColor,
+                              size: 24,
+                            ),
+                            title: Text(
+                              s.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            subtitle: s.description != null
+                                ? Text(
                                     s.description!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: textTheme.bodyMedium,
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  )
+                                : Text(
+                                    s.categoryName ?? 'Other',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
                                   ),
-                                )
-                              : null,
-                          trailing: Text(
-                            '₹${s.amount.toStringAsFixed(2)}',
-                            style: textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    SpendingDetailScreen(transaction: s),
+                            trailing: Text(
+                              '₹${s.amount.toStringAsFixed(2)}',
+                              style: textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
                               ),
-                            );
-                            if (result == true) {
-                              _hasChanged = true;
-                              _loadHistory();
-                            }
-                          },
-                          onLongPress: () => _confirmDelete(s),
+                            ),
+                            onTap: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      SpendingDetailScreen(transaction: s),
+                                ),
+                              );
+                              if (result == true) {
+                                _hasChanged = true;
+                                _loadHistory();
+                              }
+                            },
+                            onLongPress: () => _confirmDelete(s),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
+                      );
+                    }),
+                    const SizedBox(height: 12),
                   ],
                 );
               },

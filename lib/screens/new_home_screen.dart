@@ -5,6 +5,7 @@ import '../models/transaction.dart' as txmodel show Transaction;
 import '../repositories/transaction_repository.dart' show TransactionRepository;
 import '../utils/color_utils.dart' show ColorUtils;
 import '../utils/icon_utils.dart' show IconUtils;
+import '../widgets/summary_card.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
 import 'daily_summary_screen.dart';
 import 'search_screen.dart' show SearchScreen;
@@ -187,79 +188,22 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                     ),
                   ),
 
-                  // Analysis Card
+                  // Analysis Summary Card
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: InkWell(
+                      child: SummaryCard(
                         onTap: _navigateToAnalysis,
-                        borderRadius: BorderRadius.circular(28),
-                        child: Card(
-                          elevation: 0,
-                          color: colorScheme.primaryContainer.withValues(
-                            alpha: 0.4,
+                        items: [
+                          MetricItem(
+                            label: 'Today',
+                            value: _todayTotal.toStringAsFixed(2),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                          MetricItem(
+                            label: 'This Month',
+                            value: _monthlyTotal.toStringAsFixed(2),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24),
-                            child: IntrinsicHeight(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          "Today",
-                                          style: textTheme.labelLarge?.copyWith(
-                                            color: colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _todayTotal.toStringAsFixed(2),
-                                          style: textTheme.headlineMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: colorScheme.primary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  VerticalDivider(
-                                    color: colorScheme.primary.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    thickness: 2,
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          "This Month",
-                                          style: textTheme.labelLarge?.copyWith(
-                                            color: colorScheme.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _monthlyTotal.toStringAsFixed(2),
-                                          style: textTheme.headlineMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: colorScheme.primary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ),

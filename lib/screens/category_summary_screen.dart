@@ -1,11 +1,11 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
-import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
+import '../widgets/summary_card.dart';
 import 'history_screen.dart';
 
 class CategorySummaryScreen extends StatefulWidget {
@@ -65,6 +65,7 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
         ..sort((a, b) => b.value.total.compareTo(a.value.total)),
     );
 
+    if (!mounted) return;
     setState(() {
       _categoryGroups = sortedGroups;
       _grandTotal = grand;
@@ -79,10 +80,13 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surfaceContainer,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Category Spending'),
-        backgroundColor: colorScheme.surfaceContainer,
+        title: Text(
+          'Category Spending',
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,
       ),
       body: _isLoading
@@ -120,10 +124,23 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                     : Expanded(
                         child: Column(
                           children: [
-                            _buildOverviewCard(theme),
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: SummaryCard(
+                                items: [
+                                  MetricItem(
+                                    label: 'Total Spending ($_selectedPeriod)',
+                                    value: '₹${_grandTotal.toStringAsFixed(0)}',
+                                  ),
+                                ],
+                              ),
+                            ),
                             Expanded(
                               child: ListView.builder(
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
                                 itemCount: _categoryGroups.length,
                                 itemBuilder: (context, index) {
                                   final entry = _categoryGroups.entries
@@ -132,101 +149,114 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                   final percentage = _grandTotal > 0
                                       ? (group.total / _grandTotal) * 100
                                       : 0.0;
+                                  final catColor = ColorUtils.fromInt(
+                                    group.color,
+                                  );
+                                  final catIcon = IconUtils.fromString(
+                                    group.icon,
+                                  );
 
-                                  return Card(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    child: InkWell(
-                                      onTap: () async {
-                                        final now = DateTime.now();
-                                        final filterMonth =
-                                            _selectedPeriod == 'This Month'
-                                            ? DateFormat('MMM yyyy').format(now)
-                                            : null;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Card(
+                                      elevation: 0,
+                                      color: catColor.withValues(alpha: 0.12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final now = DateTime.now();
+                                          final filterMonth =
+                                              _selectedPeriod == 'This Month'
+                                              ? DateFormat(
+                                                  'MMM yyyy',
+                                                ).format(now)
+                                              : null;
 
-                                        await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => HistoryScreen(
-                                              filterCategory: group.name,
-                                              filterMonth: filterMonth,
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  HistoryScreen(
+                                                    filterCategory: group.name,
+                                                    filterMonth: filterMonth,
+                                                  ),
                                             ),
+                                          );
+                                          _loadCategoryData();
+                                        },
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Column(
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    catIcon,
+                                                    color: catColor,
+                                                    size: 24,
+                                                  ),
+                                                  const SizedBox(width: 16),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          group.name,
+                                                          style: textTheme
+                                                              .titleMedium
+                                                              ?.copyWith(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                color: colorScheme
+                                                                    .onSurface,
+                                                              ),
+                                                        ),
+                                                        Text(
+                                                          '${percentage.toStringAsFixed(1)}% of total',
+                                                          style: textTheme
+                                                              .bodySmall
+                                                              ?.copyWith(
+                                                                color: colorScheme
+                                                                    .onSurfaceVariant,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '₹${group.total.toStringAsFixed(0)}',
+                                                    style: textTheme.titleMedium
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: colorScheme
+                                                              .onSurface,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Icon(
+                                                    Icons.chevron_right,
+                                                    size: 20,
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 12),
+                                              LinearProgressIndicator(
+                                                value: percentage / 100,
+                                                backgroundColor: catColor
+                                                    .withValues(alpha: 0.2),
+                                                color: catColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ],
                                           ),
-                                        );
-                                        _loadCategoryData();
-                                      },
-                                      borderRadius: AppShapes.mediumRadius,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          children: [
-                                            Row(
-                                              children: [
-                                                CircleAvatar(
-                                                  backgroundColor:
-                                                      ColorUtils.fromInt(
-                                                        group.color,
-                                                      ).withValues(alpha: 0.2),
-                                                  child: Icon(
-                                                    IconUtils.fromString(
-                                                      group.icon,
-                                                    ),
-                                                    color: ColorUtils.fromInt(
-                                                      group.color,
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 16),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        group.name,
-                                                        style: textTheme
-                                                            .titleMedium
-                                                            ?.copyWith(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                            ),
-                                                      ),
-                                                      Text(
-                                                        '${percentage.toStringAsFixed(1)}% of total',
-                                                        style:
-                                                            textTheme.bodySmall,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '₹${group.total.toStringAsFixed(0)}',
-                                                  style: textTheme.titleMedium
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            colorScheme.primary,
-                                                      ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Icon(
-                                                  Icons.chevron_right,
-                                                  size: 16,
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 12),
-                                            LinearProgressIndicator(
-                                              value: percentage / 100,
-                                              backgroundColor: colorScheme
-                                                  .surfaceContainerHighest,
-                                              color: colorScheme.primary,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ],
                                         ),
                                       ),
                                     ),
@@ -239,38 +269,6 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                       ),
               ],
             ),
-    );
-  }
-
-  Widget _buildOverviewCard(ThemeData theme) {
-    final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: AppShapes.largeRadius,
-        border: Border.all(color: colorScheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Total Spending ($_selectedPeriod)',
-            style: textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '₹${_grandTotal.toStringAsFixed(0)}',
-            style: textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.primary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
