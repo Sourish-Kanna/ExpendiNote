@@ -47,8 +47,8 @@ As I used the application in real life, the scope naturally expanded based on wh
 
 ### Core Capabilities
 
-- **Rapid Entry**: Log titles, amounts, categories, optional descriptions, and custom dates.
-- **Activity Feed**: View recent transactions directly from the home screen.
+- **Rapid Entry**: Log titles, amounts, categories, optional descriptions, and custom transaction dates.
+- **Activity Feed**: View recent transactions ordered deterministically by transaction date (primary) and ID (secondary).
 - **Category Management**: Create, edit, organize, pin, merge, and manage categories.
 - **Search**: Find transactions using relevant transaction information.
 - **Drill-Down Navigation**: Navigate from summaries to the individual transactions contributing to them.
@@ -57,10 +57,10 @@ As I used the application in real life, the scope naturally expanded based on wh
 ### Data & UX
 
 - **Offline Support**: Fully functional without an internet connection using local SQLite persistence.
-- **Material 3 UI**: Built using Material 3 with a centralized theme architecture.
+- **Material 3 UI**: Built using Material 3 with a centralized theme architecture and design guidelines (see `docs/ui_design.md`).
 - **Custom Themes**: System, light, and dark theme modes with selectable custom theme colors.
 - **Local Data**: Spending data is stored locally on the device.
-- **Data Export**: Export spending data for portability and external use.
+- **Data Export & Backup**: Export spending data (CSV and PDF) and create/restore local JSON database backups.
 - **Reactive UI**: Changes to transactions and settings are reflected across relevant parts of the application.
 
 ---
@@ -73,28 +73,15 @@ The application uses reusable filtering and history components to support differ
 
 ### 2. Reactive State Management
 
-I use lightweight reactive state management to keep relevant screens synchronized when transaction or application settings change, without requiring unnecessary full-screen refreshes.
+Lightweight reactive state management keeps relevant screens synchronized when transaction or application settings change, without requiring unnecessary full-screen refreshes.
 
-### 3. Structured Local Persistence
+### 3. Structured Local Persistence & Versioned Migrations
 
-I use SQLite with a versioned database schema and explicit migrations, allowing the data model to evolve while preserving existing user data across application updates.
+SQLite persistence with centralized database ownership (`DatabaseService`) and explicit versioned migrations, allowing the data model to evolve safely while preserving user data across application updates.
 
-### 4. Centralized Theme Architecture
+### 4. Centralized Theme & Design System
 
-Material 3 theming is centralized through a dedicated theme architecture, supporting system/dynamic colors, custom theme colors, light/dark modes, and consistent component styling throughout the application.
-
----
-
-## 🧑‍💼 What This Project Demonstrates
-
-This repository demonstrates:
-
-- **Flutter Framework Proficiency**: Building a complete Android application with Flutter and Dart.
-- **Database Design**: SQLite integration with versioned schema migrations, relationships, indexing, and structured repositories.
-- **Modern UI/UX**: Material 3 components and a centralized design system.
-- **State Management**: Lightweight reactive state management suitable for a local-first application.
-- **System Thinking**: Evolving a small application based on actual usage while keeping the architecture maintainable.
-- **Product Development**: Moving from an initial focused idea toward a broader, user-driven product scope.
+Material 3 theming and component hierarchy are governed through centralized design rules (`docs/ui_design.md`), supporting system/dynamic colors, custom theme colors, light/dark modes, and consistent component styling throughout the application.
 
 ---
 
@@ -109,7 +96,7 @@ This repository demonstrates:
 ### Tooling
 
 - **State Management**: ValueNotifier / Change Notification
-- **Data Export**: CSV and sharing utilities
+- **Data Export**: CSV, PDF, and sharing utilities
 - **Logging**: `logger`
 - **Formatting**: `intl` (Internationalization and Date Formatting)
 
@@ -138,41 +125,22 @@ flutter run
 
 ---
 
+## 📚 Documentation & Architecture References
+
+For detailed project architecture, UI design guidelines, and database migration philosophy, refer to:
+- **System Architecture**: [`docs/design.md`](docs/design.md)
+- **UI & Visual Design System**: [`docs/ui_design.md`](docs/ui_design.md)
+- **Database Schema & Migrations**: [`docs/database_migrations.md`](docs/database_migrations.md)
+- **Agent Instructions**: [`AGENTS.md`](AGENTS.md)
+
+---
+
 ## 🌿 Project Status
 
 - **Latest Stable Release**: v1.2.1
 - **Next Release**: v2.0.0
 - **Current Status**: v2.0.0 in development
-- **Current Focus**: UI/UX redesign, usability improvements, and completion of the expanded project scope.
-
-I originally intended ExpendiNote to be a focused, one-time project. Continued real-world usage showed me that there was more worth improving, which led to the expanded v2.0.0 scope.
-
-My goal for v2.0.0 is to bring that expanded scope to a polished and complete state rather than continuously adding features without a defined direction.
-
----
-
-## 🔮 Future Planned Scopes
-
-The following are longer-term ideas that I may explore after the core v2.0.0 scope is completed:
-
-- Further usability improvements based on real-world usage
-- Additional budgeting capabilities
-- Advanced spending visualizations
-- Intelligent spending insights and analytics
-- Local notifications and reminders
-- Optional future integrations or enhancements
-
-These are **future possibilities, not commitments for v2.0.0**.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/NewFeature`)
-3. Commit your changes (`git commit -m 'Add some NewFeature'`)
-4. Push to the branch (`git push origin feature/NewFeature`)
-5. Open a Pull Request
+- **Current Focus**: UI/UX polish, usability improvements, and completion of the expanded project scope.
 
 ---
 
