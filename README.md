@@ -79,9 +79,22 @@ Lightweight reactive state management keeps relevant screens synchronized when t
 
 SQLite persistence with centralized database ownership (`DatabaseService`) and explicit versioned migrations, allowing the data model to evolve safely while preserving user data across application updates.
 
-### 4. Centralized Theme & Design System
+### 4. Centralized Theme Architecture
 
-Material 3 theming and component hierarchy are governed through centralized design rules (`docs/ui_design.md`), supporting system/dynamic colors, custom theme colors, light/dark modes, and consistent component styling throughout the application.
+Material 3 theming is centralized through a dedicated theme architecture, supporting system/dynamic colors, custom theme colors, light/dark modes, and consistent component styling throughout the application.
+
+---
+
+## 🧑‍💼 What This Project Demonstrates
+
+This repository demonstrates:
+
+- **Flutter Framework Proficiency**: Building a complete Android application with Flutter and Dart.
+- **Database Design**: SQLite integration with versioned schema migrations, relationships, indexing, and structured repositories.
+- **Modern UI/UX**: Material 3 components and a centralized design system.
+- **State Management**: Lightweight reactive state management suitable for a local-first application.
+- **System Thinking**: Evolving a small application based on actual usage while keeping the architecture maintainable.
+- **Product Development**: Moving from an initial focused idea toward a broader, user-driven product scope.
 
 ---
 
@@ -140,7 +153,36 @@ For detailed project architecture, UI design guidelines, and database migration 
 - **Latest Stable Release**: v1.2.1
 - **Next Release**: v2.0.0
 - **Current Status**: v2.0.0 in development
-- **Current Focus**: UI/UX polish, usability improvements, and completion of the expanded project scope.
+- **Current Focus**: UI/UX redesign, usability improvements, and completion of the expanded project scope.
+
+I originally intended ExpendiNote to be a focused, one-time project. Continued real-world usage showed me that there was more worth improving, which led to the expanded v2.0.0 scope.
+
+My goal for v2.0.0 is to bring that expanded scope to a polished and complete state rather than continuously adding features without a defined direction.
+
+---
+
+## 🔮 Future Planned Scopes
+
+The following are longer-term ideas that I may explore after the core v2.0.0 scope is completed:
+
+- Further usability improvements based on real-world usage
+- Additional budgeting capabilities
+- Advanced spending visualizations
+- Intelligent spending insights and analytics
+- Local notifications and reminders
+- Optional future integrations or enhancements
+
+These are **future possibilities, not commitments for v2.0.0**.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/NewFeature`)
+3. Commit your changes (`git commit -m 'Add some NewFeature'`)
+4. Push to the branch (`git push origin feature/NewFeature`)
+5. Open a Pull Request
 
 ---
 

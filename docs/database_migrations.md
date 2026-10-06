@@ -2,58 +2,82 @@
 
 ## Current Schema Version
 
-- Current database version: v2
-- Stored in: `lib/constants/database_constants.dart` (`DbConfig.databaseVersion`)
+- **Current Database Version**: **v5**
+- **Stored in**: `lib/constants/database_constants.dart` (`DbConfig.databaseVersion = 5`)
 
-## Architecture & Database Ownership
+---
 
-`DatabaseService` (`lib/services/database_service.dart`) is the centralized owner of schema creation, versioning, upgrade migrations, and SQLite lifecycle management (`PRAGMA foreign_keys = ON`).
+## Database Architecture & Ownership
 
-No direct table creation or schema alteration operations should occur outside `DatabaseService`.
+`DatabaseService` (`lib/services/database_service.dart`) is the centralized owner of SQLite database initialization, table creation, version management, and upgrade migrations (`PRAGMA foreign_keys = ON`).
 
-## Migration History
+No direct table creation, column modification, or schema migration operations should occur outside `DatabaseService`.
 
-- v1: Original app schema used a single `spendings` table:
+---
+
+## Complete Migration History
+
+- **v1**: Initial legacy schema using a single `spendings` table:
   - `spendings(id, title, amount, date, category, description)`
-- v2: Normalized schema introduced in refactor:
-  - `transactions` — normalized spending records (`id`, `title`, `amount`, `date`, `createdAt`, `categoryId`, `description`, `includeInSpendingAnalysis`)
-  - `categories` — category metadata (`id`, `name`, `icon`, `color`, `isPinned`, `isArchived`)
-  - `settings` — key/value application settings (`key`, `value`)
+- **v2**: Normalized schema introducing dedicated tables:
+  - `categories(id, name, createdAt)`
+  - `transactions(id, title, amount, date, categoryId, description, createdAt)`
+  - `settings(key, value)`
+- **v3**: Category model enhancements:
+  - Added `icon`, `color`, `isPinned`, and `isArchived` columns to `categories`.
+- **v4**: Spending analysis controls:
+  - Added `includeInSpendingAnalysis` flag to both `categories` and `transactions` tables (defaults to `1` / `true`).
+  - Automatically sets default `includeInSpendingAnalysis = 0` for the `Investment` category.
+- **v5**: Icon representation refactoring:
+  - Migrated legacy numerical icon code point strings (e.g. `'58674'`) to stable named string identifiers (e.g. `'restaurant'`) in the `categories` table.
 
-Migration recorded: v1 → v2 implemented directly in `lib/services/database_service.dart`.
+---
 
-## Migration Rules
+## Current Database Schema (v5 Summary)
 
-- Migration MUST be atomic: v1→v2 is run inside a single transaction so partial changes rollback on failure.
-- Migration errors MUST NOT be swallowed in try-catch blocks; failures must halt execution to ensure rollback.
-- Category normalization during migration:
-  - Trim whitespace, collapse multi-spaces, convert to Title Case (e.g., " food  " → "Food").
-  - Empty or missing category names map to `Others`.
-  - Category uniqueness enforced case-insensitively (`UNIQUE COLLATE NOCASE`) to prevent duplicates like `Food` and `food`.
-- Foreign key enforcement:
-  - `PRAGMA foreign_keys = ON` is enabled during DB configure to ensure referential integrity.
-- Indexes:
-  - `transactions(date)`, `transactions(categoryId)`, and `categories(name)` indexes are created `IF NOT EXISTS` for performance.
-- Color values for categories are stored as integer ARGB values.
+### `categories` Table
+- `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
+- `name`: `TEXT NOT NULL UNIQUE COLLATE NOCASE`
+- `icon`: `TEXT` (stable string key, e.g. `'restaurant'`)
+- `color`: `INTEGER` (ARGB integer value)
+- `isPinned`: `INTEGER DEFAULT 0`
+- `isArchived`: `INTEGER DEFAULT 0`
+- `includeInSpendingAnalysis`: `INTEGER DEFAULT 1`
+- `createdAt`: `TEXT NOT NULL` (ISO-8601 string)
+
+### `transactions` Table
+- `id`: `INTEGER PRIMARY KEY AUTOINCREMENT`
+- `title`: `TEXT NOT NULL`
+- `amount`: `REAL NOT NULL`
+- `date`: `TEXT NOT NULL` (ISO-8601 transaction occurrence date)
+- `categoryId`: `INTEGER` (foreign key -> `categories(id)`)
+- `description`: `TEXT`
+- `includeInSpendingAnalysis`: `INTEGER DEFAULT 1`
+- `createdAt`: `TEXT NOT NULL` (ISO-8601 creation date)
+
+### `settings` Table
+- `key`: `TEXT PRIMARY KEY`
+- `value`: `TEXT`
+
+---
+
+## Migration Rules & Architectural Directives
+
+- **Atomicity**: Migration steps execute within the database `onUpgrade` process.
+- **Error Propagation Rule**: Database migration helper logic MUST allow migration exceptions to propagate so that migration failures properly halt database opening rather than being silently swallowed.
+- **Category Normalization**: During migrations (e.g. v1→v2), category strings are trimmed, collapsed, converted to Title Case, and mapped to `Others` if empty.
+- **Foreign Key Support**: `PRAGMA foreign_keys = ON` is enabled during database configuration (`onConfigure`).
+- **Indexes**: `transactions(date)`, `transactions(categoryId)`, and `categories(name)` indexes are maintained for lookup performance.
+
+---
 
 ## Upgrade Process (Developer Guide)
 
-1. Update `DbConfig.databaseVersion` in `lib/constants/database_constants.dart`.
-2. Add a private migration helper method within `DatabaseService` (e.g., `_migrateV2toV3`).
+1. Increment `DbConfig.databaseVersion` in `lib/constants/database_constants.dart`.
+2. Add a private migration helper method within `DatabaseService` (e.g., `_migrateV5toV6`).
 3. Ensure the migration method:
-   - Performs schema modifications and data transformation within the `onUpgrade` transaction to guarantee atomicity.
-   - Uses centralized constants from `DbTables`/`DbCols`/`DbConfig` where appropriate.
-   - Normalizes and deduplicates user-facing strings (categories) as required.
-4. Update `DatabaseService.onUpgrade` to call your migration helper based on `oldVersion`.
-5. Run tests, verify schema consistency, then ship.
-
-## Best Practices for Future Migrations
-
-- Always write and run automated tests that:
-  - Create a realistic pre-migration DB file, run migration, and assert final schema and data.
-  - Simulate failures to confirm rollback semantics.
-- Prefer non-destructive migrations where possible (create new tables, copy data, validate, then drop legacy tables at the very end of a successful transaction).
-- Keep migration logic idempotent if possible: running twice should be safe or fail gracefully.
-- Use centralized schema constants (`DbTables`, `DbCols`) across services, migrations, and tests.
-- Avoid inline SQL string duplication; prefer constants and `IF NOT EXISTS` semantics for DDL.
-- Log informative migration steps for easier debugging, but avoid leaking user data in logs.
+   - Performs DDL and DML operations within `onUpgrade` transaction boundaries.
+   - Uses centralized constants (`DbTables`, `DbCols`) where possible while isolating version-specific SQL logic.
+   - Let errors throw to prevent unverified or partially migrated states.
+4. Call the helper sequentially inside `onUpgrade` according to `oldVersion`.
+5. Write and verify automated migration tests in `test/database/migration_test.dart`.
