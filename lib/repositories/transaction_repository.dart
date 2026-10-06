@@ -60,7 +60,7 @@ class TransactionRepository {
              c.${DbCols.color} AS categoryColor
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
-      ORDER BY t.${DbCols.date} DESC
+      ORDER BY t.${DbCols.date} DESC, t.${DbCols.id} DESC
       ''');
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
@@ -82,7 +82,7 @@ class TransactionRepository {
              c.${DbCols.color} AS categoryColor
       FROM ${DbTables.transactions} t 
       LEFT JOIN ${DbTables.categories} c ON t.${DbCols.categoryId} = c.${DbCols.id} 
-      ORDER BY t.${DbCols.date} DESC
+      ORDER BY t.${DbCols.date} DESC, t.${DbCols.id} DESC
       ''');
     if (limit != null) q.write(' LIMIT $limit');
     if (offset != null) q.write(' OFFSET $offset');
@@ -135,7 +135,7 @@ class TransactionRepository {
       WHERE LOWER(t.${DbCols.title}) LIKE ? 
          OR LOWER(t.${DbCols.description}) LIKE ? 
          OR LOWER(c.${DbCols.name}) LIKE ? 
-      ORDER BY t.${DbCols.date} DESC
+      ORDER BY t.${DbCols.date} DESC, t.${DbCols.id} DESC
       ''',
       [searchPattern, searchPattern, searchPattern],
     );
