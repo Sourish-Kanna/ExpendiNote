@@ -189,7 +189,7 @@ class SettingsScreen extends StatelessWidget {
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.backup_outlined),
+                  leading: const Icon(Icons.backup),
                   title: const Text('Backup Data'),
                   subtitle: const Text('Create and share a JSON backup file'),
                   onTap: () => _backupData(context),
@@ -216,7 +216,7 @@ class SettingsScreen extends StatelessWidget {
                   color: colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
                 ListTile(
-                  leading: const Icon(Icons.table_chart_outlined),
+                  leading: const Icon(Icons.table_chart),
                   title: const Text('Export CSV'),
                   subtitle: const Text('Export transactions to CSV file'),
                   onTap: () => _exportCSV(context),

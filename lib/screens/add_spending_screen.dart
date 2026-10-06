@@ -193,15 +193,15 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: colorScheme.primary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -470,7 +470,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
 
                           return InkWell(
                             onTap: () => _onCategorySelected(category),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
@@ -482,7 +482,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                                     ? catColor.withValues(alpha: 0.15)
                                     : colorScheme.surfaceContainerHighest
                                           .withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: isSelected
                                       ? catColor

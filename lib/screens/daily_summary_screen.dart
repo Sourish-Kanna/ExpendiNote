@@ -203,7 +203,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           alpha: 0.3,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(28),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(

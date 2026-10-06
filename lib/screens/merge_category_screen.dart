@@ -162,7 +162,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                                   ? catColor.withValues(alpha: 0.2)
                                   : catColor.withValues(alpha: 0.08),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(16),
                                 side: isSelected
                                     ? BorderSide(color: catColor, width: 2)
                                     : BorderSide.none,
@@ -180,7 +180,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                                   color: catColor,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
                             ),

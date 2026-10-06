@@ -105,9 +105,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       appBar: AppBar(
         title: Text(
           'Expendi Note',
-          style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
         backgroundColor: colorScheme.surface,
@@ -265,21 +263,29 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                     leading: Icon(
                                       _getCategoryIcon(spending),
                                       color: _getCategoryColor(spending),
+                                      size: 24,
                                     ),
                                     title: Text(
-                                      '${spending.title} | ₹${spending.amount.toStringAsFixed(0)}',
+                                      spending.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     subtitle: Text(
-                                      '${spending.categoryName ?? 'Other'} | ${DateFormat('d/M').format(spending.date)} | ${DateFormat('hh:mm a').format(spending.date)}',
-                                      style: textTheme.bodySmall,
+                                      '${spending.categoryName ?? 'Other'} • ${DateFormat('d/M').format(spending.date)} • ${DateFormat('hh:mm a').format(spending.date)}',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                     ),
-                                    trailing: IconButton(
-                                      icon: const Icon(Icons.more_vert),
-                                      onPressed: () =>
-                                          _showItemActions(spending),
+                                    trailing: Text(
+                                      '₹${spending.amount.toStringAsFixed(0)}',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colorScheme.onSurface,
+                                      ),
                                     ),
                                     onTap: () async {
                                       final result = await Navigator.push(
@@ -295,6 +301,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                         _refreshNotifier.value++;
                                       }
                                     },
+                                    onLongPress: () => _confirmDelete(spending),
                                   ),
                                 ),
                               );
@@ -328,42 +335,6 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
           Icon(Icons.receipt_long, size: 64, color: colorScheme.outline),
           const SizedBox(height: 16),
           const Text('No spending noted yet.'),
-        ],
-      ),
-    );
-  }
-
-  void _showItemActions(txmodel.Transaction spending) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.edit),
-            title: const Text('Edit'),
-            onTap: () async {
-              Navigator.pop(context);
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AddSpendingScreen(transaction: spending),
-                ),
-              );
-              if (result == true) {
-                _refreshNotifier.value++;
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Delete', style: TextStyle(color: Colors.red)),
-            onTap: () {
-              Navigator.pop(context);
-              _confirmDelete(spending);
-            },
-          ),
         ],
       ),
     );

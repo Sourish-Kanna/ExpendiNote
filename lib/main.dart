@@ -125,7 +125,6 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
       future: _initFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          // return const HomeScreen();
           return const NewHomeScreen();
         }
 
