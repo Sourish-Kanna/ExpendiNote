@@ -62,8 +62,11 @@ Before making changes in any project area, AI agents MUST consult the relevant s
 
 ## Testing & Review Methodology
 
-- Follow the current project decision regarding tests.
-- Do not introduce a new testing strategy or recreate removed tests unless explicitly requested.
+- Testing is part of the normal development scope for ExpendiNote.
+- When production behavior or functionality changes, add or update the relevant tests.
+- Run `flutter analyze` and the relevant test suite(s) before declaring implementation work complete.
+- Database/schema/migration changes should include appropriate migration/database tests.
+- Do not expand the feature scope solely to add unrelated tests.
 - Before declaring work complete:
   1. Verify the requested requirements are actually implemented.
   2. Inspect the resulting code and the complete current patch.
