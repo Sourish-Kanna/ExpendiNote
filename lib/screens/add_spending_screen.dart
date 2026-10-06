@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -264,6 +265,11 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*'),
+                            ),
+                          ],
                           textInputAction: TextInputAction.next,
                           textAlign: TextAlign.center,
                           style: textTheme.displayMedium?.copyWith(
