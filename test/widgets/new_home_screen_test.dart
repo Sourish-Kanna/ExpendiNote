@@ -111,7 +111,7 @@ void main() {
 
         for (int opening = 1; opening <= 6; opening++) {
           // Reset session flag to simulate a new app opening launch
-          _NewHomeScreenState.resetSessionFlagForTesting();
+          NewHomeScreen.resetSessionFlagForTesting();
 
           await tester.pumpWidget(createWidgetUnderTest());
           await tester.runAsync(() async {
@@ -141,7 +141,7 @@ void main() {
       (tester) async {
         configureViewport(tester);
 
-        _NewHomeScreenState.resetSessionFlagForTesting();
+        NewHomeScreen.resetSessionFlagForTesting();
 
         // First initialization in session
         await tester.pumpWidget(createWidgetUnderTest());

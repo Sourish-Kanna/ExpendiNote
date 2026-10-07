@@ -16,17 +16,17 @@ import 'unified_summary_screen.dart';
 class NewHomeScreen extends StatefulWidget {
   const NewHomeScreen({super.key});
 
+  @visibleForTesting
+  static void resetSessionFlagForTesting() {
+    _NewHomeScreenState._hasCheckedAppOpeningThisSession = false;
+  }
+
   @override
   State<NewHomeScreen> createState() => _NewHomeScreenState();
 }
 
 class _NewHomeScreenState extends State<NewHomeScreen> {
   static bool _hasCheckedAppOpeningThisSession = false;
-
-  @visibleForTesting
-  static void resetSessionFlagForTesting() {
-    _hasCheckedAppOpeningThisSession = false;
-  }
 
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
