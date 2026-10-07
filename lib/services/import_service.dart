@@ -173,7 +173,8 @@ class ImportService {
         await txn.delete(DbTables.transactions);
         await txn.delete(
           DbTables.categories,
-          where: 'LOWER(${DbCols.name}) NOT IN (?, ?, ?, ?, ?, ?, ?, ?)',
+          where:
+              'LOWER(${DbCols.name}) NOT IN (?, ?, ?, ?, ?, ?, ?, ?)',
           whereArgs: defaultCategoryNames.toList(),
         );
       }
@@ -231,20 +232,17 @@ class ImportService {
             DateTime.now().toIso8601String();
 
         final existingCategoryId = categoryNameMap[name.toLowerCase()];
-        final finalCatId =
-            existingCategoryId ??
+        final finalCatId = existingCategoryId ??
             await txn.insert(DbTables.categories, {
-              DbCols.id: null,
-              DbCols.name: name,
-              DbCols.icon: icon,
-              DbCols.color: color,
-              DbCols.isPinned: isPinned ? 1 : 0,
-              DbCols.isArchived: isArchived ? 1 : 0,
-              DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis
-                  ? 1
-                  : 0,
-              DbCols.createdAt: createdAt,
-            }, conflictAlgorithm: sql.ConflictAlgorithm.ignore);
+          DbCols.id: null,
+          DbCols.name: name,
+          DbCols.icon: icon,
+          DbCols.color: color,
+          DbCols.isPinned: isPinned ? 1 : 0,
+          DbCols.isArchived: isArchived ? 1 : 0,
+          DbCols.includeInSpendingAnalysis: includeInSpendingAnalysis ? 1 : 0,
+          DbCols.createdAt: createdAt,
+        }, conflictAlgorithm: sql.ConflictAlgorithm.ignore);
         if (oldId != null) {
           categoryIdMap[oldId] = finalCatId;
         }

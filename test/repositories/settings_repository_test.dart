@@ -54,38 +54,26 @@ void main() {
       expect(await SettingsRepository.get('temp_key'), isNull);
     });
 
-    test(
-      'getBool and setBool handle boolean conversion and default values',
-      () async {
-        expect(
-          await SettingsRepository.getBool('custom_theme', defaultValue: true),
-          isTrue,
-        );
-        expect(
-          await SettingsRepository.getBool('custom_theme', defaultValue: false),
-          isFalse,
-        );
+    test('getBool and setBool handle boolean conversion and default values', () async {
+      expect(await SettingsRepository.getBool('custom_theme', defaultValue: true), isTrue);
+      expect(await SettingsRepository.getBool('custom_theme', defaultValue: false), isFalse);
 
-        await SettingsRepository.setBool('custom_theme', true);
-        expect(await SettingsRepository.getBool('custom_theme'), isTrue);
+      await SettingsRepository.setBool('custom_theme', true);
+      expect(await SettingsRepository.getBool('custom_theme'), isTrue);
 
-        await SettingsRepository.setBool('custom_theme', false);
-        expect(await SettingsRepository.getBool('custom_theme'), isFalse);
-      },
-    );
+      await SettingsRepository.setBool('custom_theme', false);
+      expect(await SettingsRepository.getBool('custom_theme'), isFalse);
+    });
 
-    test(
-      'getInt parses integer values or returns null if invalid/missing',
-      () async {
-        expect(await SettingsRepository.getInt('page_size'), isNull);
+    test('getInt parses integer values or returns null if invalid/missing', () async {
+      expect(await SettingsRepository.getInt('page_size'), isNull);
 
-        await SettingsRepository.set('page_size', '25');
-        expect(await SettingsRepository.getInt('page_size'), equals(25));
+      await SettingsRepository.set('page_size', '25');
+      expect(await SettingsRepository.getInt('page_size'), equals(25));
 
-        await SettingsRepository.set('page_size', 'invalid_int');
-        expect(await SettingsRepository.getInt('page_size'), isNull);
-      },
-    );
+      await SettingsRepository.set('page_size', 'invalid_int');
+      expect(await SettingsRepository.getInt('page_size'), isNull);
+    });
 
     test('theme settings store and retrieve theme configuration', () async {
       await SettingsRepository.set('theme_mode', 'dark');
@@ -94,10 +82,7 @@ void main() {
 
       expect(await SettingsRepository.get('theme_mode'), equals('dark'));
       expect(await SettingsRepository.getBool('custom_theme_enabled'), isTrue);
-      expect(
-        await SettingsRepository.get('selected_theme_color'),
-        equals('Purple'),
-      );
+      expect(await SettingsRepository.get('selected_theme_color'), equals('Purple'));
     });
   });
 }

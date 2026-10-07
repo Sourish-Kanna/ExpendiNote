@@ -24,28 +24,23 @@ void main() {
   });
 
   group('DatabaseService Fresh Installation & Schema Tests', () {
-    test(
-      'creates required tables for v5 schema directly on fresh install',
-      () async {
-        final db = await DatabaseService.instance.database;
+    test('creates required tables for v5 schema directly on fresh install', () async {
+      final db = await DatabaseService.instance.database;
 
-        final tables = await db.rawQuery(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
-        );
-        final tableNames = tables.map((t) => t['name'] as String).toSet();
+      final tables = await db.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+      );
+      final tableNames = tables.map((t) => t['name'] as String).toSet();
 
-        expect(tableNames, contains(DbTables.categories));
-        expect(tableNames, contains(DbTables.transactions));
-        expect(tableNames, contains(DbTables.settings));
-      },
-    );
+      expect(tableNames, contains(DbTables.categories));
+      expect(tableNames, contains(DbTables.transactions));
+      expect(tableNames, contains(DbTables.settings));
+    });
 
     test('categories table contains all expected v5 columns', () async {
       final db = await DatabaseService.instance.database;
 
-      final columns = await db.rawQuery(
-        "PRAGMA table_info(${DbTables.categories})",
-      );
+      final columns = await db.rawQuery("PRAGMA table_info(${DbTables.categories})");
       final columnNames = columns.map((c) => c['name'] as String).toSet();
 
       expect(columnNames, contains(DbCols.id));
@@ -61,9 +56,7 @@ void main() {
     test('transactions table contains all expected v5 columns', () async {
       final db = await DatabaseService.instance.database;
 
-      final columns = await db.rawQuery(
-        "PRAGMA table_info(${DbTables.transactions})",
-      );
+      final columns = await db.rawQuery("PRAGMA table_info(${DbTables.transactions})");
       final columnNames = columns.map((c) => c['name'] as String).toSet();
 
       expect(columnNames, contains(DbCols.id));
@@ -79,9 +72,7 @@ void main() {
     test('creates required performance indexes', () async {
       final db = await DatabaseService.instance.database;
 
-      final indexes = await db.rawQuery(
-        "SELECT name FROM sqlite_master WHERE type='index'",
-      );
+      final indexes = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='index'");
       final indexNames = indexes.map((i) => i['name'] as String).toSet();
 
       expect(indexNames, contains('idx_transactions_date'));
@@ -89,38 +80,30 @@ void main() {
       expect(indexNames, contains('idx_categories_name'));
     });
 
-    test(
-      'seeds default categories with correct spending analysis settings on fresh install',
-      () async {
-        final db = await DatabaseService.instance.database;
+    test('seeds default categories with correct spending analysis settings on fresh install', () async {
+      final db = await DatabaseService.instance.database;
 
-        final categories = await db.query(DbTables.categories);
-        final names = categories.map((c) => c[DbCols.name] as String).toList();
+      final categories = await db.query(DbTables.categories);
+      final names = categories.map((c) => c[DbCols.name] as String).toList();
 
-        expect(
-          names,
-          containsAll([
-            'Food',
-            'Transport',
-            'Shopping',
-            'Bills',
-            'Entertainment',
-            'Healthcare',
-            'Investment',
-            'Others',
-          ]),
-        );
+      expect(names, containsAll([
+        'Food',
+        'Transport',
+        'Shopping',
+        'Bills',
+        'Entertainment',
+        'Healthcare',
+        'Investment',
+        'Others',
+      ]));
 
-        // Verify Investment has includeInSpendingAnalysis set to 0, Food set to 1
-        final investment = categories.firstWhere(
-          (c) => c[DbCols.name] == 'Investment',
-        );
-        expect(investment[DbCols.includeInSpendingAnalysis], equals(0));
+      // Verify Investment has includeInSpendingAnalysis set to 0, Food set to 1
+      final investment = categories.firstWhere((c) => c[DbCols.name] == 'Investment');
+      expect(investment[DbCols.includeInSpendingAnalysis], equals(0));
 
-        final food = categories.firstWhere((c) => c[DbCols.name] == 'Food');
-        expect(food[DbCols.includeInSpendingAnalysis], equals(1));
-      },
-    );
+      final food = categories.firstWhere((c) => c[DbCols.name] == 'Food');
+      expect(food[DbCols.includeInSpendingAnalysis], equals(1));
+    });
 
     test('enforces NOCASE uniqueness on category names', () async {
       final db = await DatabaseService.instance.database;
@@ -149,63 +132,43 @@ void main() {
       );
     });
 
-    test(
-      'supports transaction CRUD operations via DatabaseService instance',
-      () async {
-        final db = await DatabaseService.instance.database;
+    test('supports transaction CRUD operations via DatabaseService instance', () async {
+      final db = await DatabaseService.instance.database;
 
-        final catId =
-            (await db.query(DbTables.categories, limit: 1)).first['id'] as int;
-        final nowStr = DateTime.now().toIso8601String();
+      final catId = (await db.query(DbTables.categories, limit: 1)).first['id'] as int;
+      final nowStr = DateTime.now().toIso8601String();
 
-        // Insert
-        final id = await db.insert(DbTables.transactions, {
-          DbCols.title: 'Dinner',
-          DbCols.amount: 500.0,
-          DbCols.date: nowStr,
-          DbCols.categoryId: catId,
-          DbCols.description: 'Fancy restaurant',
-          DbCols.includeInSpendingAnalysis: 1,
-          DbCols.createdAt: nowStr,
-        });
+      // Insert
+      final id = await db.insert(DbTables.transactions, {
+        DbCols.title: 'Dinner',
+        DbCols.amount: 500.0,
+        DbCols.date: nowStr,
+        DbCols.categoryId: catId,
+        DbCols.description: 'Fancy restaurant',
+        DbCols.includeInSpendingAnalysis: 1,
+        DbCols.createdAt: nowStr,
+      });
 
-        // Retrieve
-        final rows = await db.query(
-          DbTables.transactions,
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        expect(rows.length, equals(1));
-        expect(rows.first[DbCols.title], equals('Dinner'));
-        expect(rows.first[DbCols.amount], equals(500.0));
+      // Retrieve
+      final rows = await db.query(DbTables.transactions, where: 'id = ?', whereArgs: [id]);
+      expect(rows.length, equals(1));
+      expect(rows.first[DbCols.title], equals('Dinner'));
+      expect(rows.first[DbCols.amount], equals(500.0));
 
-        // Update
-        await db.update(
-          DbTables.transactions,
-          {DbCols.amount: 550.0},
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        final updatedRows = await db.query(
-          DbTables.transactions,
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        expect(updatedRows.first[DbCols.amount], equals(550.0));
+      // Update
+      await db.update(
+        DbTables.transactions,
+        {DbCols.amount: 550.0},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      final updatedRows = await db.query(DbTables.transactions, where: 'id = ?', whereArgs: [id]);
+      expect(updatedRows.first[DbCols.amount], equals(550.0));
 
-        // Delete
-        await db.delete(
-          DbTables.transactions,
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        final deletedRows = await db.query(
-          DbTables.transactions,
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        expect(deletedRows, isEmpty);
-      },
-    );
+      // Delete
+      await db.delete(DbTables.transactions, where: 'id = ?', whereArgs: [id]);
+      final deletedRows = await db.query(DbTables.transactions, where: 'id = ?', whereArgs: [id]);
+      expect(deletedRows, isEmpty);
+    });
   });
 }
