@@ -1,8 +1,6 @@
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
-import 'package:flutter/foundation.dart';
-
 import '../models/transaction.dart' as txmodel show Transaction;
 import '../repositories/settings_repository.dart';
 import '../repositories/transaction_repository.dart' show TransactionRepository;
@@ -24,11 +22,6 @@ class NewHomeScreen extends StatefulWidget {
 
 class _NewHomeScreenState extends State<NewHomeScreen> {
   static bool _hasCheckedAppOpeningThisSession = false;
-
-  @visibleForTesting
-  static void resetAppOpeningSessionFlag() {
-    _hasCheckedAppOpeningThisSession = false;
-  }
 
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
