@@ -46,21 +46,24 @@ void main() {
       expect(controller.selectedThemeColor, equals(AppThemeColor.purple));
     });
 
-    test('setThemeMode updates state, notifies listeners, and persists choice', () async {
-      final controller = AppThemeController();
-      await Future.delayed(const Duration(milliseconds: 50));
+    test(
+      'setThemeMode updates state, notifies listeners, and persists choice',
+      () async {
+        final controller = AppThemeController();
+        await Future.delayed(const Duration(milliseconds: 50));
 
-      bool listenerNotified = false;
-      controller.addListener(() {
-        listenerNotified = true;
-      });
+        bool listenerNotified = false;
+        controller.addListener(() {
+          listenerNotified = true;
+        });
 
-      await controller.setThemeMode(ThemeMode.light);
+        await controller.setThemeMode(ThemeMode.light);
 
-      expect(controller.themeMode, equals(ThemeMode.light));
-      expect(listenerNotified, isTrue);
-      expect(await SettingsRepository.get('theme_mode'), equals('light'));
-    });
+        expect(controller.themeMode, equals(ThemeMode.light));
+        expect(listenerNotified, isTrue);
+        expect(await SettingsRepository.get('theme_mode'), equals('light'));
+      },
+    );
 
     test('setCustomThemeEnabled updates state and persists setting', () async {
       final controller = AppThemeController();
@@ -75,29 +78,44 @@ void main() {
       expect(await SettingsRepository.getBool('custom_theme_enabled'), isTrue);
     });
 
-    test('setSelectedThemeColor updates color and preserves it when custom theme is disabled', () async {
-      final controller = AppThemeController();
-      await Future.delayed(const Duration(milliseconds: 50));
+    test(
+      'setSelectedThemeColor updates color and preserves it when custom theme is disabled',
+      () async {
+        final controller = AppThemeController();
+        await Future.delayed(const Duration(milliseconds: 50));
 
-      await controller.setSelectedThemeColor(AppThemeColor.orange);
-      expect(controller.selectedThemeColor, equals(AppThemeColor.orange));
-      expect(await SettingsRepository.get('selected_theme_color'), equals('Orange'));
+        await controller.setSelectedThemeColor(AppThemeColor.orange);
+        expect(controller.selectedThemeColor, equals(AppThemeColor.orange));
+        expect(
+          await SettingsRepository.get('selected_theme_color'),
+          equals('Orange'),
+        );
 
-      // Disable custom theme
-      await controller.setCustomThemeEnabled(false);
+        // Disable custom theme
+        await controller.setCustomThemeEnabled(false);
 
-      // Selected color is preserved in state and persistence
-      expect(controller.selectedThemeColor, equals(AppThemeColor.orange));
-      expect(await SettingsRepository.get('selected_theme_color'), equals('Orange'));
-    });
+        // Selected color is preserved in state and persistence
+        expect(controller.selectedThemeColor, equals(AppThemeColor.orange));
+        expect(
+          await SettingsRepository.get('selected_theme_color'),
+          equals('Orange'),
+        );
+      },
+    );
 
     test('AppThemeColor.fromName handles all 4 color options and fallback', () {
       expect(AppThemeColor.fromName('Blue'), equals(AppThemeColor.blue));
       expect(AppThemeColor.fromName('Green'), equals(AppThemeColor.green));
       expect(AppThemeColor.fromName('Purple'), equals(AppThemeColor.purple));
       expect(AppThemeColor.fromName('Orange'), equals(AppThemeColor.orange));
-      expect(AppThemeColor.fromName('InvalidColor'), equals(AppThemeColor.green)); // fallback
-      expect(AppThemeColor.fromName(null), equals(AppThemeColor.green)); // fallback
+      expect(
+        AppThemeColor.fromName('InvalidColor'),
+        equals(AppThemeColor.green),
+      ); // fallback
+      expect(
+        AppThemeColor.fromName(null),
+        equals(AppThemeColor.green),
+      ); // fallback
     });
   });
 }

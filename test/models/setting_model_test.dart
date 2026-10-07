@@ -15,10 +15,16 @@ void main() {
     });
 
     test('Typed getters perform expected type conversions', () {
-      final boolSetting = const Setting(key: 'custom_theme_enabled', value: 'true');
+      final boolSetting = const Setting(
+        key: 'custom_theme_enabled',
+        value: 'true',
+      );
       expect(boolSetting.boolValue, isTrue);
 
-      final falseBoolSetting = const Setting(key: 'custom_theme_enabled', value: 'false');
+      final falseBoolSetting = const Setting(
+        key: 'custom_theme_enabled',
+        value: 'false',
+      );
       expect(falseBoolSetting.boolValue, isFalse);
 
       final intSetting = const Setting(key: 'version', value: '5');

@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
@@ -15,7 +15,9 @@ void main() {
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    final tempDir = Directory.systemTemp.createTempSync('cat_mgmt_widget_test_');
+    final tempDir = Directory.systemTemp.createTempSync(
+      'cat_mgmt_widget_test_',
+    );
     databaseFactory.setDatabasesPath(tempDir.path);
   });
 
@@ -25,8 +27,12 @@ void main() {
     await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
     await DatabaseService.instance.database;
 
-    await CategoryRepository.createCategory(Category(id: 1, name: 'Groceries', icon: 'shopping_bag', isPinned: true));
-    await CategoryRepository.createCategory(Category(id: 2, name: 'Entertainment', icon: 'movie', isPinned: false));
+    await CategoryRepository.createCategory(
+      Category(id: 1, name: 'Groceries', icon: 'shopping_bag', isPinned: true),
+    );
+    await CategoryRepository.createCategory(
+      Category(id: 2, name: 'Entertainment', icon: 'movie', isPinned: false),
+    );
   });
 
   tearDown(() async {
@@ -34,9 +40,7 @@ void main() {
   });
 
   Widget createWidgetUnderTest() {
-    return const MaterialApp(
-      home: CategoryManagementScreen(),
-    );
+    return const MaterialApp(home: CategoryManagementScreen());
   }
 
   void configureViewport(WidgetTester tester) {
@@ -47,21 +51,26 @@ void main() {
   }
 
   group('CategoryManagementScreen Widget Tests', () {
-    testWidgets('renders list of categories with pinned indicator and floating action button', (tester) async {
-      configureViewport(tester);
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 100));
-      });
-      await tester.pump();
+    testWidgets(
+      'renders list of categories with pinned indicator and floating action button',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
 
-      expect(find.text('Manage Categories'), findsOneWidget);
-      expect(find.text('Groceries'), findsOneWidget);
-      expect(find.text('Entertainment'), findsOneWidget);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
-    });
+        expect(find.text('Manage Categories'), findsOneWidget);
+        expect(find.text('Groceries'), findsOneWidget);
+        expect(find.text('Entertainment'), findsOneWidget);
+        expect(find.byType(FloatingActionButton), findsOneWidget);
+      },
+    );
 
-    testWidgets('opens bottom sheet when long-pressing a category card', (tester) async {
+    testWidgets('opens bottom sheet when long-pressing a category card', (
+      tester,
+    ) async {
       configureViewport(tester);
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.runAsync(() async {
@@ -76,7 +85,10 @@ void main() {
 
       expect(find.text('Edit'), findsOneWidget);
       expect(find.text('Merge'), findsOneWidget);
-      expect(find.text('Delete'), findsOneWidget); // 0 transactions so delete is visible
+      expect(
+        find.text('Delete'),
+        findsOneWidget,
+      ); // 0 transactions so delete is visible
     });
   });
 }

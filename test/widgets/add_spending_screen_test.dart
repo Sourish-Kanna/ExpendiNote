@@ -16,7 +16,9 @@ void main() {
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
-    final tempDir = Directory.systemTemp.createTempSync('add_spending_widget_test_');
+    final tempDir = Directory.systemTemp.createTempSync(
+      'add_spending_widget_test_',
+    );
     databaseFactory.setDatabasesPath(tempDir.path);
   });
 
@@ -27,8 +29,22 @@ void main() {
     await DatabaseService.instance.database;
 
     // Seed test categories
-    await CategoryRepository.createCategory(Category(id: 1, name: 'Food', icon: 'restaurant', includeInSpendingAnalysis: true));
-    await CategoryRepository.createCategory(Category(id: 2, name: 'Investment', icon: 'trending_up', includeInSpendingAnalysis: false));
+    await CategoryRepository.createCategory(
+      Category(
+        id: 1,
+        name: 'Food',
+        icon: 'restaurant',
+        includeInSpendingAnalysis: true,
+      ),
+    );
+    await CategoryRepository.createCategory(
+      Category(
+        id: 2,
+        name: 'Investment',
+        icon: 'trending_up',
+        includeInSpendingAnalysis: false,
+      ),
+    );
   });
 
   tearDown(() async {
@@ -36,9 +52,7 @@ void main() {
   });
 
   Widget createWidgetUnderTest({Transaction? transaction}) {
-    return MaterialApp(
-      home: AddSpendingScreen(transaction: transaction),
-    );
+    return MaterialApp(home: AddSpendingScreen(transaction: transaction));
   }
 
   void configureViewport(WidgetTester tester) {
@@ -49,25 +63,31 @@ void main() {
   }
 
   group('AddSpendingScreen Widget Tests', () {
-    testWidgets('shows validation error when saving without category selection', (tester) async {
-      configureViewport(tester);
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 100));
-      });
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tester.pump();
+    testWidgets(
+      'shows validation error when saving without category selection',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pump();
 
-      // Tap save button
-      final saveBtn = find.widgetWithText(FilledButton, 'Save Spending');
-      expect(saveBtn, findsOneWidget);
-      await tester.ensureVisible(saveBtn);
-      await tester.tap(saveBtn);
-      await tester.pump();
+        // Tap save button
+        final saveBtn = find.widgetWithText(FilledButton, 'Save Spending');
+        expect(saveBtn, findsOneWidget);
+        await tester.ensureVisible(saveBtn);
+        await tester.tap(saveBtn);
+        await tester.pump();
 
-      // Category error message should appear
-      expect(find.text('Please explicitly select a category before saving.'), findsOneWidget);
-    });
+        // Category error message should appear
+        expect(
+          find.text('Please explicitly select a category before saving.'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets('shows validation error when amount is empty', (tester) async {
       configureViewport(tester);
@@ -85,7 +105,10 @@ void main() {
       await tester.pump();
 
       // Enter title but leave amount empty
-      await tester.enterText(find.widgetWithText(TextFormField, 'What did you spend on?'), 'Test Title');
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'What did you spend on?'),
+        'Test Title',
+      );
 
       // Tap save button
       final saveBtn = find.widgetWithText(FilledButton, 'Save Spending');
@@ -96,7 +119,9 @@ void main() {
       expect(find.text('Please enter an amount'), findsOneWidget);
     });
 
-    testWidgets('pre-fills fields when editing an existing transaction', (tester) async {
+    testWidgets('pre-fills fields when editing an existing transaction', (
+      tester,
+    ) async {
       configureViewport(tester);
       final existingTx = Transaction(
         id: 10,
@@ -121,7 +146,9 @@ void main() {
       expect(find.text('Italian restaurant'), findsOneWidget);
     });
 
-    testWidgets('prompts dialog when changing category during edit', (tester) async {
+    testWidgets('prompts dialog when changing category during edit', (
+      tester,
+    ) async {
       configureViewport(tester);
       final existingTx = Transaction(
         id: 10,

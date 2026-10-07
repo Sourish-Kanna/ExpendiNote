@@ -23,6 +23,11 @@ class NewHomeScreen extends StatefulWidget {
 class _NewHomeScreenState extends State<NewHomeScreen> {
   static bool _hasCheckedAppOpeningThisSession = false;
 
+  @visibleForTesting
+  static void resetSessionFlagForTesting() {
+    _hasCheckedAppOpeningThisSession = false;
+  }
+
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
@@ -43,10 +48,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
     final count = await SettingsRepository.getInt('app_opening_count') ?? 0;
     if (count < 5) {
-      await SettingsRepository.set(
-        'app_opening_count',
-        (count + 1).toString(),
-      );
+      await SettingsRepository.set('app_opening_count', (count + 1).toString());
       if (!mounted) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -373,5 +375,4 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
       ),
     );
   }
-
 }

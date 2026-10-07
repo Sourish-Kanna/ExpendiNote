@@ -8,7 +8,7 @@ import 'package:expend_note/repositories/transaction_repository.dart';
 import 'package:expend_note/screens/new_home_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
 
@@ -86,19 +86,88 @@ void main() {
       },
     );
 
-    testWidgets('long press on transaction card opens bottom sheet with Edit and Delete', (tester) async {
-      configureViewport(tester);
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.runAsync(() async {
-        await Future.delayed(const Duration(milliseconds: 100));
-      });
-      await tester.pump();
+    testWidgets(
+      'long press on transaction card opens bottom sheet with Edit and Delete',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
 
-      await tester.longPress(find.text('Starbucks Coffee'));
-      await tester.pumpAndSettle();
+        await tester.longPress(find.text('Starbucks Coffee'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Edit'), findsOneWidget);
-      expect(find.text('Delete'), findsOneWidget);
-    });
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'shows long-press hint SnackBar for first 5 openings and stops on 6th',
+      (tester) async {
+        configureViewport(tester);
+
+        for (int opening = 1; opening <= 6; opening++) {
+          // Reset session flag to simulate a new app opening launch
+          _NewHomeScreenState.resetSessionFlagForTesting();
+
+          await tester.pumpWidget(createWidgetUnderTest());
+          await tester.runAsync(() async {
+            await Future.delayed(const Duration(milliseconds: 100));
+          });
+          await tester.pumpAndSettle();
+
+          if (opening <= 5) {
+            expect(
+              find.text('Long-press a transaction for more options.'),
+              findsOneWidget,
+              reason: 'Opening $opening should show hint',
+            );
+          } else {
+            expect(
+              find.text('Long-press a transaction for more options.'),
+              findsNothing,
+              reason: 'Opening $opening should not show hint',
+            );
+          }
+        }
+      },
+    );
+
+    testWidgets(
+      'rebuilding or re-initializing within same app session does not increment opening count',
+      (tester) async {
+        configureViewport(tester);
+
+        _NewHomeScreenState.resetSessionFlagForTesting();
+
+        // First initialization in session
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Long-press a transaction for more options.'),
+          findsOneWidget,
+        );
+
+        // Re-initialize home screen in same session without resetting session flag
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pumpAndSettle();
+
+        // Should NOT trigger SnackBar again in same session
+        expect(
+          find.text('Long-press a transaction for more options.'),
+          findsNothing,
+        );
+      },
+    );
   });
 }

@@ -1,5 +1,5 @@
 import 'package:intl/intl.dart';
-import 'package:material_ui/material_ui.dart';
+import 'package:flutter/material.dart';
 
 import '../models/category.dart';
 import '../models/transaction.dart';
@@ -28,9 +28,9 @@ class TransactionCard extends StatelessWidget {
     this.contentPadding,
     this.onTap,
     this.onLongPress,
-  })  : category = null,
-        categoryTxCount = null,
-        categoryTotalAmount = null;
+  }) : category = null,
+       categoryTxCount = null,
+       categoryTotalAmount = null;
 
   const TransactionCard.category({
     super.key,
@@ -62,7 +62,8 @@ class TransactionCard extends StatelessWidget {
       cardColor = ColorUtils.fromInt(t.categoryColor);
       iconData = IconUtils.fromString(t.categoryIcon);
 
-      title = titleWidget ??
+      title =
+          titleWidget ??
           Text(
             t.title,
             maxLines: 1,
@@ -73,7 +74,8 @@ class TransactionCard extends StatelessWidget {
             ),
           );
 
-      subtitle = subtitleWidget ??
+      subtitle =
+          subtitleWidget ??
           Text(
             '${t.categoryName ?? 'Other'} • ${DateFormat('d/M').format(t.date)} • ${DateFormat('hh:mm a').format(t.date)}',
             style: textTheme.bodySmall?.copyWith(
@@ -81,7 +83,8 @@ class TransactionCard extends StatelessWidget {
             ),
           );
 
-      trailing = trailingWidget ??
+      trailing =
+          trailingWidget ??
           Text(
             '₹${t.amount.toStringAsFixed(0)}',
             style: textTheme.titleMedium?.copyWith(
@@ -94,7 +97,8 @@ class TransactionCard extends StatelessWidget {
       cardColor = ColorUtils.fromInt(c.color);
       iconData = IconUtils.fromString(c.icon);
 
-      title = titleWidget ??
+      title =
+          titleWidget ??
           Row(
             children: [
               Text(
@@ -111,7 +115,8 @@ class TransactionCard extends StatelessWidget {
             ],
           );
 
-      subtitle = subtitleWidget ??
+      subtitle =
+          subtitleWidget ??
           Text(
             '${categoryTxCount ?? 0} transactions • ₹${(categoryTotalAmount ?? 0.0).toStringAsFixed(0)}',
             style: textTheme.bodySmall?.copyWith(
@@ -127,17 +132,12 @@ class TransactionCard extends StatelessWidget {
     return Card(
       elevation: 0,
       color: cardColor.withValues(alpha: 0.12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
-        contentPadding: contentPadding ??
+        contentPadding:
+            contentPadding ??
             const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Icon(
-          iconData,
-          color: cardColor,
-          size: 24,
-        ),
+        leading: Icon(iconData, color: cardColor, size: 24),
         title: title,
         subtitle: subtitle,
         trailing: trailing,
@@ -174,8 +174,9 @@ void showTransactionActionSheet({
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -248,8 +249,9 @@ void showCategoryActionSheet({
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color:
-                      theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

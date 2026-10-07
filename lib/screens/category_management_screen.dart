@@ -60,7 +60,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 final catMap = _categoriesWithStats[index];
                 final category = Category.fromMap(catMap);
                 final txCount = catMap['transactionCount'] ?? 0;
-                final totalAmount = (catMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
+                final totalAmount =
+                    (catMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
