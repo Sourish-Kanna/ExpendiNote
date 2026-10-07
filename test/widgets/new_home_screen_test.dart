@@ -8,7 +8,7 @@ import 'package:expend_note/repositories/transaction_repository.dart';
 import 'package:expend_note/screens/new_home_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
 
