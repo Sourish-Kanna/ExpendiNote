@@ -2,8 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
+import '../widgets/transaction_card.dart';
 import 'edit_category_screen.dart';
 import 'merge_category_screen.dart';
 
@@ -61,84 +60,29 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 final catMap = _categoriesWithStats[index];
                 final category = Category.fromMap(catMap);
                 final txCount = catMap['transactionCount'] ?? 0;
-                final totalAmount = catMap['totalAmount'] ?? 0.0;
-                final catColor = ColorUtils.fromInt(category.color);
+                final totalAmount = (catMap['totalAmount'] as num?)?.toDouble() ?? 0.0;
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    elevation: 0,
-                    color: catColor.withValues(alpha: 0.12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                  child: TransactionCard.category(
+                    category: category,
+                    categoryTxCount: txCount,
+                    categoryTotalAmount: totalAmount,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      leading: Icon(
-                        IconUtils.fromString(category.icon),
-                        color: catColor,
-                        size: 24,
-                      ),
-                      title: Row(
-                        children: [
-                          Text(
-                            category.name,
-                            style: textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          if (category.isPinned) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.push_pin, size: 14, color: catColor),
-                          ],
-                        ],
-                      ),
-                      subtitle: Text(
-                        '$txCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) =>
-                            _handleMenuSelection(value, category, txCount),
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: ListTile(
-                              leading: Icon(Icons.edit),
-                              title: Text('Edit'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'merge',
-                            child: ListTile(
-                              leading: Icon(Icons.merge_type),
-                              title: Text('Merge'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          if (txCount == 0)
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: ListTile(
-                                leading: Icon(Icons.delete, color: Colors.red),
-                                title: Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                        ],
-                      ),
-                      onTap: () => _editCategory(category),
-                    ),
+                    onTap: () => _editCategory(category),
+                    onLongPress: () {
+                      showCategoryActionSheet(
+                        context: context,
+                        category: category,
+                        txCount: txCount,
+                        onEdit: () => _editCategory(category),
+                        onMerge: () => _mergeCategory(category, txCount),
+                        onDelete: () => _confirmDelete(category),
+                      );
+                    },
                   ),
                 );
               },
@@ -151,20 +95,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  void _handleMenuSelection(String value, Category category, int txCount) {
-    switch (value) {
-      case 'edit':
-        _editCategory(category);
-        break;
-      case 'merge':
-        _mergeCategory(category, txCount);
-        break;
-      case 'delete':
-        _confirmDelete(category);
-        break;
-    }
   }
 
   Future<void> _editCategory(Category? category) async {

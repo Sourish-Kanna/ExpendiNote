@@ -88,6 +88,8 @@ class SummaryCard extends StatelessWidget {
               Text(
                 item.label,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: textTheme.labelLarge?.copyWith(
                   color: itemTextColor,
                   fontWeight: FontWeight.bold,
@@ -97,6 +99,8 @@ class SummaryCard extends StatelessWidget {
               Text(
                 item.value,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: itemTextColor,

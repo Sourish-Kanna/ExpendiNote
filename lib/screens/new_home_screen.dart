@@ -1,11 +1,13 @@
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
+import 'package:flutter/foundation.dart';
+
 import '../models/transaction.dart' as txmodel show Transaction;
+import '../repositories/settings_repository.dart';
 import '../repositories/transaction_repository.dart' show TransactionRepository;
-import '../utils/color_utils.dart' show ColorUtils;
-import '../utils/icon_utils.dart' show IconUtils;
 import '../widgets/summary_card.dart';
+import '../widgets/transaction_card.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
 import 'daily_summary_screen.dart';
 import 'search_screen.dart' show SearchScreen;
@@ -21,6 +23,13 @@ class NewHomeScreen extends StatefulWidget {
 }
 
 class _NewHomeScreenState extends State<NewHomeScreen> {
+  static bool _hasCheckedAppOpeningThisSession = false;
+
+  @visibleForTesting
+  static void resetAppOpeningSessionFlag() {
+    _hasCheckedAppOpeningThisSession = false;
+  }
+
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
@@ -30,8 +39,32 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLongPressHint();
     _refreshSpendings();
     _refreshNotifier.addListener(_refreshSpendings);
+  }
+
+  Future<void> _checkLongPressHint() async {
+    if (_hasCheckedAppOpeningThisSession) return;
+    _hasCheckedAppOpeningThisSession = true;
+
+    final count = await SettingsRepository.getInt('app_opening_count') ?? 0;
+    if (count < 5) {
+      await SettingsRepository.set(
+        'app_opening_count',
+        (count + 1).toString(),
+      );
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Long-press a transaction for more options.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+    }
   }
 
   @override
@@ -247,62 +280,43 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                               final spending = _recentSpendings[index];
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
-                                child: Card(
-                                  elevation: 0,
-                                  color: _getCategoryColor(
-                                    spending,
-                                  ).withValues(alpha: 0.12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    leading: Icon(
-                                      _getCategoryIcon(spending),
-                                      color: _getCategoryColor(spending),
-                                      size: 24,
-                                    ),
-                                    title: Text(
-                                      spending.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: colorScheme.onSurface,
+                                child: TransactionCard(
+                                  transaction: spending,
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SpendingDetailScreen(
+                                              transaction: spending,
+                                            ),
                                       ),
-                                    ),
-                                    subtitle: Text(
-                                      '${spending.categoryName ?? 'Other'} • ${DateFormat('d/M').format(spending.date)} • ${DateFormat('hh:mm a').format(spending.date)}',
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    trailing: Text(
-                                      '₹${spending.amount.toStringAsFixed(0)}',
-                                      style: textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    onTap: () async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SpendingDetailScreen(
-                                                transaction: spending,
-                                              ),
-                                        ),
-                                      );
-                                      if (result == true) {
-                                        _refreshNotifier.value++;
-                                      }
-                                    },
-                                    onLongPress: () => _confirmDelete(spending),
-                                  ),
+                                    );
+                                    if (result == true) {
+                                      _refreshNotifier.value++;
+                                    }
+                                  },
+                                  onLongPress: () {
+                                    showTransactionActionSheet(
+                                      context: context,
+                                      transaction: spending,
+                                      onEdit: () async {
+                                        final result = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                AddSpendingScreen(
+                                                  transaction: spending,
+                                                ),
+                                          ),
+                                        );
+                                        if (result == true) {
+                                          _refreshNotifier.value++;
+                                        }
+                                      },
+                                      onDelete: () => _confirmDelete(spending),
+                                    );
+                                  },
                                 ),
                               );
                             }, childCount: _recentSpendings.length),
@@ -367,11 +381,4 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     );
   }
 
-  IconData _getCategoryIcon(txmodel.Transaction spending) {
-    return IconUtils.fromString(spending.categoryIcon);
-  }
-
-  Color _getCategoryColor(txmodel.Transaction spending) {
-    return ColorUtils.fromInt(spending.categoryColor);
-  }
 }

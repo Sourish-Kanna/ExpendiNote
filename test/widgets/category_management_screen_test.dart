@@ -61,7 +61,7 @@ void main() {
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
-    testWidgets('opens popup menu when tapping popup button', (tester) async {
+    testWidgets('opens bottom sheet when long-pressing a category card', (tester) async {
       configureViewport(tester);
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.runAsync(() async {
@@ -69,10 +69,10 @@ void main() {
       });
       await tester.pump();
 
-      // Find popup menu button
-      final menuBtn = find.byType(PopupMenuButton<String>).first;
-      await tester.tap(menuBtn);
-      await tester.pump();
+      // Long press first category item
+      final categoryCard = find.text('Groceries');
+      await tester.longPress(categoryCard);
+      await tester.pumpAndSettle();
 
       expect(find.text('Edit'), findsOneWidget);
       expect(find.text('Merge'), findsOneWidget);

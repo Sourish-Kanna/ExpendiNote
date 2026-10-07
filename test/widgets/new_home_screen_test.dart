@@ -85,5 +85,20 @@ void main() {
         expect(find.text('₹250'), findsOneWidget);
       },
     );
+
+    testWidgets('long press on transaction card opens bottom sheet with Edit and Delete', (tester) async {
+      configureViewport(tester);
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
+
+      await tester.longPress(find.text('Starbucks Coffee'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit'), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+    });
   });
 }
