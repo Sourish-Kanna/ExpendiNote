@@ -6,6 +6,7 @@ import '../repositories/transaction_repository.dart' show TransactionRepository;
 import '../utils/color_utils.dart' show ColorUtils;
 import '../utils/icon_utils.dart' show IconUtils;
 import '../widgets/summary_card.dart';
+import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
 import 'daily_summary_screen.dart';
 import 'search_screen.dart' show SearchScreen;
@@ -301,7 +302,30 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                         _refreshNotifier.value++;
                                       }
                                     },
-                                    onLongPress: () => _confirmDelete(spending),
+                                    onLongPress: () async {
+                                      final navigator = Navigator.of(context);
+                                      final action =
+                                          await showTransactionOptionsBottomSheet(
+                                            context: context,
+                                            transaction: spending,
+                                          );
+                                      if (!mounted || action == null) return;
+                                      if (action == TransactionOption.edit) {
+                                        final result = await navigator.push(
+                                          MaterialPageRoute(
+                                            builder: (_) => AddSpendingScreen(
+                                              transaction: spending,
+                                            ),
+                                          ),
+                                        );
+                                        if (result == true) {
+                                          _refreshNotifier.value++;
+                                        }
+                                      } else if (action ==
+                                          TransactionOption.delete) {
+                                        _confirmDelete(spending);
+                                      }
+                                    },
                                   ),
                                 ),
                               );

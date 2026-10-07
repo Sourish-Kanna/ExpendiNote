@@ -437,7 +437,8 @@ class DatabaseService {
 
     AppLogger.info('Migration v3 -> v4 completed.');
   }
-/// Migrates the database from version 4 to version 5.
+
+  /// Migrates the database from version 4 to version 5.
   /// Replaces persisted Material icon code points with stable icon names.
   static Future<void> _migrateV4toV5(Database db) async {
     AppLogger.info('Starting database migration: v4 -> v5');
@@ -460,5 +461,4 @@ class DatabaseService {
 
     AppLogger.info('Migration v4 -> v5 completed.');
   }
-
 }

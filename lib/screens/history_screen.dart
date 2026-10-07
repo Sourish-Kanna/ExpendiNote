@@ -6,6 +6,8 @@ import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import '../widgets/summary_card.dart';
+import '../widgets/transaction_options_bottom_sheet.dart';
+import 'add_spending_screen.dart';
 import 'spending_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -241,11 +243,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               horizontal: 16,
                               vertical: 4,
                             ),
-                            leading: Icon(
-                              catIcon,
-                              color: catColor,
-                              size: 24,
-                            ),
+                            leading: Icon(catIcon, color: catColor, size: 24),
                             title: Text(
                               s.title,
                               maxLines: 1,
@@ -290,7 +288,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 _loadHistory();
                               }
                             },
-                            onLongPress: () => _confirmDelete(s),
+                            onLongPress: () async {
+                              final navigator = Navigator.of(context);
+                              final action =
+                                  await showTransactionOptionsBottomSheet(
+                                    context: context,
+                                    transaction: s,
+                                  );
+                              if (!mounted || action == null) return;
+                              if (action == TransactionOption.edit) {
+                                final result = await navigator.push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        AddSpendingScreen(transaction: s),
+                                  ),
+                                );
+                                if (result == true) {
+                                  _hasChanged = true;
+                                  _loadHistory();
+                                }
+                              } else if (action == TransactionOption.delete) {
+                                _confirmDelete(s);
+                              }
+                            },
                           ),
                         ),
                       );

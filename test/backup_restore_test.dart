@@ -279,7 +279,7 @@ void main() {
         expect(txCount, equals(1));
       },
     );
-   Future<void> seedDefaultCategories() async {
+    Future<void> seedDefaultCategories() async {
       const names = [
         'Food',
         'Transport',
@@ -298,71 +298,78 @@ void main() {
       }
     }
 
-    test('Merge preserves existing transactions and default categories', () async {
-      await seedDefaultCategories();
-      final foodId = (await db.query(
-        DbTables.categories,
-        where: '${DbCols.name} = ?',
-        whereArgs: ['Food'],
-      )).first[DbCols.id] as int;
+    test(
+      'Merge preserves existing transactions and default categories',
+      () async {
+        await seedDefaultCategories();
+        final foodId =
+            (await db.query(
+                  DbTables.categories,
+                  where: '${DbCols.name} = ?',
+                  whereArgs: ['Food'],
+                )).first[DbCols.id]
+                as int;
 
-      await db.insert(DbTables.categories, {
-        DbCols.name: 'Old Custom',
-        DbCols.createdAt: DateTime.now().toIso8601String(),
-      });
-      await db.insert(DbTables.transactions, {
-        DbCols.title: 'Existing',
-        DbCols.amount: 10.0,
-        DbCols.date: '2026-09-01T10:00:00Z',
-        DbCols.categoryId: foodId,
-        DbCols.createdAt: DateTime.now().toIso8601String(),
-      });
+        await db.insert(DbTables.categories, {
+          DbCols.name: 'Old Custom',
+          DbCols.createdAt: DateTime.now().toIso8601String(),
+        });
+        await db.insert(DbTables.transactions, {
+          DbCols.title: 'Existing',
+          DbCols.amount: 10.0,
+          DbCols.date: '2026-09-01T10:00:00Z',
+          DbCols.categoryId: foodId,
+          DbCols.createdAt: DateTime.now().toIso8601String(),
+        });
 
-      final backup = ExportMigrationService.migrateToLatest([
-        {
-          'id': 100,
-          'title': 'Imported',
-          'amount': 20.0,
-          'date': '2026-09-02T10:00:00Z',
-          'category': 'Food',
-        },
-      ]);
+        final backup = ExportMigrationService.migrateToLatest([
+          {
+            'id': 100,
+            'title': 'Imported',
+            'amount': 20.0,
+            'date': '2026-09-02T10:00:00Z',
+            'category': 'Food',
+          },
+        ]);
 
-      final restored = await ImportService().restoreMigratedData(
-        backup,
-        mode: RestoreMode.merge,
-        database: db,
-      );
+        final restored = await ImportService().restoreMigratedData(
+          backup,
+          mode: RestoreMode.merge,
+          database: db,
+        );
 
-      expect(restored, equals(1));
-      expect((await db.query(DbTables.transactions)).length, equals(2));
-      expect(
-        (await db.query(
-          DbTables.categories,
-          where: '${DbCols.name} = ?',
-          whereArgs: ['Food'],
-        )).length,
-        equals(1),
-      );
-      expect(
-        (await db.query(
-          DbTables.categories,
-          where: '${DbCols.name} = ?',
-          whereArgs: ['Old Custom'],
-        )).length,
-        equals(1),
-      );
-    });
+        expect(restored, equals(1));
+        expect((await db.query(DbTables.transactions)).length, equals(2));
+        expect(
+          (await db.query(
+            DbTables.categories,
+            where: '${DbCols.name} = ?',
+            whereArgs: ['Food'],
+          )).length,
+          equals(1),
+        );
+        expect(
+          (await db.query(
+            DbTables.categories,
+            where: '${DbCols.name} = ?',
+            whereArgs: ['Old Custom'],
+          )).length,
+          equals(1),
+        );
+      },
+    );
 
     test(
       'Replace removes existing transactions and custom categories but preserves defaults',
       () async {
         await seedDefaultCategories();
-        final foodId = (await db.query(
-          DbTables.categories,
-          where: '${DbCols.name} = ?',
-          whereArgs: ['Food'],
-        )).first[DbCols.id] as int;
+        final foodId =
+            (await db.query(
+                  DbTables.categories,
+                  where: '${DbCols.name} = ?',
+                  whereArgs: ['Food'],
+                )).first[DbCols.id]
+                as int;
 
         await db.insert(DbTables.categories, {
           DbCols.name: 'Old Custom',
@@ -455,6 +462,5 @@ void main() {
         );
       },
     );
-
   });
 }

@@ -55,9 +55,7 @@ void main() {
     });
 
     test('fromMap handles null and missing optional fields with defaults', () {
-      final map = <String, dynamic>{
-        DbCols.name: 'Others',
-      };
+      final map = <String, dynamic>{DbCols.name: 'Others'};
 
       final category = Category.fromMap(map);
 
@@ -82,10 +80,7 @@ void main() {
         includeInSpendingAnalysis: true,
       );
 
-      final updated = category.copyWith(
-        name: 'Utilities',
-        isPinned: true,
-      );
+      final updated = category.copyWith(name: 'Utilities', isPinned: true);
 
       expect(updated.id, equals(1));
       expect(updated.name, equals('Utilities'));
@@ -120,11 +115,7 @@ void main() {
         createdAt: now,
       );
 
-      final cat3 = Category(
-        id: 5,
-        name: 'Shopping Different',
-        createdAt: now,
-      );
+      final cat3 = Category(id: 5, name: 'Shopping Different', createdAt: now);
 
       expect(cat1, equals(cat2));
       expect(cat1.hashCode, equals(cat2.hashCode));

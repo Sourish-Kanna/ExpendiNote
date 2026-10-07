@@ -5,6 +5,8 @@ import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
+import '../widgets/transaction_options_bottom_sheet.dart';
+import 'add_spending_screen.dart';
 import 'spending_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -145,11 +147,60 @@ class _SearchScreenState extends State<SearchScreen> {
                           _loadData();
                         }
                       },
+                      onLongPress: () async {
+                        final navigator = Navigator.of(context);
+                        final action = await showTransactionOptionsBottomSheet(
+                          context: context,
+                          transaction: s,
+                        );
+                        if (!mounted || action == null) return;
+                        if (action == TransactionOption.edit) {
+                          final result = await navigator.push(
+                            MaterialPageRoute(
+                              builder: (_) => AddSpendingScreen(transaction: s),
+                            ),
+                          );
+                          if (result == true) {
+                            _hasChanged = true;
+                            _loadData();
+                          }
+                        } else if (action == TransactionOption.delete) {
+                          _confirmDelete(s);
+                        }
+                      },
                     ),
                   ),
                 );
               },
             ),
+    );
+  }
+
+  void _confirmDelete(txmodel.Transaction spending) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Spending?'),
+        content: const Text('Are you sure you want to delete this entry?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await TransactionRepository.deleteTransaction(spending.id!);
+              _hasChanged = true;
+              _loadData();
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

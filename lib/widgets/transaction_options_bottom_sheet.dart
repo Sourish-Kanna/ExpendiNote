@@ -1,0 +1,82 @@
+import 'package:material_ui/material_ui.dart';
+
+import '../models/transaction.dart';
+
+enum TransactionOption { edit, delete }
+
+/// Displays a Material 3 modal bottom sheet with options to Edit or Delete a transaction.
+Future<TransactionOption?> showTransactionOptionsBottomSheet({
+  required BuildContext context,
+  required Transaction transaction,
+}) {
+  return showModalBottomSheet<TransactionOption>(
+    context: context,
+    showDragHandle: true,
+    builder: (context) =>
+        TransactionOptionsBottomSheet(transaction: transaction),
+  );
+}
+
+class TransactionOptionsBottomSheet extends StatelessWidget {
+  final Transaction transaction;
+
+  const TransactionOptionsBottomSheet({super.key, required this.transaction});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Text(
+                transaction.title,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(
+                'Edit',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context, TransactionOption.edit);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete, color: colorScheme.error),
+              title: Text(
+                'Delete',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context, TransactionOption.delete);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
