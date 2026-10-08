@@ -217,5 +217,51 @@ void main() {
         expect(find.text('Delete Category?'), findsNothing);
       },
     );
+
+    testWidgets(
+      'renders long-press discoverability hint icon on category items',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Should find hint icon for category items
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        expect(hintIconFinder, findsWidgets);
+
+        // Tapping hint icon directly opens edit category screen
+        await tester.tap(hintIconFinder.first);
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        expect(find.text('Edit Category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'long pressing hint icon directly opens category options bottom sheet',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        await tester.longPress(hintIconFinder.first);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Merge'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+      },
+    );
   });
 }

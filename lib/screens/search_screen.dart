@@ -134,6 +134,14 @@ class _SearchScreenState extends State<SearchScreen> {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      trailing: Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.5,
+                        ),
+                        semanticLabel: 'Long press for options',
+                      ),
                       onTap: () async {
                         final result = await Navigator.push(
                           context,

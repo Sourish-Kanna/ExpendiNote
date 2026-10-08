@@ -268,12 +268,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                       color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
-                            trailing: Text(
-                              '₹${s.amount.toStringAsFixed(2)}',
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
-                              ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '₹${s.amount.toStringAsFixed(2)}',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.more_vert,
+                                  size: 18,
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5),
+                                  semanticLabel: 'Long press for options',
+                                ),
+                              ],
                             ),
                             onTap: () async {
                               final result = await Navigator.push(

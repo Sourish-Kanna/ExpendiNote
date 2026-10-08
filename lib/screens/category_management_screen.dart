@@ -104,6 +104,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      trailing: Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.5,
+                        ),
+                        semanticLabel: 'Long press for options',
+                      ),
                       onTap: () => _editCategory(category),
                       onLongPress: () async {
                         final option = await showCategoryOptionsBottomSheet(
