@@ -4,6 +4,7 @@ import '../models/category.dart';
 import '../repositories/category_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
+import '../widgets/category_options_bottom_sheet.dart';
 import 'edit_category_screen.dart';
 import 'merge_category_screen.dart';
 
@@ -103,41 +104,26 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) =>
-                            _handleMenuSelection(value, category, txCount),
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: ListTile(
-                              leading: Icon(Icons.edit),
-                              title: Text('Edit'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'merge',
-                            child: ListTile(
-                              leading: Icon(Icons.merge_type),
-                              title: Text('Merge'),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          if (txCount == 0)
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: ListTile(
-                                leading: Icon(Icons.delete, color: Colors.red),
-                                title: Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                        ],
-                      ),
                       onTap: () => _editCategory(category),
+                      onLongPress: () async {
+                        final option = await showCategoryOptionsBottomSheet(
+                          context: context,
+                          category: category,
+                          transactionCount: txCount,
+                        );
+                        if (!mounted || option == null) return;
+                        switch (option) {
+                          case CategoryOption.edit:
+                            _editCategory(category);
+                            break;
+                          case CategoryOption.merge:
+                            _mergeCategory(category, txCount);
+                            break;
+                          case CategoryOption.delete:
+                            _confirmDelete(category);
+                            break;
+                        }
+                      },
                     ),
                   ),
                 );
@@ -151,20 +137,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  void _handleMenuSelection(String value, Category category, int txCount) {
-    switch (value) {
-      case 'edit':
-        _editCategory(category);
-        break;
-      case 'merge':
-        _mergeCategory(category, txCount);
-        break;
-      case 'delete':
-        _confirmDelete(category);
-        break;
-    }
   }
 
   Future<void> _editCategory(Category? category) async {
