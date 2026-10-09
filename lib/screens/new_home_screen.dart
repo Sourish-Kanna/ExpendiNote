@@ -3,9 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel show Transaction;
 import '../repositories/transaction_repository.dart' show TransactionRepository;
-import '../utils/color_utils.dart' show ColorUtils;
-import '../utils/icon_utils.dart' show IconUtils;
 import '../widgets/summary_card.dart';
+import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
 import 'daily_summary_screen.dart';
@@ -246,103 +245,46 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                               index,
                             ) {
                               final spending = _recentSpendings[index];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Card(
-                                  elevation: 0,
-                                  color: _getCategoryColor(
-                                    spending,
-                                  ).withValues(alpha: 0.12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    leading: Icon(
-                                      _getCategoryIcon(spending),
-                                      color: _getCategoryColor(spending),
-                                      size: 24,
-                                    ),
-                                    title: Text(
-                                      spending.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                        color: colorScheme.onSurface,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${spending.categoryName ?? 'Other'} • ${DateFormat('d/M').format(spending.date)} • ${DateFormat('hh:mm a').format(spending.date)}',
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '₹${spending.amount.toStringAsFixed(0)}',
-                                          style: textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: colorScheme.onSurface,
-                                              ),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Icon(
-                                          Icons.more_vert,
-                                          size: 18,
-                                          color: colorScheme.onSurfaceVariant
-                                              .withValues(alpha: 0.5),
-                                          semanticLabel:
-                                              'Long press for options',
-                                        ),
-                                      ],
-                                    ),
-                                    onTap: () async {
-                                      final result = await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SpendingDetailScreen(
-                                                transaction: spending,
-                                              ),
-                                        ),
-                                      );
-                                      if (result == true) {
-                                        _refreshNotifier.value++;
-                                      }
-                                    },
-                                    onLongPress: () async {
-                                      final navigator = Navigator.of(context);
-                                      final action =
-                                          await showTransactionOptionsBottomSheet(
-                                            context: context,
+                              return TransactionCard(
+                                transaction: spending,
+                                onTap: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          SpendingDetailScreen(
                                             transaction: spending,
-                                          );
-                                      if (!mounted || action == null) return;
-                                      if (action == TransactionOption.edit) {
-                                        final result = await navigator.push(
-                                          MaterialPageRoute(
-                                            builder: (_) => AddSpendingScreen(
-                                              transaction: spending,
-                                            ),
                                           ),
-                                        );
-                                        if (result == true) {
-                                          _refreshNotifier.value++;
-                                        }
-                                      } else if (action ==
-                                          TransactionOption.delete) {
-                                        _confirmDelete(spending);
-                                      }
-                                    },
-                                  ),
-                                ),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _refreshNotifier.value++;
+                                  }
+                                },
+                                onLongPress: () async {
+                                  final navigator = Navigator.of(context);
+                                  final action =
+                                      await showTransactionOptionsBottomSheet(
+                                        context: context,
+                                        transaction: spending,
+                                      );
+                                  if (!mounted || action == null) return;
+                                  if (action == TransactionOption.edit) {
+                                    final result = await navigator.push(
+                                      MaterialPageRoute(
+                                        builder: (_) => AddSpendingScreen(
+                                          transaction: spending,
+                                        ),
+                                      ),
+                                    );
+                                    if (result == true) {
+                                      _refreshNotifier.value++;
+                                    }
+                                  } else if (action ==
+                                      TransactionOption.delete) {
+                                    _confirmDelete(spending);
+                                  }
+                                },
                               );
                             }, childCount: _recentSpendings.length),
                           ),
@@ -404,13 +346,5 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         ],
       ),
     );
-  }
-
-  IconData _getCategoryIcon(txmodel.Transaction spending) {
-    return IconUtils.fromString(spending.categoryIcon);
-  }
-
-  Color _getCategoryColor(txmodel.Transaction spending) {
-    return ColorUtils.fromInt(spending.categoryColor);
   }
 }

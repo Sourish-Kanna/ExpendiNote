@@ -3,9 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
 import '../widgets/summary_card.dart';
+import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart';
 import 'spending_detail_screen.dart';
@@ -227,105 +226,53 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ),
                     ),
                     ...spendings.map((s) {
-                      final catColor = ColorUtils.fromInt(s.categoryColor);
-                      final catIcon = IconUtils.fromString(s.categoryIcon);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Card(
-                          elevation: 0,
-                          color: catColor.withValues(alpha: 0.12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            leading: Icon(catIcon, color: catColor, size: 24),
-                            title: Text(
-                              s.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
-                            subtitle: s.description != null
-                                ? Text(
-                                    s.description!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  )
-                                : Text(
-                                    s.categoryName ?? 'Other',
-                                    style: textTheme.bodySmall?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '₹${s.amount.toStringAsFixed(2)}',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.more_vert,
-                                  size: 18,
-                                  color: colorScheme.onSurfaceVariant
-                                      .withValues(alpha: 0.5),
-                                  semanticLabel: 'Long press for options',
-                                ),
-                              ],
-                            ),
-                            onTap: () async {
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      SpendingDetailScreen(transaction: s),
-                                ),
-                              );
-                              if (result == true) {
-                                _hasChanged = true;
-                                _loadHistory();
-                              }
-                            },
-                            onLongPress: () async {
-                              final navigator = Navigator.of(context);
-                              final action =
-                                  await showTransactionOptionsBottomSheet(
-                                    context: context,
-                                    transaction: s,
-                                  );
-                              if (!mounted || action == null) return;
-                              if (action == TransactionOption.edit) {
-                                final result = await navigator.push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        AddSpendingScreen(transaction: s),
-                                  ),
-                                );
-                                if (result == true) {
-                                  _hasChanged = true;
-                                  _loadHistory();
-                                }
-                              } else if (action == TransactionOption.delete) {
-                                _confirmDelete(s);
-                              }
-                            },
-                          ),
+                      return TransactionCard(
+                        transaction: s,
+                        subtitle:
+                            s.description != null && s.description!.isNotEmpty
+                            ? s.description
+                            : s.categoryName ?? 'Other',
+                        amountText: '₹${s.amount.toStringAsFixed(2)}',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
                         ),
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SpendingDetailScreen(transaction: s),
+                            ),
+                          );
+                          if (result == true) {
+                            _hasChanged = true;
+                            _loadHistory();
+                          }
+                        },
+                        onLongPress: () async {
+                          final navigator = Navigator.of(context);
+                          final action =
+                              await showTransactionOptionsBottomSheet(
+                                context: context,
+                                transaction: s,
+                              );
+                          if (!mounted || action == null) return;
+                          if (action == TransactionOption.edit) {
+                            final result = await navigator.push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AddSpendingScreen(transaction: s),
+                              ),
+                            );
+                            if (result == true) {
+                              _hasChanged = true;
+                              _loadHistory();
+                            }
+                          } else if (action == TransactionOption.delete) {
+                            _confirmDelete(s);
+                          }
+                        },
                       );
                     }),
                     const SizedBox(height: 12),
