@@ -1,10 +1,8 @@
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
+import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart';
 import 'spending_detail_screen.dart';
@@ -99,77 +97,42 @@ class _SearchScreenState extends State<SearchScreen> {
               itemCount: _filteredSpendings.length,
               itemBuilder: (context, index) {
                 final s = _filteredSpendings[index];
-                final catColor = ColorUtils.fromInt(s.categoryColor);
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    elevation: 0,
-                    color: catColor.withValues(alpha: 0.12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                return TransactionCard(
+                  transaction: s,
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SpendingDetailScreen(transaction: s),
                       ),
-                      leading: Icon(
-                        IconUtils.fromString(s.categoryIcon),
-                        color: catColor,
-                        size: 24,
-                      ),
-                      title: Text(
-                        '${s.title} | ₹${s.amount.toStringAsFixed(0)}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurface,
+                    );
+                    if (result == true) {
+                      _hasChanged = true;
+                      _loadData();
+                    }
+                  },
+                  onLongPress: () async {
+                    final navigator = Navigator.of(context);
+                    final action = await showTransactionOptionsBottomSheet(
+                      context: context,
+                      transaction: s,
+                    );
+                    if (!mounted || action == null) return;
+                    if (action == TransactionOption.edit) {
+                      final result = await navigator.push(
+                        MaterialPageRoute(
+                          builder: (_) => AddSpendingScreen(transaction: s),
                         ),
-                      ),
-                      subtitle: Text(
-                        '${s.categoryName ?? 'Other'} | ${DateFormat('d/M').format(s.date)} | ${DateFormat('hh:mm a').format(s.date)}',
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      onTap: () async {
-                        final result = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                SpendingDetailScreen(transaction: s),
-                          ),
-                        );
-                        if (result == true) {
-                          _hasChanged = true;
-                          _loadData();
-                        }
-                      },
-                      onLongPress: () async {
-                        final navigator = Navigator.of(context);
-                        final action = await showTransactionOptionsBottomSheet(
-                          context: context,
-                          transaction: s,
-                        );
-                        if (!mounted || action == null) return;
-                        if (action == TransactionOption.edit) {
-                          final result = await navigator.push(
-                            MaterialPageRoute(
-                              builder: (_) => AddSpendingScreen(transaction: s),
-                            ),
-                          );
-                          if (result == true) {
-                            _hasChanged = true;
-                            _loadData();
-                          }
-                        } else if (action == TransactionOption.delete) {
-                          _confirmDelete(s);
-                        }
-                      },
-                    ),
-                  ),
+                      );
+                      if (result == true) {
+                        _hasChanged = true;
+                        _loadData();
+                      }
+                    } else if (action == TransactionOption.delete) {
+                      _confirmDelete(s);
+                    }
+                  },
                 );
               },
             ),
