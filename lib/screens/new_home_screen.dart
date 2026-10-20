@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel show Transaction;
+import '../repositories/settings_repository.dart';
 import '../repositories/transaction_repository.dart' show TransactionRepository;
 import '../widgets/summary_card.dart';
 import '../widgets/transaction_card.dart';
@@ -16,11 +18,18 @@ import 'unified_summary_screen.dart';
 class NewHomeScreen extends StatefulWidget {
   const NewHomeScreen({super.key});
 
+  @visibleForTesting
+  static void resetLaunchSessionForTesting() {
+    _NewHomeScreenState._launchHandledThisSession = false;
+  }
+
   @override
   State<NewHomeScreen> createState() => _NewHomeScreenState();
 }
 
 class _NewHomeScreenState extends State<NewHomeScreen> {
+  static bool _launchHandledThisSession = false;
+
   List<txmodel.Transaction> _recentSpendings = [];
   double _todayTotal = 0;
   double _monthlyTotal = 0;
@@ -32,6 +41,31 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
     super.initState();
     _refreshSpendings();
     _refreshNotifier.addListener(_refreshSpendings);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowLaunchHint();
+    });
+  }
+
+  Future<void> _checkAndShowLaunchHint() async {
+    if (_launchHandledThisSession) return;
+    _launchHandledThisSession = true;
+
+    final currentCount =
+        await SettingsRepository.getInt(SettingsRepository.launchCountKey) ?? 0;
+    final newCount = currentCount + 1;
+    await SettingsRepository.set(
+      SettingsRepository.launchCountKey,
+      newCount.toString(),
+    );
+
+    if (newCount <= 5 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Long-press a transaction for more options.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
