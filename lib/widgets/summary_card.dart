@@ -17,8 +17,7 @@ class SummaryCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
 
-  // ignore: prefer_const_constructors_in_immutables
-  SummaryCard({
+  const SummaryCard({
     super.key,
     required this.items,
     this.onTap,
@@ -28,7 +27,7 @@ class SummaryCard extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
     this.margin,
   }) : assert(
-         items.isNotEmpty && items.length <= 2,
+         items.length >= 1 && items.length <= 2,
          'SummaryCard supports exactly one or two metrics.',
        );
 

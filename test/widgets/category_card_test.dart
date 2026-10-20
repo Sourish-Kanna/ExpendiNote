@@ -109,5 +109,51 @@ void main() {
 
       expect(longPressed, isTrue);
     });
+
+    testWidgets(
+      'constrains long category name to one line with ellipsis in narrow layout and keeps pinned icon visible',
+      (tester) async {
+        final longNameCategory = Category(
+          id: 3,
+          name:
+              'Extremely Long Category Name That Will Overflow Normal Card Width',
+          icon: 'shopping_bag',
+          color: 0xFF4CAF50,
+          isPinned: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 280,
+                  child: CategoryCard(
+                    category: longNameCategory,
+                    transactionCount: 12,
+                    totalAmount: 99999.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(CategoryCard), findsOneWidget);
+
+        final nameFinder = find.text(
+          'Extremely Long Category Name That Will Overflow Normal Card Width',
+        );
+        expect(nameFinder, findsOneWidget);
+
+        final nameTextWidget = tester.widget<Text>(nameFinder);
+        expect(nameTextWidget.maxLines, equals(1));
+        expect(nameTextWidget.overflow, equals(TextOverflow.ellipsis));
+
+        expect(find.byIcon(Icons.push_pin), findsOneWidget);
+        expect(find.byIcon(Icons.more_vert), findsOneWidget);
+      },
+    );
   });
 }

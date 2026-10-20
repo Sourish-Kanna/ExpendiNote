@@ -93,5 +93,42 @@ void main() {
 
       expect(longPressed, isTrue);
     });
+
+    testWidgets(
+      'constrains long transaction amount to one line with ellipsis in narrow layout without overflow',
+      (tester) async {
+        final longTitleTx = testTransaction.copyWith(
+          title: 'Extremely Long Transaction Title That Spans Across Screen',
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 280,
+                  child: TransactionCard(
+                    transaction: longTitleTx,
+                    amountText: '₹999,999,999,999,999,999.00',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(TransactionCard), findsOneWidget);
+
+        final amountFinder = find.text('₹999,999,999,999,999,999.00');
+        expect(amountFinder, findsOneWidget);
+
+        final amountTextWidget = tester.widget<Text>(amountFinder);
+        expect(amountTextWidget.maxLines, equals(1));
+        expect(amountTextWidget.overflow, equals(TextOverflow.ellipsis));
+
+        expect(find.byIcon(Icons.more_vert), findsOneWidget);
+      },
+    );
   });
 }

@@ -71,24 +71,31 @@ class TransactionCard extends StatelessWidget {
             color: colorScheme.onSurfaceVariant,
           ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              displayAmount,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+        trailing: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 140),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  displayAmount,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.more_vert,
-              size: 18,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-              semanticLabel: 'Long press for options',
-            ),
-          ],
+              const SizedBox(width: 4),
+              Icon(
+                Icons.more_vert,
+                size: 18,
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                semanticLabel: 'Long press for options',
+              ),
+            ],
+          ),
         ),
         onTap: onTap,
         onLongPress: onLongPress,

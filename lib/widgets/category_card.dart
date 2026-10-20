@@ -47,11 +47,15 @@ class CategoryCard extends StatelessWidget {
         leading: Icon(catIcon, color: catColor, size: 24),
         title: Row(
           children: [
-            Text(
-              category.name,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
+            Flexible(
+              child: Text(
+                category.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
               ),
             ),
             if (category.isPinned) ...[
