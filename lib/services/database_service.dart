@@ -62,19 +62,19 @@ class DatabaseService {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v2...');
           await _migrateV1toV2(db);
         }
         if (oldVersion < 3) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v3...');
           await _migrateV2toV3(db);
         }
         if (oldVersion < 4) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v4...');
           await _migrateV3toV4(db);
         }
         if (oldVersion < 5) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v5...');
           await _migrateV4toV5(db);
         }
       },
