@@ -51,6 +51,9 @@ class DatabaseService {
     return await openDatabase(
       path,
       version: DbConfig.databaseVersion,
+      onOpen: (db) => AppLogger.info(
+        "database table version $DbConfig.databaseVersion opened",
+      ),
       onConfigure: (db) async {
         // Enable foreign key support in SQLite
         await db.execute('PRAGMA foreign_keys = ON');
@@ -204,7 +207,7 @@ class DatabaseService {
     try {
       AppLogger.debug('Creating v2 schema tables for migration...');
 
-      // Step 1: Create v2 tables (Independent of _createTables to satisfy Task 5)
+      // Step 1: Create v2 tables
       // v2 schema for categories did NOT include icon, color, pinned, or archived fields.
       await db.execute('''
         CREATE TABLE IF NOT EXISTS ${DbTables.categories}(

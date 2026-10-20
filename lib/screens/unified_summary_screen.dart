@@ -142,6 +142,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                                 children: [
                                   Text(
                                     'Total Spending',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: textTheme.labelLarge?.copyWith(
                                       color: colorScheme.primary,
                                       fontWeight: FontWeight.bold,
@@ -150,6 +152,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '₹${totalAnalysisSpending.toStringAsFixed(2)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: textTheme.headlineMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colorScheme.primary,
@@ -167,6 +171,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                                 children: [
                                   Text(
                                     'Total Entries',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: textTheme.labelLarge?.copyWith(
                                       color: colorScheme.primary,
                                       fontWeight: FontWeight.bold,
@@ -175,6 +181,8 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${_allSpendings.length}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: textTheme.headlineMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: colorScheme.primary,
