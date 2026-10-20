@@ -52,7 +52,7 @@ class DatabaseService {
       path,
       version: DbConfig.databaseVersion,
       onOpen: (db) => AppLogger.info(
-        "database table version $DbConfig.databaseVersion opened",
+        "database table version ${DbConfig.databaseVersion} opened",
       ),
       onConfigure: (db) async {
         // Enable foreign key support in SQLite
