@@ -344,13 +344,33 @@ class DatabaseService {
     final cleaned = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (cleaned.isEmpty) return 'Others';
 
-    return cleaned
-        .split(' ')
-        .map((p) {
-          if (p.isEmpty) return '';
-          return p[0].toUpperCase() + p.substring(1).toLowerCase();
-        })
-        .join(' ');
+    // Map legacy v1 category names to current category names.
+    switch (cleaned.toLowerCase()) {
+      case 'general':
+      case 'other':
+      case 'others':
+        return 'Others';
+      case 'food':
+        return 'Food';
+      case 'transport':
+        return 'Transport';
+      case 'entertainment':
+        return 'Entertainment';
+      case 'shopping':
+        return 'Shopping';
+      case 'health':
+      case 'healthcare':
+        return 'Healthcare';
+      default:
+        // Preserve custom category names with normalized capitalization.
+        return cleaned
+            .split(' ')
+            .map((part) {
+              if (part.isEmpty) return '';
+              return part[0].toUpperCase() + part.substring(1).toLowerCase();
+            })
+            .join(' ');
+    }
   }
 
   /// Migrates the database from version 2 to version 3.
