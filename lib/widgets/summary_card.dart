@@ -26,7 +26,10 @@ class SummaryCard extends StatelessWidget {
     this.borderRadius = 28.0,
     this.padding = const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
     this.margin,
-  });
+  }) : assert(
+         items.length >= 1 && items.length <= 2,
+         'SummaryCard supports exactly one or two metrics.',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +91,8 @@ class SummaryCard extends StatelessWidget {
               Text(
                 item.label,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: textTheme.labelLarge?.copyWith(
                   color: itemTextColor,
                   fontWeight: FontWeight.bold,
@@ -97,6 +102,8 @@ class SummaryCard extends StatelessWidget {
               Text(
                 item.value,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: itemTextColor,

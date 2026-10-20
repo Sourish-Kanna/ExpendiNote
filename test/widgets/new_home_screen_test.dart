@@ -191,5 +191,45 @@ void main() {
         expect(find.text('Starbucks Coffee'), findsNothing);
       },
     );
+
+    testWidgets(
+      'renders long-press discoverability hint icon on transaction item',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Discoverability hint icon should be rendered
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        expect(hintIconFinder, findsOneWidget);
+
+        // Tapping hint icon directly preserves normal tap behavior (navigates to detail)
+        await tester.tap(hintIconFinder);
+        await tester.pumpAndSettle();
+        expect(find.text('Details'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'long pressing hint icon directly opens transaction options bottom sheet',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        await tester.longPress(hintIconFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+      },
+    );
   });
 }
