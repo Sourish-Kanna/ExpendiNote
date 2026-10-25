@@ -255,8 +255,12 @@ void main() {
         });
         await tester.pump();
 
-        final hintIconFinder = find.byIcon(Icons.more_vert);
-        await tester.longPress(hintIconFinder.first);
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        final hintIconFinder = find.descendant(
+          of: cardFinder,
+          matching: find.byIcon(Icons.more_vert),
+        );
+        await tester.longPress(hintIconFinder);
         await tester.pumpAndSettle();
 
         expect(find.text('Edit'), findsOneWidget);
@@ -285,6 +289,15 @@ void main() {
         expect(find.text('Pin category'), findsOneWidget);
 
         await tester.tap(find.text('Pin category'));
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
         await tester.pumpAndSettle();
 
         // Re-open options to verify it now shows "Unpin category"
@@ -336,6 +349,9 @@ void main() {
           scrollable: find.byType(Scrollable).first,
         );
         await tester.tap(find.text(updateButtonText));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
         await tester.pumpAndSettle();
 
         // Confirmation dialog should appear

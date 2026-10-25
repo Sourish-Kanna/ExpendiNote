@@ -23,37 +23,6 @@ class CategoryRepository {
     if (category.id == null) {
       throw ArgumentError('Category id is required for update');
     }
-
-    static Future<void> updateCategoryWithOptionalTransactionAnalysisUpdate({
-      required Category category,
-      required bool applyToExistingTransactions,
-    }) async {
-      if (category.id == null) {
-        throw ArgumentError('Category id is required for update');
-      }
-
-      final db = await _dbService.database;
-      await db.transaction((txn) async {
-        await txn.update(
-          DbTables.categories,
-          category.toMap(),
-          where: '${DbCols.id} = ?',
-          whereArgs: [category.id],
-        );
-
-        if (applyToExistingTransactions) {
-          await txn.update(
-            DbTables.transactions,
-            {
-              DbCols.includeInSpendingAnalysis:
-                  category.includeInSpendingAnalysis ? 1 : 0,
-            },
-            where: '${DbCols.categoryId} = ?',
-            whereArgs: [category.id],
-          );
-        }
-      });
-    }
     final db = await _dbService.database;
     return await db.update(
       DbTables.categories,
@@ -61,6 +30,37 @@ class CategoryRepository {
       where: '${DbCols.id} = ?',
       whereArgs: [category.id],
     );
+  }
+
+  static Future<void> updateCategoryWithOptionalTransactionAnalysisUpdate({
+    required Category category,
+    required bool applyToExistingTransactions,
+  }) async {
+    if (category.id == null) {
+      throw ArgumentError('Category id is required for update');
+    }
+
+    final db = await _dbService.database;
+    await db.transaction((txn) async {
+      await txn.update(
+        DbTables.categories,
+        category.toMap(),
+        where: '${DbCols.id} = ?',
+        whereArgs: [category.id],
+      );
+
+      if (applyToExistingTransactions) {
+        await txn.update(
+          DbTables.transactions,
+          {
+            DbCols.includeInSpendingAnalysis:
+                category.includeInSpendingAnalysis ? 1 : 0,
+          },
+          where: '${DbCols.categoryId} = ?',
+          whereArgs: [category.id],
+        );
+      }
+    });
   }
 
   static Future<List<Category>> getAllCategories({

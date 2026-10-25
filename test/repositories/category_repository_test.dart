@@ -244,5 +244,74 @@ void main() {
         expect(tx2!.categoryId, equals(targetId));
       },
     );
+
+    test(
+      'updateCategoryWithOptionalTransactionAnalysisUpdate updates category and conditionally modifies existing transactions in category',
+      () async {
+        final cat1Id = await CategoryRepository.createCategory(
+          Category(name: 'Shopping', includeInSpendingAnalysis: true),
+        );
+        final cat2Id = await CategoryRepository.createCategory(
+          Category(name: 'Bills', includeInSpendingAnalysis: true),
+        );
+
+        final tx1Id = await TransactionRepository.insertTransaction(
+          Transaction(
+            title: 'Shoes',
+            amount: 1000.0,
+            date: DateTime.now(),
+            categoryId: cat1Id,
+            includeInSpendingAnalysis: true,
+          ),
+        );
+        final tx2Id = await TransactionRepository.insertTransaction(
+          Transaction(
+            title: 'Electricity',
+            amount: 500.0,
+            date: DateTime.now(),
+            categoryId: cat2Id,
+            includeInSpendingAnalysis: true,
+          ),
+        );
+
+        // Update cat1 to exclude from analysis without updating existing transactions
+        final cat1Updated = (await CategoryRepository.getById(cat1Id))!.copyWith(
+          includeInSpendingAnalysis: false,
+        );
+        await CategoryRepository.updateCategoryWithOptionalTransactionAnalysisUpdate(
+          category: cat1Updated,
+          applyToExistingTransactions: false,
+        );
+
+        // Category default updated
+        expect(
+          (await CategoryRepository.getById(cat1Id))!.includeInSpendingAnalysis,
+          isFalse,
+        );
+        // Existing transaction in cat1 remains included
+        expect(
+          (await TransactionRepository.getById(tx1Id))!.includeInSpendingAnalysis,
+          isTrue,
+        );
+
+        // Now update cat1 to exclude and apply to existing transactions
+        await CategoryRepository.updateCategoryWithOptionalTransactionAnalysisUpdate(
+          category: cat1Updated,
+          applyToExistingTransactions: true,
+        );
+
+        // Existing transaction in cat1 updated to excluded
+        expect(
+          (await TransactionRepository.getById(tx1Id))!.includeInSpendingAnalysis,
+          isFalse,
+        );
+
+        // Unrelated category transaction tx2 remains unchanged
+        expect(
+          (await TransactionRepository.getById(tx2Id))!.includeInSpendingAnalysis,
+          isTrue,
+        );
+      },
+    );
   });
 }
