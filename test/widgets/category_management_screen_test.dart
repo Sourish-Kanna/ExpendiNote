@@ -6,6 +6,7 @@ import 'package:expend_note/models/transaction.dart';
 import 'package:expend_note/repositories/category_repository.dart';
 import 'package:expend_note/repositories/transaction_repository.dart';
 import 'package:expend_note/screens/category_management_screen.dart';
+import 'package:expend_note/screens/edit_category_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/widgets/category_card.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -310,7 +311,11 @@ void main() {
         final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
         await tester.ensureVisible(cardFinder);
         await tester.tap(cardFinder);
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
 
         expect(find.text('Edit Category'), findsOneWidget);
 
