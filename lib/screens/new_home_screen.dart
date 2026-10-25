@@ -228,11 +228,11 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                         items: [
                           MetricItem(
                             label: 'Today',
-                            value: _todayTotal.toStringAsFixed(2),
+                            value: '₹${_todayTotal.toStringAsFixed(2)}',
                           ),
                           MetricItem(
                             label: 'This Month',
-                            value: _monthlyTotal.toStringAsFixed(2),
+                            value: '₹${_monthlyTotal.toStringAsFixed(2)}',
                           ),
                         ],
                       ),

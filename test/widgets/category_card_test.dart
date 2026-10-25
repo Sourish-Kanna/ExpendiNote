@@ -155,5 +155,27 @@ void main() {
         expect(find.byIcon(Icons.more_vert), findsOneWidget);
       },
     );
+
+    testWidgets('category card subtitle has maxLines 1 and ellipsis overflow', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: testCategory,
+              transactionCount: 999,
+              totalAmount: 123456789.0,
+            ),
+          ),
+        ),
+      );
+
+      final subtitleFinder = find.text('999 transactions • ₹123456789');
+      expect(subtitleFinder, findsOneWidget);
+      final subtitleWidget = tester.widget<Text>(subtitleFinder);
+      expect(subtitleWidget.maxLines, equals(1));
+      expect(subtitleWidget.overflow, equals(TextOverflow.ellipsis));
+    });
   });
 }

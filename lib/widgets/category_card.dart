@@ -66,6 +66,8 @@ class CategoryCard extends StatelessWidget {
         ),
         subtitle: Text(
           '$transactionCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
