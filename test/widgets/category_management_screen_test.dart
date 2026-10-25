@@ -7,6 +7,7 @@ import 'package:expend_note/repositories/category_repository.dart';
 import 'package:expend_note/repositories/transaction_repository.dart';
 import 'package:expend_note/screens/category_management_screen.dart';
 import 'package:expend_note/services/database_service.dart';
+import 'package:expend_note/widgets/category_card.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
@@ -261,6 +262,83 @@ void main() {
         expect(find.text('Edit'), findsOneWidget);
         expect(find.text('Merge'), findsOneWidget);
         expect(find.text('Delete'), findsOneWidget);
+        expect(find.text('Pin category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'bottom sheet includes Pin/Unpin category option and updates pinned state',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Entertainment is unpinned, so bottom sheet should show "Pin category"
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        await tester.ensureVisible(cardFinder);
+        await tester.longPress(cardFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Pin category'), findsOneWidget);
+
+        await tester.tap(find.text('Pin category'));
+        await tester.pumpAndSettle();
+
+        // Re-open options to verify it now shows "Unpin category"
+        await tester.ensureVisible(cardFinder);
+        await tester.longPress(cardFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Unpin category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'changing default inclusion in analysis prompts confirmation dialog with 3 choices',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Edit Entertainment category
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        await tester.ensureVisible(cardFinder);
+        await tester.tap(cardFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Category'), findsOneWidget);
+
+        // Toggle include in spending analysis switch
+        final tileFinder = find.byType(SwitchListTile).last;
+        await tester.scrollUntilVisible(
+          tileFinder,
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(tileFinder);
+        await tester.pumpAndSettle();
+
+        // Tap Update Category
+        const updateButtonText = 'Update Category';
+        await tester.scrollUntilVisible(
+          find.text(updateButtonText),
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.text(updateButtonText));
+        await tester.pumpAndSettle();
+
+        // Confirmation dialog should appear
+        expect(find.text('Apply to Existing Transactions?'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Future transactions only'), findsOneWidget);
+        expect(find.text('Existing transactions too'), findsOneWidget);
       },
     );
   });
