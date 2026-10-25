@@ -140,4 +140,17 @@ class TransactionRepository {
       [searchPattern, searchPattern, searchPattern],
     );
   }
+
+  static Future<void> updateTransactionsIncludeInAnalysisForCategory(
+    int categoryId,
+    bool include,
+  ) async {
+    final db = await _dbService.database;
+    await db.update(
+      DbTables.transactions,
+      {DbCols.includeInSpendingAnalysis: include ? 1 : 0},
+      where: '${DbCols.categoryId} = ?',
+      whereArgs: [categoryId],
+    );
+  }
 }

@@ -76,6 +76,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     );
                     if (!mounted || option == null) return;
                     switch (option) {
+                      case CategoryOption.pin:
+                        _loadCategories();
+                        break;
                       case CategoryOption.edit:
                         _editCategory(category);
                         break;
