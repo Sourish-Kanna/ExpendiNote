@@ -170,7 +170,7 @@ jobs:
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          status: ${{ (needs.android-release.result == 'success' && (needs.web-deploy.result == 'success' || needs.web-deploy.result == 'skipped')) && 'success' || 'failure' }}
+          status: ${{ needs.android-release.result == 'success' && 'success' || 'failure' }}
           title: "🚀 Deployment for ${{ github.event.release.tag_name }}"
           description: |
             **Android Build:** ${{ needs.android-release.result }}
