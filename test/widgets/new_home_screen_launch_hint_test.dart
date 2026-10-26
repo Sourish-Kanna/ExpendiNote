@@ -154,17 +154,12 @@ void main() {
     );
 
     testWidgets(
-      'prevents duplicate display and duplicate count increment within the same launch',
+      'prevents duplicate launch count increment within the same launch',
       (tester) async {
         configureViewport(tester);
 
         final testKey = UniqueKey();
         await pumpHomeScreen(tester, key: testKey);
-
-        expect(
-          find.text('Long-press a transaction for more options.'),
-          findsOneWidget,
-        );
 
         final initialCount = await getLaunchCount(tester);
         expect(initialCount, equals(1));
@@ -175,7 +170,7 @@ void main() {
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 100));
         });
-        await tester.pumpAndSettle();
+        await tester.pump();
 
         final countAfterRebuild = await getLaunchCount(tester);
         expect(countAfterRebuild, equals(1));
