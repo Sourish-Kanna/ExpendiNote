@@ -1,13 +1,17 @@
 import 'dart:io';
-import 'package:material_ui/material_ui.dart';
+
+import 'package:expend_note/constants/database_constants.dart';
+import 'package:expend_note/models/category.dart';
+import 'package:expend_note/models/transaction.dart';
+import 'package:expend_note/repositories/category_repository.dart';
+import 'package:expend_note/repositories/transaction_repository.dart';
+import 'package:expend_note/screens/category_management_screen.dart';
+import 'package:expend_note/services/database_service.dart';
+import 'package:expend_note/widgets/category_card.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart' hide Transaction;
-import 'package:expend_note/services/database_service.dart';
-import 'package:expend_note/repositories/category_repository.dart';
-import 'package:expend_note/models/category.dart';
-import 'package:expend_note/screens/category_management_screen.dart';
-import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -27,11 +31,21 @@ void main() {
     await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
     await DatabaseService.instance.database;
 
-    await CategoryRepository.createCategory(
+    final cat1Id = await CategoryRepository.createCategory(
       Category(id: 1, name: 'Groceries', icon: 'shopping_bag', isPinned: true),
     );
     await CategoryRepository.createCategory(
       Category(id: 2, name: 'Entertainment', icon: 'movie', isPinned: false),
+    );
+
+    // Insert a transaction for Groceries so txCount > 0
+    await TransactionRepository.insertTransaction(
+      Transaction(
+        title: 'Apples',
+        amount: 100.0,
+        date: DateTime.now(),
+        categoryId: cat1Id,
+      ),
     );
   });
 
@@ -68,7 +82,7 @@ void main() {
       },
     );
 
-    testWidgets('opens popup menu when tapping popup button', (tester) async {
+    testWidgets('does not use three-dot popup menu', (tester) async {
       configureViewport(tester);
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.runAsync(() async {
@@ -76,17 +90,276 @@ void main() {
       });
       await tester.pump();
 
-      // Find popup menu button
-      final menuBtn = find.byType(PopupMenuButton<String>).first;
-      await tester.tap(menuBtn);
-      await tester.pump();
-
-      expect(find.text('Edit'), findsOneWidget);
-      expect(find.text('Merge'), findsOneWidget);
-      expect(
-        find.text('Delete'),
-        findsOneWidget,
-      ); // 0 transactions so delete is visible
+      // PopupMenuButton should not exist
+      expect(find.byType(PopupMenuButton<String>), findsNothing);
     });
+
+    testWidgets(
+      'long pressing a category opens modal bottom sheet with Edit, Merge, Delete',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        await tester.longPress(find.text('Entertainment'));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Entertainment'),
+          findsNWidgets(2),
+        ); // Card & Bottom Sheet
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Merge'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'selecting Edit from long-press bottom sheet opens EditCategoryScreen',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        await tester.longPress(find.text('Entertainment'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Edit'));
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        expect(find.text('Edit Category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'selecting Merge from long-press bottom sheet opens MergeCategoryScreen',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        await tester.longPress(find.text('Entertainment'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Merge'));
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        expect(find.text('Merge Category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'selecting Delete for a category with 0 transactions triggers delete confirmation',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Entertainment has 0 transactions
+        await tester.longPress(find.text('Entertainment'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Delete Category?'), findsOneWidget);
+        expect(
+          find.text('Are you sure you want to delete "Entertainment"?'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Delete option is disabled and untappable for a category with transactions',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Groceries has 1 transaction
+        await tester.longPress(find.text('Groceries'));
+        await tester.pumpAndSettle();
+
+        // Delete should be visible but disabled
+        final deleteListTile = tester.widget<ListTile>(
+          find.widgetWithText(ListTile, 'Delete'),
+        );
+        expect(deleteListTile.enabled, isFalse);
+
+        // Tap disabled delete
+        await tester.tap(find.text('Delete'));
+        await tester.pumpAndSettle();
+
+        // Should NOT trigger delete confirmation
+        expect(find.text('Delete Category?'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'renders long-press discoverability hint icon on category items',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Should find hint icon for category items
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        expect(hintIconFinder, findsWidgets);
+
+        // Tapping hint icon directly opens edit category screen
+        await tester.tap(hintIconFinder.first);
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        expect(find.text('Edit Category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'long pressing hint icon directly opens category options bottom sheet',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        final hintIconFinder = find.descendant(
+          of: cardFinder,
+          matching: find.byIcon(Icons.more_vert),
+        );
+        await tester.longPress(hintIconFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Merge'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+        expect(find.text('Pin category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'bottom sheet includes Pin/Unpin category option and updates pinned state',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Entertainment is unpinned, so bottom sheet should show "Pin category"
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        await tester.ensureVisible(cardFinder);
+        await tester.longPress(cardFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Pin category'), findsOneWidget);
+
+        await tester.tap(find.text('Pin category'));
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+        await tester.pumpAndSettle();
+
+        // Re-open options to verify it now shows "Unpin category"
+        await tester.ensureVisible(cardFinder);
+        await tester.longPress(cardFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Unpin category'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'changing default inclusion in analysis prompts confirmation dialog with 3 choices',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        // Edit Entertainment category
+        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
+        await tester.ensureVisible(cardFinder);
+        await tester.tap(cardFinder);
+        await tester.pump();
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pump();
+
+        expect(find.text('Edit Category'), findsOneWidget);
+
+        // Toggle include in spending analysis switch
+        final tileFinder = find.byType(SwitchListTile).last;
+        await tester.scrollUntilVisible(
+          tileFinder,
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(tileFinder);
+        await tester.pumpAndSettle();
+
+        // Tap Update Category
+        const updateButtonText = 'Update Category';
+        await tester.scrollUntilVisible(
+          find.text(updateButtonText),
+          500,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(find.text(updateButtonText));
+        await tester.runAsync(() async {
+          await Future.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pumpAndSettle();
+
+        // Confirmation dialog should appear
+        expect(find.text('Apply to Existing Transactions?'), findsOneWidget);
+        expect(find.text('Cancel'), findsOneWidget);
+        expect(find.text('Future transactions only'), findsOneWidget);
+        expect(find.text('Existing transactions too'), findsOneWidget);
+      },
+    );
   });
 }

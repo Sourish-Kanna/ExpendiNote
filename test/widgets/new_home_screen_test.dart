@@ -25,6 +25,7 @@ void main() {
   });
 
   setUp(() async {
+    NewHomeScreen.resetLaunchSessionForTesting();
     await DatabaseService.instance.closeDatabase();
     final dbPath = await getDatabasesPath();
     await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
@@ -153,8 +154,9 @@ void main() {
       },
     );
 
+
     testWidgets(
-      'selecting Delete from long-press bottom sheet opens confirmation dialog and deletes transaction',
+      'renders long-press discoverability hint icon on transaction item',
       (tester) async {
         configureViewport(tester);
         await tester.pumpWidget(createWidgetUnderTest());
@@ -163,32 +165,33 @@ void main() {
         });
         await tester.pump();
 
-        // Long press to open bottom sheet
-        await tester.longPress(find.text('Starbucks Coffee'));
+        // Discoverability hint icon should be rendered
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        expect(hintIconFinder, findsOneWidget);
+
+        // Tapping hint icon directly preserves normal tap behavior (navigates to detail)
+        await tester.tap(hintIconFinder);
         await tester.pumpAndSettle();
+        expect(find.text('Details'), findsOneWidget);
+      },
+    );
 
-        // Tap Delete option in bottom sheet
-        await tester.tap(find.text('Delete'));
-        await tester.pumpAndSettle();
-
-        // Existing delete confirmation dialog should appear
-        expect(find.text('Delete Spending?'), findsOneWidget);
-        expect(
-          find.text('Are you sure you want to delete this entry?'),
-          findsOneWidget,
-        );
-
-        // Confirm deletion in dialog
-        final dialogDeleteButton = find.widgetWithText(TextButton, 'Delete');
-        await tester.tap(dialogDeleteButton);
-        await tester.pump();
+    testWidgets(
+      'long pressing hint icon directly opens transaction options bottom sheet',
+      (tester) async {
+        configureViewport(tester);
+        await tester.pumpWidget(createWidgetUnderTest());
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 100));
         });
         await tester.pump();
 
-        // Transaction should be removed from home screen
-        expect(find.text('Starbucks Coffee'), findsNothing);
+        final hintIconFinder = find.byIcon(Icons.more_vert);
+        await tester.longPress(hintIconFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
       },
     );
   });

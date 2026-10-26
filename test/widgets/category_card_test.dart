@@ -1,0 +1,181 @@
+import 'package:expend_note/models/category.dart';
+import 'package:expend_note/widgets/category_card.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final testCategory = Category(
+    id: 1,
+    name: 'Groceries',
+    icon: 'shopping_bag',
+    color: 0xFF4CAF50,
+    isPinned: true,
+  );
+
+  group('CategoryCard Widget Tests', () {
+    testWidgets('renders category details and pinned indicator correctly', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: testCategory,
+              transactionCount: 5,
+              totalAmount: 1250.0,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Groceries'), findsOneWidget);
+      expect(find.text('5 transactions • ₹1250'), findsOneWidget);
+      expect(find.byIcon(Icons.shopping_bag), findsOneWidget);
+      expect(find.byIcon(Icons.push_pin), findsOneWidget);
+      expect(find.byIcon(Icons.more_vert), findsOneWidget);
+    });
+
+    testWidgets('hides pinned indicator when category is not pinned', (
+      tester,
+    ) async {
+      final unpinnedCategory = Category(
+        id: 2,
+        name: 'Entertainment',
+        icon: 'movie',
+        color: 0xFF9C27B0,
+        isPinned: false,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: unpinnedCategory,
+              transactionCount: 0,
+              totalAmount: 0.0,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Entertainment'), findsOneWidget);
+      expect(find.byIcon(Icons.push_pin), findsNothing);
+    });
+
+    testWidgets('triggers onTap callback when tapped', (tester) async {
+      bool tapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: testCategory,
+              transactionCount: 1,
+              totalAmount: 100.0,
+              onTap: () => tapped = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Groceries'));
+      await tester.pump();
+
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('triggers onLongPress callback when long pressed', (
+      tester,
+    ) async {
+      bool longPressed = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: testCategory,
+              transactionCount: 1,
+              totalAmount: 100.0,
+              onLongPress: () => longPressed = true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.longPress(find.text('Groceries'));
+      await tester.pump();
+
+      expect(longPressed, isTrue);
+    });
+
+    testWidgets(
+      'constrains long category name to one line with ellipsis in narrow layout and keeps pinned icon visible',
+      (tester) async {
+        final longNameCategory = Category(
+          id: 3,
+          name:
+              'Extremely Long Category Name That Will Overflow Normal Card Width',
+          icon: 'shopping_bag',
+          color: 0xFF4CAF50,
+          isPinned: true,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 280,
+                  child: CategoryCard(
+                    category: longNameCategory,
+                    transactionCount: 12,
+                    totalAmount: 99999.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(CategoryCard), findsOneWidget);
+
+        final nameFinder = find.text(
+          'Extremely Long Category Name That Will Overflow Normal Card Width',
+        );
+        expect(nameFinder, findsOneWidget);
+
+        final nameTextWidget = tester.widget<Text>(nameFinder);
+        expect(nameTextWidget.maxLines, equals(1));
+        expect(nameTextWidget.overflow, equals(TextOverflow.ellipsis));
+
+        expect(find.byIcon(Icons.push_pin), findsOneWidget);
+        expect(find.byIcon(Icons.more_vert), findsOneWidget);
+      },
+    );
+
+    testWidgets('category card subtitle has maxLines 1 and ellipsis overflow', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CategoryCard(
+              category: testCategory,
+              transactionCount: 999,
+              totalAmount: 123456789.0,
+            ),
+          ),
+        ),
+      );
+
+      final subtitleFinder = find.text('999 transactions • ₹123456789');
+      expect(subtitleFinder, findsOneWidget);
+      final subtitleWidget = tester.widget<Text>(subtitleFinder);
+      expect(subtitleWidget.maxLines, equals(1));
+      expect(subtitleWidget.overflow, equals(TextOverflow.ellipsis));
+    });
+  });
+}
