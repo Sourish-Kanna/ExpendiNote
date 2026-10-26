@@ -183,12 +183,15 @@ void main() {
         await tester.tap(dialogDeleteButton);
         await tester.pump();
         await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
+          while ((await TransactionRepository.getAllTransactions()).isNotEmpty) {
+            await Future.delayed(const Duration(milliseconds: 10));
+          }
         });
         await tester.pumpAndSettle();
 
         // Transaction should be removed from home screen
         expect(find.text('Starbucks Coffee'), findsNothing);
+        expect(find.text('No spending noted yet.'), findsOneWidget);
       },
     );
 
