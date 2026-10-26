@@ -6,6 +6,7 @@ import 'package:expend_note/screens/new_home_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
@@ -22,6 +23,9 @@ void main() {
 
   setUp(() async {
     NewHomeScreen.resetLaunchSessionForTesting();
+    await DatabaseService.instance.closeDatabase();
+    final dbPath = await getDatabasesPath();
+    await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
     final db = await DatabaseService.instance.database;
     await db.delete(DbTables.settings);
     await db.delete(DbTables.transactions);
@@ -167,11 +171,11 @@ void main() {
 
         // Trigger rebuild / re-pump using same widget instance & key without resetting launch session flag
         await tester.pumpWidget(createWidgetUnderTest(key: testKey));
+        await tester.pump();
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 100));
         });
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpAndSettle();
 
         final countAfterRebuild = await getLaunchCount(tester);
         expect(countAfterRebuild, equals(1));
