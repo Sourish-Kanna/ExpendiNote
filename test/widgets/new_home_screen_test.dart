@@ -185,7 +185,7 @@ void main() {
         await tester.runAsync(() async {
           await Future.delayed(const Duration(milliseconds: 100));
         });
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         // Transaction should be removed from home screen
         expect(find.text('Starbucks Coffee'), findsNothing);
