@@ -25,6 +25,7 @@ void main() {
   });
 
   setUp(() async {
+    NewHomeScreen.resetLaunchSessionForTesting();
     await DatabaseService.instance.closeDatabase();
     final dbPath = await getDatabasesPath();
     await databaseFactory.deleteDatabase(p.join(dbPath, DbConfig.databaseFile));
@@ -182,12 +183,25 @@ void main() {
         final dialogDeleteButton = find.widgetWithText(TextButton, 'Delete');
         await tester.tap(dialogDeleteButton);
         await tester.pump();
+
+        // Deterministically wait for SQLite database deletion with a bounded timeout
         await tester.runAsync(() async {
-          while ((await TransactionRepository.getAllTransactions()).isNotEmpty) {
-            await Future.delayed(const Duration(milliseconds: 10));
+          int attempts = 0;
+          while (attempts < 50 && (await TransactionRepository.getAllTransactions()).isNotEmpty) {
+            await Future.delayed(const Duration(milliseconds: 20));
+            attempts++;
           }
         });
-        await tester.pumpAndSettle();
+
+        // Deterministically pump frames until the UI reflects the empty state
+        int pumpAttempts = 0;
+        while (pumpAttempts < 50 && find.text('No spending noted yet.').evaluate().isEmpty) {
+          await tester.runAsync(() async {
+            await Future.delayed(const Duration(milliseconds: 20));
+          });
+          await tester.pump();
+          pumpAttempts++;
+        }
 
         // Transaction should be removed from home screen
         expect(find.text('Starbucks Coffee'), findsNothing);
