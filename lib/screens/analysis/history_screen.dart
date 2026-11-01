@@ -40,8 +40,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() => _isLoading = true);
     final allSpendings = await TransactionRepository.getAllTransactions();
 
-    final now = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+    // final now = DateTime.now();
+    // final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
     Map<String, List<txmodel.Transaction>> grouped = {};
     for (var s in allSpendings) {
@@ -58,13 +58,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         continue;
       }
 
-      // If no filter, skip today (standard history view)
-      if (widget.filterDate == null &&
-          widget.filterCategory == null &&
-          widget.filterMonth == null &&
-          dateStr == todayStr) {
-        continue;
-      }
+      // // If no filter, skip today (standard history view)
+      // if (widget.filterDate == null &&
+      //     widget.filterCategory == null &&
+      //     widget.filterMonth == null &&
+      //     dateStr == todayStr) {
+      //   continue;
+      // }
 
       if (!grouped.containsKey(dateStr)) {
         grouped[dateStr] = [];
@@ -138,7 +138,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         .expand((d) => _groupedSpendings[d]!)
         .length;
 
-    String title = 'Spending History';
+    String title = 'History';
     if (widget.filterDate != null) {
       title = DateFormat(
         'EEEE, MMM dd',
@@ -176,7 +176,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: SummaryCard(
                       items: [
                         MetricItem(
-                          label: 'Filtered Spending',
+                          label: 'Total Spending',
                           value: '₹${totalFilteredAmount.toStringAsFixed(2)}',
                         ),
                         MetricItem(

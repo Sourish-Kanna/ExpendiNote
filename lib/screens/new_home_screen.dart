@@ -8,7 +8,7 @@ import '../widgets/summary_card.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
-import 'analysis/monthly_summary_screen.dart';
+import 'analysis/history_screen.dart';
 import 'analysis/unified_summary_screen.dart';
 import 'category/category_management_screen.dart';
 import 'search_screen.dart' show SearchScreen;
@@ -122,7 +122,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   void _navigateToDailySummary() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const MonthlySummaryScreen()),
+      MaterialPageRoute(builder: (context) => const HistoryScreen()),
     ).then((_) {
       _refreshNotifier.value++;
     });
@@ -146,6 +146,19 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.category),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryManagementScreen(),
+                ),
+              ).then((_) {
+                _refreshNotifier.value++;
+              });
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
@@ -156,39 +169,19 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
               });
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.catching_pokemon),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CategoryManagementScreen()),
-              ).then((_) {
-                _refreshNotifier.value++;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.category),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CategoryManagementScreen()),
-              ).then((_) {
-                _refreshNotifier.value++;
-              });
-            },
-          ),
         ],
       ),
       body: _isLoading
-          ? const Center(child: Column(
-            mainAxisAlignment: .center,
-            crossAxisAlignment: .center,
-            children: [
-              CircularProgressIndicator(),
-              Text("Your Spendings are Loading..."),
-            ],
-          ))
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: .center,
+                crossAxisAlignment: .center,
+                children: [
+                  CircularProgressIndicator(),
+                  Text("Your Spendings are Loading..."),
+                ],
+              ),
+            )
           : RefreshIndicator(
               onRefresh: _refreshSpendings,
               child: CustomScrollView(
@@ -319,7 +312,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                           ),
                                     ),
                                   );
-                                   _refreshNotifier.value++;
+                                  _refreshNotifier.value++;
                                 },
                                 onLongPress: () async {
                                   final navigator = Navigator.of(context);
