@@ -43,7 +43,43 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     });
   }
 
-  // Dialog to import raw JSON string without external file pickers
+  Future<void> _importJsonFile() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final success = await ExportService().selectAndImportJSONFile();
+    if (!mounted) return;
+    if (success) {
+      await _loadData();
+      widget.refreshNotifier.value++;
+      messenger.showSnackBar(
+        const SnackBar(content: Text('JSON file imported successfully!')),
+      );
+    }
+  }
+
+  Future<void> _exportJsonFile() async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (_allSpendings.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No spending entries to export.')),
+      );
+      return;
+    }
+    final success = await ExportService().saveJSONToDevice(_allSpendings);
+    if (!mounted) return;
+    if (success) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Saved JSON backup to Downloads folder!')),
+      );
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save JSON backup to Downloads folder.'),
+        ),
+      );
+    }
+  }
+
+  // Dialog to import JSON file or raw JSON string
   Future<void> _showImportJsonDialog() async {
     final TextEditingController jsonController = TextEditingController();
 
@@ -54,16 +90,40 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           title: const Text('Import JSON Backup'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              FilledButton.icon(
+                icon: const Icon(Icons.folder_open),
+                label: const Text('Select JSON File'),
+                onPressed: () {
+                  Navigator.pop(context, null);
+                  _importJsonFile();
+                },
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        'OR',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
+              ),
               const Text(
-                'Paste your spendings JSON data below. This will overwrite current entries.',
+                'Paste your spendings JSON data below:',
                 style: TextStyle(fontSize: 13),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               TextField(
                 controller: jsonController,
-                maxLines: 8,
+                maxLines: 5,
                 decoration: const InputDecoration(
                   hintText: '[{"title": "Groceries", "amount": 250.0, ...}]',
                   border: OutlineInputBorder(),
@@ -78,7 +138,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Import'),
+              child: const Text('Import Text'),
             ),
           ],
         );
@@ -86,21 +146,21 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
     );
 
     if (confirm == true && jsonController.text.trim().isNotEmpty) {
+      final messenger = ScaffoldMessenger.of(context);
       final success = await ExportService().importFromJSONString(
         jsonController.text.trim(),
       );
-      if (mounted) {
-        if (success) {
-          await _loadData();
-          widget.refreshNotifier.value++;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('JSON imported successfully!')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to parse JSON data.')),
-          );
-        }
+      if (!mounted) return;
+      if (success) {
+        await _loadData();
+        widget.refreshNotifier.value++;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('JSON imported successfully!')),
+        );
+      } else {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Failed to parse JSON data.')),
+        );
       }
     }
   }
@@ -116,7 +176,13 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
         backgroundColor: colorScheme.surfaceContainer,
         scrolledUnderElevation: 0,
         actions: [
-          // Export JSON via Share Sheet
+          // Select & Export JSON File
+          IconButton(
+            icon: const Icon(Icons.file_download),
+            tooltip: 'Export JSON File',
+            onPressed: _exportJsonFile,
+          ),
+          // Share JSON
           IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Share JSON',
@@ -125,28 +191,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
               await ExportService().exportToJSON(_allSpendings);
             },
           ),
-          // Save JSON to Downloads Folder
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: 'Save JSON to Downloads',
-            onPressed: () async {
-              final success = await ExportService().saveJSONToDevice(
-                _allSpendings,
-              );
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Saved JSON backup to Downloads folder!'
-                          : 'Failed to save JSON backup.',
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-          // Import JSON String via Dialog
+          // Select & Import JSON File
           IconButton(
             icon: const Icon(Icons.upload_file),
             tooltip: 'Import JSON',

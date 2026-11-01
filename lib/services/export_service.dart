@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
@@ -15,14 +16,51 @@ import 'database_service.dart';
 class ExportService {
   final Logger _logger = Logger();
 
-  // --- 1. EXPORT TO JSON & SHARE ---
+  // --- 1. EXPORT JSON TO DOWNLOADS FOLDER ---
+  /// Directly exports spendings as a JSON file into the device Downloads folder.
+  Future<bool> selectAndExportJSONFile(List<Spending> spendings) async {
+    return await saveJSONToDevice(spendings);
+  }
+
+  // --- 2. SELECT & IMPORT JSON FILE ---
+  /// Prompts the user to pick a JSON file from storage and imports the spendings into the database.
+  Future<bool> selectAndImportJSONFile() async {
+    _logger.i('Opening file picker to select a JSON file for import...');
+    try {
+      final PlatformFile? selectedFile = await FilePicker.pickFile(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (selectedFile == null) {
+        _logger.i('Import file selection canceled.');
+        return false;
+      }
+
+      if (selectedFile.path != null && selectedFile.path!.isNotEmpty) {
+        return await importFromJSONFile(selectedFile.path!);
+      } else {
+        final bytes = await selectedFile.readAsBytes();
+        final String content = utf8.decode(bytes);
+        return await importFromJSONString(content);
+      }
+    } catch (e) {
+      _logger.e('Failed to select/import JSON file: $e');
+      return false;
+    }
+  }
+
+  // --- 3. EXPORT TO JSON & SHARE ---
   Future<void> exportToJSON(List<Spending> spendings) async {
     _logger.i('Exporting ${spendings.length} spendings to JSON...');
     try {
-      final List<Map<String, dynamic>> jsonList =
-      spendings.map((s) => s.toMap()).toList();
+      final List<Map<String, dynamic>> jsonList = spendings
+          .map((s) => s.toMap())
+          .toList();
 
-      final String jsonString = const JsonEncoder.withIndent('  ').convert(jsonList);
+      final String jsonString = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(jsonList);
 
       final directory = await getTemporaryDirectory();
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
@@ -41,13 +79,16 @@ class ExportService {
     }
   }
 
-  // --- 2. SAVE JSON TO DEVICE DOWNLOADS ---
+  // --- 4. SAVE JSON TO DEVICE DOWNLOADS ---
   Future<bool> saveJSONToDevice(List<Spending> spendings) async {
     _logger.i('Saving JSON backup to device storage...');
     try {
-      final List<Map<String, dynamic>> jsonList =
-      spendings.map((s) => s.toMap()).toList();
-      final String jsonString = const JsonEncoder.withIndent('  ').convert(jsonList);
+      final List<Map<String, dynamic>> jsonList = spendings
+          .map((s) => s.toMap())
+          .toList();
+      final String jsonString = const JsonEncoder.withIndent(
+        '  ',
+      ).convert(jsonList);
 
       Directory? targetDir;
       if (Platform.isAndroid) {
@@ -62,7 +103,10 @@ class ExportService {
       if (targetDir == null) return false;
 
       final dateStamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final backupPath = join(targetDir.path, 'spending_backup_$dateStamp.json');
+      final backupPath = join(
+        targetDir.path,
+        'spending_backup_$dateStamp.json',
+      );
 
       final file = File(backupPath);
       await file.writeAsString(jsonString);
@@ -74,7 +118,7 @@ class ExportService {
     }
   }
 
-  // --- 3. IMPORT FROM JSON STRING / RAW DATA ---
+  // --- 5. IMPORT FROM JSON STRING / RAW DATA ---
   Future<bool> importFromJSONString(String jsonContent) async {
     _logger.i('Parsing and restoring from JSON string...');
     try {
@@ -92,17 +136,17 @@ class ExportService {
 
         for (var item in decoded) {
           if (item is Map<String, dynamic>) {
-            await txn.insert(
-              'spendings',
-              {
-                'title': item['title'],
-                'amount': item['amount'],
-                'date': item['date'],
-                'category': item['category'],
-                'description': item['description'],
-              },
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
+            final double amount = (item['amount'] is num)
+                ? (item['amount'] as num).toDouble()
+                : 0.0;
+            await txn.insert('spendings', {
+              if (item['id'] != null) 'id': item['id'],
+              'title': item['title'] ?? '',
+              'amount': amount,
+              'date': item['date'] ?? DateTime.now().toIso8601String(),
+              'category': item['category'] ?? 'Other',
+              'description': item['description'],
+            }, conflictAlgorithm: ConflictAlgorithm.replace);
           }
         }
       });
@@ -115,7 +159,7 @@ class ExportService {
     }
   }
 
-  // --- 4. IMPORT FROM FILE PATH ---
+  // --- 6. IMPORT FROM FILE PATH ---
   Future<bool> importFromJSONFile(String filePath) async {
     try {
       final file = File(filePath);
