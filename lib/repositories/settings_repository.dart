@@ -1,5 +1,4 @@
 import 'package:sqflite/sqflite.dart' as sql;
-
 import '../constants/database_constants.dart';
 import '../services/database_service.dart';
 

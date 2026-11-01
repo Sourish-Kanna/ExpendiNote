@@ -2,11 +2,11 @@ import 'dart:math' show Random;
 
 import 'package:material_ui/material_ui.dart';
 
-import '../models/category.dart';
-import '../repositories/category_repository.dart';
-import '../repositories/transaction_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
+import '../../models/category.dart';
+import '../../repositories/category_repository.dart';
+import '../../repositories/transaction_repository.dart';
+import '../../utils/color_utils.dart';
+import '../../utils/icon_utils.dart';
 
 class EditCategoryScreen extends StatefulWidget {
   final Category? category;

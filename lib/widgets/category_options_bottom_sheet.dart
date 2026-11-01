@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
 
-enum CategoryOption { edit, merge, delete, pin }
+enum CategoryOption { edit, merge, delete, pin, view }
 
 /// Displays a Material 3 modal bottom sheet with options to Pin/Unpin, Edit, Merge, or Delete a category.
 Future<CategoryOption?> showCategoryOptionsBottomSheet({
@@ -112,7 +112,7 @@ class CategoryOptionsBottomSheet extends StatelessWidget {
                 color: canDelete ? colorScheme.error : null,
               ),
               title: Text(
-                'Delete',
+                canDelete ? 'Delete' : 'Delete (Disabled)',
                 style: textTheme.bodyLarge?.copyWith(
                   color: canDelete ? colorScheme.error : null,
                   fontWeight: FontWeight.w500,

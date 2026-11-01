@@ -88,11 +88,16 @@ class TransactionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(
-                Icons.more_vert,
-                size: 18,
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                semanticLabel: 'Long press for options',
+              IconButton(
+                icon: Icon(
+                  Icons.more_vert,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                onLongPress: () {ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Show Options')),
+                    );},
+                onPressed: onTap,
               ),
             ],
           ),

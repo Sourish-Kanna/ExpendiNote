@@ -65,18 +65,23 @@ class CategoryCard extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          '$transactionCount transactions • ₹${totalAmount.toStringAsFixed(0)}',
+          '$transactionCount transactions • ₹${totalAmount.toStringAsFixed(2)}',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurfaceVariant,
           ),
         ),
-        trailing: Icon(
-          Icons.more_vert,
-          size: 18,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-          semanticLabel: 'Long press for options',
+        trailing: IconButton(
+          icon: Icon(
+            Icons.more_vert,
+            size: 18,
+            color: colorScheme.onSurfaceVariant,
+          ),
+          onLongPress: () {ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Show Options')),
+              );},
+          onPressed: onLongPress,
         ),
         onTap: onTap,
         onLongPress: onLongPress,

@@ -52,7 +52,8 @@ class SummaryCard extends StatelessWidget {
         padding: padding,
         child: IntrinsicHeight(
           child: Row(
-            children: _buildChildren(colorScheme, textTheme, defaultTextColor),
+            children: _buildChildren(colorScheme, textTheme,
+              defaultTextColor),
           ),
         ),
       ),

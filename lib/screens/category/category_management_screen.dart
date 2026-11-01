@@ -1,11 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/category.dart';
-import '../repositories/category_repository.dart';
-import '../widgets/category_card.dart';
-import '../widgets/category_options_bottom_sheet.dart';
+import '../../models/category.dart';
+import '../../repositories/category_repository.dart';
+import '../../widgets/category_card.dart';
+import '../../widgets/category_options_bottom_sheet.dart';
+import '../analysis/category_summary_screen.dart';
 import 'edit_category_screen.dart';
 import 'merge_category_screen.dart';
+
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -67,7 +69,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   category: category,
                   transactionCount: txCount,
                   totalAmount: totalAmount,
-                  onTap: () => _editCategory(category),
+                  onTap: () => _viewCategory(category),
                   onLongPress: () async {
                     final option = await showCategoryOptionsBottomSheet(
                       context: context,
@@ -87,6 +89,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                         break;
                       case CategoryOption.delete:
                         _confirmDelete(category);
+                        break;
+                      case CategoryOption.view:
+                        _viewCategory(category);
                         break;
                     }
                   },
@@ -108,6 +113,18 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => EditCategoryScreen(category: category),
+      ),
+    );
+    if (result == true) {
+      _loadCategories();
+    }
+  }
+
+  Future<void> _viewCategory(Category? category) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CategorySummaryScreen(),
       ),
     );
     if (result == true) {

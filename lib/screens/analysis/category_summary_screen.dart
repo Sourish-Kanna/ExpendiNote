@@ -1,12 +1,12 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../models/transaction.dart' as txmodel;
-import '../repositories/transaction_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
-import '../widgets/summary_card.dart';
-import 'history_screen.dart';
+import '../../models/transaction.dart' as txmodel;
+import '../../repositories/transaction_repository.dart';
+import '../../utils/color_utils.dart';
+import '../../utils/icon_utils.dart';
+import '../../widgets/summary_card.dart';
+import '../Analysis/history_screen.dart';
 
 class CategorySummaryScreen extends StatefulWidget {
   const CategorySummaryScreen({super.key});

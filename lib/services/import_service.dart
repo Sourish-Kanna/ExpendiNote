@@ -69,7 +69,8 @@ class ImportService {
   }) async {
     try {
       // 1. Pick JSON backup file
-      final result = await FilePicker.pickFiles(type: FileType.any);
+      final result = await FilePicker.pickFiles(type: FileType.custom,
+        allowedExtensions: ['json', 'csv']);
 
       if (result.isEmpty || result.first.path == null) {
         AppLogger.info('Restore cancelled: no file selected.');

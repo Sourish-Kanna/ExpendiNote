@@ -5,7 +5,7 @@ import 'package:expend_note/models/category.dart';
 import 'package:expend_note/models/transaction.dart';
 import 'package:expend_note/repositories/category_repository.dart';
 import 'package:expend_note/repositories/transaction_repository.dart';
-import 'package:expend_note/screens/category_management_screen.dart';
+import 'package:expend_note/screens/category/category_management_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/widgets/category_card.dart';
 import 'package:flutter_test/flutter_test.dart';

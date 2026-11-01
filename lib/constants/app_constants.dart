@@ -1,7 +1,7 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppConstants {
-  static String _cachedVersion = '2.0.1+1-dev';
+  static String _cachedVersion = '2.0.3-dev';
   static PackageInfo? _packageInfo;
 
   /// Returns the current app version string (including build number if available, e.g. '2.0.1+1-dev').

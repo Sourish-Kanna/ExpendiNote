@@ -3,7 +3,6 @@ import 'package:material_ui/material_ui.dart';
 import 'app_shapes.dart';
 
 class AppTheme {
-  static const Color fallbackSeed = Colors.teal;
 
   static ThemeData buildTheme(ColorScheme scheme) {
     return ThemeData(

@@ -1,9 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/category.dart';
-import '../repositories/category_repository.dart';
-import '../utils/color_utils.dart';
-import '../utils/icon_utils.dart';
+import '../../models/category.dart';
+import '../../repositories/category_repository.dart';
+import '../../utils/color_utils.dart';
+import '../../utils/icon_utils.dart';
 
 class MergeCategoryScreen extends StatefulWidget {
   final Category sourceCategory;
