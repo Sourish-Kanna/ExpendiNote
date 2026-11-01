@@ -407,6 +407,9 @@ class DatabaseService {
         );
       }
     }
+
+    await _backfillCategoryIconsAndColors(db);
+
     AppLogger.info('Migration v2 -> v3 completed.');
   }
 
@@ -448,10 +451,12 @@ class DatabaseService {
 
     // Ensure 'Investment' category exists if missing
     final now = DateTime.now().toIso8601String();
+    final defaultColors = ColorUtils.getAvailableColors();
+    final defaultIcons = IconUtils.getAvailableIcons();
     await db.insert(DbTables.categories, {
       DbCols.name: 'Investment',
-      DbCols.icon: null,
-      DbCols.color: null,
+      DbCols.icon: IconUtils.iconToString(defaultIcons[7]),
+      DbCols.color: ColorUtils.colorToInt(defaultColors[6]),
       DbCols.isPinned: 0,
       DbCols.isArchived: 0,
       DbCols.includeInSpendingAnalysis: 0,
@@ -466,6 +471,7 @@ class DatabaseService {
   static Future<void> _migrateV4toV5(Database db) async {
     AppLogger.info('Starting database migration: v4 -> v5');
 
+    // Update numeric code points to named icon strings ONLY for rows with legacy numeric code points.
     await db.execute('''
       UPDATE ${DbTables.categories}
       SET ${DbCols.icon} = CASE ${DbCols.icon}
@@ -478,10 +484,86 @@ class DatabaseService {
         WHEN '58136' THEN 'home'
         WHEN '59007' THEN 'trending_up'
         WHEN '57728' THEN 'commute'
-        ELSE 'category'
+        ELSE ${DbCols.icon}
       END
+      WHERE ${DbCols.icon} IN ('57672', '58674', '58778', '58381', '58328', '58713', '58136', '59007', '57728')
     ''');
 
+    await _backfillCategoryIconsAndColors(db);
+
     AppLogger.info('Migration v4 -> v5 completed.');
+  }
+
+  /// Backfills missing category icons and colors based on category names.
+  static Future<void> _backfillCategoryIconsAndColors(Database db) async {
+    final defaultColors = ColorUtils.getAvailableColors();
+    final defaultIcons = IconUtils.getAvailableIcons();
+
+    final categories = await db.query(
+      DbTables.categories,
+      columns: ['id', DbCols.name, DbCols.icon, DbCols.color],
+    );
+
+    final batch = db.batch();
+    var hasUpdates = false;
+
+    for (final cat in categories) {
+      final id = cat['id'] as int;
+      final name = (cat[DbCols.name] as String? ?? '').toLowerCase();
+      final currentIcon = cat[DbCols.icon] as String?;
+      final currentColor = cat[DbCols.color] as int?;
+
+      if (currentIcon != null && currentColor != null) {
+        continue;
+      }
+
+      String? newIcon = currentIcon;
+      int? newColor = currentColor;
+
+      if (name.contains('food') ||
+          name.contains('dining') ||
+          name.contains('restaurant')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[1]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[5]);
+      } else if (name.contains('transport') ||
+          name.contains('commute') ||
+          name.contains('travel')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[8]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[3]);
+      } else if (name.contains('shopping')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[2]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[0]);
+      } else if (name.contains('bill') || name.contains('home')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[6]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[2]);
+      } else if (name.contains('entertainment') || name.contains('movie')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[3]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[1]);
+      } else if (name.contains('health') || name.contains('medical')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[4]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[4]);
+      } else if (name.contains('education') || name.contains('school')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[5]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[3]);
+      } else if (name.contains('investment')) {
+        newIcon ??= IconUtils.iconToString(defaultIcons[7]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[6]);
+      } else {
+        newIcon ??= IconUtils.iconToString(defaultIcons[0]);
+        newColor ??= ColorUtils.colorToInt(defaultColors[6]);
+      }
+
+      batch.update(
+        DbTables.categories,
+        {DbCols.icon: newIcon, DbCols.color: newColor},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      hasUpdates = true;
+    }
+
+    if (hasUpdates) {
+      await batch.commit(noResult: true);
+    }
   }
 }

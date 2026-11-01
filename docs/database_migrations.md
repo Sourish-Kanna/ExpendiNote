@@ -28,8 +28,9 @@ No direct table creation, column modification, or schema migration operations sh
 - **v4**: Spending analysis controls:
   - Added `includeInSpendingAnalysis` flag to both `categories` and `transactions` tables (defaults to `1` / `true`).
   - Automatically sets default `includeInSpendingAnalysis = 0` for the `Investment` category.
-- **v5**: Icon representation refactoring:
+- **v5**: Icon representation refactoring & backfill:
   - Migrated legacy numerical icon code point strings (e.g. `'58674'`) to stable named string identifiers (e.g. `'restaurant'`) in the `categories` table.
+  - Automatically backfills category icons and colors based on category names for legacy migrated categories missing metadata.
 
 ---
 
