@@ -51,6 +51,9 @@ class DatabaseService {
     return await openDatabase(
       path,
       version: DbConfig.databaseVersion,
+      onOpen: (db) => AppLogger.info(
+        "database table version ${DbConfig.databaseVersion} opened",
+      ),
       onConfigure: (db) async {
         // Enable foreign key support in SQLite
         await db.execute('PRAGMA foreign_keys = ON');
@@ -62,19 +65,19 @@ class DatabaseService {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v2...');
           await _migrateV1toV2(db);
         }
         if (oldVersion < 3) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v3...');
           await _migrateV2toV3(db);
         }
         if (oldVersion < 4) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v4...');
           await _migrateV3toV4(db);
         }
         if (oldVersion < 5) {
-          AppLogger.info('Upgrading DB from v$oldVersion to v$newVersion...');
+          AppLogger.info('Upgrading DB from v$oldVersion to v5...');
           await _migrateV4toV5(db);
         }
       },
@@ -204,7 +207,7 @@ class DatabaseService {
     try {
       AppLogger.debug('Creating v2 schema tables for migration...');
 
-      // Step 1: Create v2 tables (Independent of _createTables to satisfy Task 5)
+      // Step 1: Create v2 tables
       // v2 schema for categories did NOT include icon, color, pinned, or archived fields.
       await db.execute('''
         CREATE TABLE IF NOT EXISTS ${DbTables.categories}(
@@ -341,13 +344,33 @@ class DatabaseService {
     final cleaned = raw.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (cleaned.isEmpty) return 'Others';
 
-    return cleaned
-        .split(' ')
-        .map((p) {
-          if (p.isEmpty) return '';
-          return p[0].toUpperCase() + p.substring(1).toLowerCase();
-        })
-        .join(' ');
+    // Map legacy v1 category names to current category names.
+    switch (cleaned.toLowerCase()) {
+      case 'general':
+      case 'other':
+      case 'others':
+        return 'Others';
+      case 'food':
+        return 'Food';
+      case 'transport':
+        return 'Transport';
+      case 'entertainment':
+        return 'Entertainment';
+      case 'shopping':
+        return 'Shopping';
+      case 'health':
+      case 'healthcare':
+        return 'Healthcare';
+      default:
+        // Preserve custom category names with normalized capitalization.
+        return cleaned
+            .split(' ')
+            .map((part) {
+              if (part.isEmpty) return '';
+              return part[0].toUpperCase() + part.substring(1).toLowerCase();
+            })
+            .join(' ');
+    }
   }
 
   /// Migrates the database from version 2 to version 3.

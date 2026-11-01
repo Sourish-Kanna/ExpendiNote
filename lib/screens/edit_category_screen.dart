@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/category.dart';
 import '../repositories/category_repository.dart';
+import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 
@@ -65,6 +66,70 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('A category named "$name" already exists.')),
           );
+        }
+        return;
+      }
+
+      final bool analysisSettingChanged =
+          widget.category != null &&
+          _includeInSpendingAnalysis !=
+              widget.category!.includeInSpendingAnalysis;
+
+      if (analysisSettingChanged && mounted) {
+        final choice = await showDialog<String>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Apply to Existing Transactions?'),
+            content: Text(
+              'Would you like to apply the updated default spending analysis setting ("${_includeInSpendingAnalysis ? 'Included' : 'Excluded'}") to existing transactions in this category?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'cancel'),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'future_only'),
+                child: const Text('Future transactions only'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, 'existing_too'),
+                child: const Text('Existing transactions too'),
+              ),
+            ],
+          ),
+        );
+
+        if (choice == 'cancel' || choice == null) {
+          setState(() {
+            _includeInSpendingAnalysis =
+                widget.category!.includeInSpendingAnalysis;
+          });
+          return;
+        }
+
+        final category = Category(
+          id: widget.category?.id,
+          name: name,
+          icon: IconUtils.iconToString(_selectedIcon),
+          color: ColorUtils.colorToInt(_selectedColor),
+          isPinned: _isPinned,
+          isArchived: widget.category?.isArchived ?? false,
+          includeInSpendingAnalysis: _includeInSpendingAnalysis,
+          createdAt: widget.category?.createdAt,
+        );
+
+        await CategoryRepository.updateCategory(category);
+
+        if (choice == 'existing_too') {
+          await TransactionRepository.updateTransactionsIncludeInAnalysisForCategory(
+            widget.category!.id!,
+            _includeInSpendingAnalysis,
+          );
+        }
+
+        if (mounted) {
+          Navigator.pop(context, true);
         }
         return;
       }

@@ -4,6 +4,8 @@ import '../constants/database_constants.dart';
 import '../services/database_service.dart';
 
 class SettingsRepository {
+  static const String launchCountKey = 'app_launch_count';
+
   static DatabaseService get _dbService => DatabaseService.instance;
 
   static Future<void> set(String key, String? value) async {
