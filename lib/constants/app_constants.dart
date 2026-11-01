@@ -8,10 +8,6 @@ class AppConstants {
   static String get appVersion {
     if (_packageInfo != null) {
       final v = _packageInfo!.version;
-      final b = _packageInfo!.buildNumber;
-      if (b.isNotEmpty && !v.contains('+')) {
-        return '$v+$b';
-      }
       return v;
     }
     return _cachedVersion;
@@ -25,12 +21,7 @@ class AppConstants {
     try {
       _packageInfo = await PackageInfo.fromPlatform();
       final v = _packageInfo!.version;
-      final b = _packageInfo!.buildNumber;
-      if (b.isNotEmpty && !v.contains('+')) {
-        _cachedVersion = '$v+$b';
-      } else {
-        _cachedVersion = v;
-      }
+      _cachedVersion = v;
       return _cachedVersion;
     } catch (_) {
       return _cachedVersion;
