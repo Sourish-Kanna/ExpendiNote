@@ -110,11 +110,11 @@ void main() {
       expect(AppThemeColor.fromName('Orange'), equals(AppThemeColor.orange));
       expect(
         AppThemeColor.fromName('InvalidColor'),
-        equals(AppThemeColor.green),
+        equals(AppThemeColor.blue),
       ); // fallback
       expect(
         AppThemeColor.fromName(null),
-        equals(AppThemeColor.green),
+        equals(AppThemeColor.blue),
       ); // fallback
     });
   });

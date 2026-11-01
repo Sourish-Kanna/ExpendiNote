@@ -31,7 +31,7 @@ void main() {
       );
 
       expect(find.text('Groceries'), findsOneWidget);
-      expect(find.text('5 transactions • ₹1250'), findsOneWidget);
+      expect(find.text('5 transactions • ₹1250.00'), findsOneWidget);
       expect(find.byIcon(Icons.shopping_bag), findsOneWidget);
       expect(find.byIcon(Icons.push_pin), findsOneWidget);
       expect(find.byIcon(Icons.more_vert), findsOneWidget);
@@ -171,7 +171,7 @@ void main() {
         ),
       );
 
-      final subtitleFinder = find.text('999 transactions • ₹123456789');
+      final subtitleFinder = find.text('999 transactions • ₹123456789.00');
       expect(subtitleFinder, findsOneWidget);
       final subtitleWidget = tester.widget<Text>(subtitleFinder);
       expect(subtitleWidget.maxLines, equals(1));

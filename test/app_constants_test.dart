@@ -6,7 +6,7 @@ void main() {
     test(
       'appVersion returns pubspec fallback version when package info is not initialized',
       () {
-        expect(AppConstants.appVersion, equals('2.0.1+1-dev'));
+        expect(AppConstants.appVersion, equals('2.0.3-dev'));
       },
     );
 

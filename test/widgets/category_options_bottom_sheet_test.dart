@@ -123,12 +123,12 @@ void main() {
 
         // Delete ListTile should be disabled
         final deleteListTile = tester.widget<ListTile>(
-          find.widgetWithText(ListTile, 'Delete'),
+          find.widgetWithText(ListTile, 'Delete (Disabled)'),
         );
         expect(deleteListTile.enabled, isFalse);
 
         // Attempting to tap disabled Delete
-        await tester.tap(find.text('Delete'));
+        await tester.tap(find.text('Delete (Disabled)'));
         await tester.pumpAndSettle();
 
         // Sheet should NOT close with delete option

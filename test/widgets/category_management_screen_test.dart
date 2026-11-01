@@ -206,12 +206,12 @@ void main() {
 
         // Delete should be visible but disabled
         final deleteListTile = tester.widget<ListTile>(
-          find.widgetWithText(ListTile, 'Delete'),
+          find.widgetWithText(ListTile, 'Delete (Disabled)'),
         );
         expect(deleteListTile.enabled, isFalse);
 
         // Tap disabled delete
-        await tester.tap(find.text('Delete'));
+        await tester.tap(find.text('Delete (Disabled)'));
         await tester.pumpAndSettle();
 
         // Should NOT trigger delete confirmation
@@ -220,7 +220,7 @@ void main() {
     );
 
     testWidgets(
-      'renders long-press discoverability hint icon on category items',
+      'tapping discoverability hint icon opens category options',
       (tester) async {
         configureViewport(tester);
         await tester.pumpWidget(createWidgetUnderTest());
@@ -233,20 +233,19 @@ void main() {
         final hintIconFinder = find.byIcon(Icons.more_vert);
         expect(hintIconFinder, findsWidgets);
 
-        // Tapping hint icon directly opens edit category screen
+        // Tapping hint icon directly opens category options
         await tester.tap(hintIconFinder.first);
-        await tester.pump();
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
+        await tester.pumpAndSettle();
 
-        expect(find.text('Edit Category'), findsOneWidget);
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Merge'), findsOneWidget);
+        expect(find.text('Delete (Disabled)'), findsOneWidget);
+        expect(find.text('Unpin category'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'long pressing hint icon directly opens category options bottom sheet',
+      'long pressing hint icon shows the options snackbar',
       (tester) async {
         configureViewport(tester);
         await tester.pumpWidget(createWidgetUnderTest());
@@ -263,10 +262,7 @@ void main() {
         await tester.longPress(hintIconFinder);
         await tester.pumpAndSettle();
 
-        expect(find.text('Edit'), findsOneWidget);
-        expect(find.text('Merge'), findsOneWidget);
-        expect(find.text('Delete'), findsOneWidget);
-        expect(find.text('Pin category'), findsOneWidget);
+        expect(find.text('Show Options'), findsOneWidget);
       },
     );
 
@@ -319,15 +315,13 @@ void main() {
         });
         await tester.pump();
 
-        // Edit Entertainment category
+        // Open Entertainment category options
         final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
         await tester.ensureVisible(cardFinder);
-        await tester.tap(cardFinder);
-        await tester.pump();
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
+        await tester.longPress(cardFinder);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
 
         expect(find.text('Edit Category'), findsOneWidget);
 

@@ -156,7 +156,7 @@ void main() {
 
 
     testWidgets(
-      'renders long-press discoverability hint icon on transaction item',
+      'tapping discoverability hint icon opens transaction options',
       (tester) async {
         configureViewport(tester);
         await tester.pumpWidget(createWidgetUnderTest());
@@ -169,15 +169,16 @@ void main() {
         final hintIconFinder = find.byIcon(Icons.more_vert);
         expect(hintIconFinder, findsOneWidget);
 
-        // Tapping hint icon directly preserves normal tap behavior (navigates to detail)
+        // Tapping hint icon directly opens transaction options
         await tester.tap(hintIconFinder);
         await tester.pumpAndSettle();
-        expect(find.text('Details'), findsOneWidget);
+        expect(find.text('Edit'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'long pressing hint icon directly opens transaction options bottom sheet',
+      'long pressing hint icon shows the options snackbar',
       (tester) async {
         configureViewport(tester);
         await tester.pumpWidget(createWidgetUnderTest());
@@ -190,8 +191,7 @@ void main() {
         await tester.longPress(hintIconFinder);
         await tester.pumpAndSettle();
 
-        expect(find.text('Edit'), findsOneWidget);
-        expect(find.text('Delete'), findsOneWidget);
+        expect(find.text('Show Options'), findsOneWidget);
       },
     );
   });
