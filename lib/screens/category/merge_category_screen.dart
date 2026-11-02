@@ -19,7 +19,12 @@ class MergeCategoryScreen extends StatefulWidget {
 }
 
 class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
-  List<Category> _otherCategories = [];
+  final TextEditingController _searchController = TextEditingController();
+  List<Category> _allOtherCategories = [];
+  List<Category> _filteredCategories = [];
+  Map<int, int> _destinationCounts = {};
+  Map<int, double> _destinationTotals = {};
+  double _sourceTotalAmount = 0.0;
   Category? _selectedDestination;
   bool _isLoading = true;
 
@@ -27,16 +32,69 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
   void initState() {
     super.initState();
     _loadCategories();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.toLowerCase().trim();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredCategories = _allOtherCategories;
+      } else {
+        _filteredCategories = _allOtherCategories
+            .where((c) => c.name.toLowerCase().contains(query))
+            .toList();
+      }
+    });
   }
 
   Future<void> _loadCategories() async {
-    final all = await CategoryRepository.getAllCategories();
-    setState(() {
-      _otherCategories = all
-          .where((c) => c.id != widget.sourceCategory.id)
-          .toList();
-      _isLoading = false;
-    });
+    try {
+      final stats = await CategoryRepository.getCategoriesWithStats();
+
+      double sourceTotal = 0.0;
+      final Map<int, int> counts = {};
+      final Map<int, double> totals = {};
+      final List<Category> others = [];
+
+      for (final stat in stats) {
+        final cat = Category.fromMap(stat);
+        final count = (stat['transactionCount'] as int?) ?? 0;
+        final total = (stat['totalAmount'] ?? 0.0).toDouble();
+
+        if (cat.id == widget.sourceCategory.id) {
+          sourceTotal = total;
+        } else {
+          counts[cat.id!] = count;
+          totals[cat.id!] = total;
+          others.add(cat);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _sourceTotalAmount = sourceTotal;
+          _allOtherCategories = others;
+          _filteredCategories = others;
+          _destinationCounts = counts;
+          _destinationTotals = totals;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load categories: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _merge() async {
@@ -47,7 +105,8 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Confirm Merge'),
         content: Text(
-          'This will move all ${widget.txCount} transactions from '
+          'This will move all ${widget.txCount} transactions '
+          '(₹${_sourceTotalAmount.toStringAsFixed(2)}) from '
           '"${widget.sourceCategory.name}" to "${_selectedDestination!.name}".\n\n'
           '"${widget.sourceCategory.name}" will be deleted.\n\n'
           'This action cannot be undone.',
@@ -131,7 +190,34 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (_otherCategories.isEmpty)
+                  if (_allOtherCategories.length >= 5) ...[
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search destination categories...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () => _searchController.clear(),
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_allOtherCategories.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
                       child: Text(
@@ -140,54 +226,86 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                         style: TextStyle(color: Colors.grey),
                       ),
                     )
+                  else if (_filteredCategories.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 30),
+                      child: Text(
+                        'No categories match your search.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
                   else
-                    RadioGroup<int>(
-                      groupValue: _selectedDestination?.id,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedDestination = _otherCategories.firstWhere(
-                            (cat) => cat.id == value,
-                          );
-                        });
-                      },
-                      child: Column(
-                        children: _otherCategories.map((c) {
-                          final isSelected = _selectedDestination?.id == c.id;
-                          final catColor = ColorUtils.fromInt(c.color);
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Card(
-                              elevation: 0,
-                              color: isSelected
-                                  ? catColor.withValues(alpha: 0.2)
-                                  : catColor.withValues(alpha: 0.08),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: isSelected
-                                    ? BorderSide(color: catColor, width: 2)
-                                    : BorderSide.none,
+                    ..._filteredCategories.map((c) {
+                      final isSelected = _selectedDestination?.id == c.id;
+                      final catColor = ColorUtils.fromInt(c.color);
+                      final count = _destinationCounts[c.id!] ?? 0;
+                      final total = _destinationTotals[c.id!] ?? 0.0;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Card(
+                          elevation: 0,
+                          color: isSelected
+                              ? catColor.withValues(alpha: 0.2)
+                              : catColor.withValues(alpha: 0.08),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: isSelected
+                                ? BorderSide(color: catColor, width: 2)
+                                : BorderSide.none,
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              setState(() {
+                                _selectedDestination = c;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
                               ),
-                              child: RadioListTile<int>(
-                                value: c.id!,
-                                title: Text(
-                                  c.name,
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    IconUtils.fromString(c.icon),
+                                    color: catColor,
+                                    size: 24,
                                   ),
-                                ),
-                                secondary: Icon(
-                                  IconUtils.fromString(c.icon),
-                                  color: catColor,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          c.name,
+                                          style: textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          '$count transactions • ₹${total.toStringAsFixed(2)}',
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Icon(Icons.check_circle, color: catColor),
+                                ],
                               ),
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                          ),
+                        ),
+                      );
+                    }),
                   const SizedBox(height: 32),
                   FilledButton.icon(
                     onPressed: _selectedDestination == null ? null : _merge,
@@ -243,6 +361,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
             ),
             const SizedBox(height: 16),
             ListTile(
+              contentPadding: EdgeInsets.zero,
               leading: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -262,7 +381,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                 ),
               ),
               subtitle: Text(
-                '${widget.txCount} transactions will be moved',
+                '${widget.txCount} transactions • ₹${_sourceTotalAmount.toStringAsFixed(2)} will be moved',
                 style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
