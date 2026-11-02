@@ -144,9 +144,6 @@ class DatabaseService {
       'Others',
     ];
 
-    final colors = ColorUtils.getAvailableColors();
-    final icons = IconUtils.getAvailableIcons();
-
     final batch = db.batch();
     for (final name in defaults) {
       final isInvestment = name.toLowerCase() == 'investment';
@@ -155,36 +152,36 @@ class DatabaseService {
       Color color;
       switch (name.toLowerCase()) {
         case 'food':
-          icon = icons[1]; // Icons.restaurant
-          color = colors[5]; // Colors.deepOrange
+          icon = IconUtils.restaurantIcon;
+          color = ColorUtils.deepOrangeColor;
           break;
         case 'transport':
-          icon = icons[8]; // Icons.commute
-          color = colors[3]; // Colors.blue
+          icon = IconUtils.commuteIcon;
+          color = ColorUtils.blueColor;
           break;
         case 'shopping':
-          icon = icons[2]; // Icons.shopping_bag
-          color = colors[0]; // Colors.purple
+          icon = IconUtils.shoppingBagIcon;
+          color = ColorUtils.purpleColor;
           break;
         case 'bills':
-          icon = icons[6]; // Icons.home
-          color = colors[2]; // Colors.indigo
+          icon = IconUtils.homeIcon;
+          color = ColorUtils.indigoColor;
           break;
         case 'entertainment':
-          icon = icons[3]; // Icons.movie
-          color = colors[1]; // Colors.deepPurple
+          icon = IconUtils.movieIcon;
+          color = ColorUtils.deepPurpleColor;
           break;
         case 'healthcare':
-          icon = icons[4]; // Icons.medical_services
-          color = colors[4]; // Colors.teal
+          icon = IconUtils.medicalServicesIcon;
+          color = ColorUtils.tealColor;
           break;
         case 'investment':
-          icon = icons[7]; // Icons.trending_up
-          color = colors[6]; // Colors.blueGrey
+          icon = IconUtils.trendingUpIcon;
+          color = ColorUtils.blueGreyColor;
           break;
         default:
-          icon = icons[0]; // Icons.category
-          color = colors[6]; // Colors.blueGrey
+          icon = IconUtils.defaultIcon;
+          color = ColorUtils.blueGreyColor;
       }
 
       batch.insert(DbTables.categories, {
@@ -451,12 +448,10 @@ class DatabaseService {
 
     // Ensure 'Investment' category exists if missing
     final now = DateTime.now().toIso8601String();
-    final defaultColors = ColorUtils.getAvailableColors();
-    final defaultIcons = IconUtils.getAvailableIcons();
     await db.insert(DbTables.categories, {
       DbCols.name: 'Investment',
-      DbCols.icon: IconUtils.iconToString(defaultIcons[7]),
-      DbCols.color: ColorUtils.colorToInt(defaultColors[6]),
+      DbCols.icon: IconUtils.iconToString(IconUtils.trendingUpIcon),
+      DbCols.color: ColorUtils.colorToInt(ColorUtils.blueGreyColor),
       DbCols.isPinned: 0,
       DbCols.isArchived: 0,
       DbCols.includeInSpendingAnalysis: 0,
@@ -496,9 +491,6 @@ class DatabaseService {
 
   /// Backfills missing category icons and colors based on category names.
   static Future<void> _backfillCategoryIconsAndColors(Database db) async {
-    final defaultColors = ColorUtils.getAvailableColors();
-    final defaultIcons = IconUtils.getAvailableIcons();
-
     final categories = await db.query(
       DbTables.categories,
       columns: ['id', DbCols.name, DbCols.icon, DbCols.color],
@@ -523,34 +515,34 @@ class DatabaseService {
       if (name.contains('food') ||
           name.contains('dining') ||
           name.contains('restaurant')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[1]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[5]);
+        newIcon ??= IconUtils.iconToString(IconUtils.restaurantIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.deepOrangeColor);
       } else if (name.contains('transport') ||
           name.contains('commute') ||
           name.contains('travel')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[8]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[3]);
+        newIcon ??= IconUtils.iconToString(IconUtils.commuteIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.blueColor);
       } else if (name.contains('shopping')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[2]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[0]);
+        newIcon ??= IconUtils.iconToString(IconUtils.shoppingBagIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.purpleColor);
       } else if (name.contains('bill') || name.contains('home')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[6]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[2]);
+        newIcon ??= IconUtils.iconToString(IconUtils.homeIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.indigoColor);
       } else if (name.contains('entertainment') || name.contains('movie')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[3]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[1]);
+        newIcon ??= IconUtils.iconToString(IconUtils.movieIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.deepPurpleColor);
       } else if (name.contains('health') || name.contains('medical')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[4]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[4]);
+        newIcon ??= IconUtils.iconToString(IconUtils.medicalServicesIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.tealColor);
       } else if (name.contains('education') || name.contains('school')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[5]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[3]);
+        newIcon ??= IconUtils.iconToString(IconUtils.schoolIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.blueColor);
       } else if (name.contains('investment')) {
-        newIcon ??= IconUtils.iconToString(defaultIcons[7]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[6]);
+        newIcon ??= IconUtils.iconToString(IconUtils.trendingUpIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.blueGreyColor);
       } else {
-        newIcon ??= IconUtils.iconToString(defaultIcons[0]);
-        newColor ??= ColorUtils.colorToInt(defaultColors[6]);
+        newIcon ??= IconUtils.iconToString(IconUtils.defaultIcon);
+        newColor ??= ColorUtils.colorToInt(ColorUtils.blueGreyColor);
       }
 
       batch.update(

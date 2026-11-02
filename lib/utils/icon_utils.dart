@@ -1,16 +1,26 @@
 import 'package:material_ui/material_ui.dart';
 
 class IconUtils {
+  static const IconData defaultIcon = Icons.category;
+  static const IconData restaurantIcon = Icons.restaurant;
+  static const IconData shoppingBagIcon = Icons.shopping_bag;
+  static const IconData movieIcon = Icons.movie;
+  static const IconData medicalServicesIcon = Icons.medical_services;
+  static const IconData schoolIcon = Icons.school;
+  static const IconData homeIcon = Icons.home;
+  static const IconData trendingUpIcon = Icons.trending_up;
+  static const IconData commuteIcon = Icons.commute;
+
   static const List<IconData> iconsList = [
-    Icons.category,
-    Icons.restaurant,
-    Icons.shopping_bag,
-    Icons.movie,
-    Icons.medical_services,
-    Icons.school,
-    Icons.home,
-    Icons.trending_up,
-    Icons.commute,
+    defaultIcon,
+    restaurantIcon,
+    shoppingBagIcon,
+    movieIcon,
+    medicalServicesIcon,
+    schoolIcon,
+    homeIcon,
+    trendingUpIcon,
+    commuteIcon,
   ];
 
   static IconData fromString(String? iconString) {
