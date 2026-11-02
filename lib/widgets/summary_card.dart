@@ -17,6 +17,9 @@ class SummaryCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
 
+  /// Displays a single metric with a prominent, centered value.
+  final bool prominent;
+
   const SummaryCard({
     super.key,
     required this.items,
@@ -26,9 +29,14 @@ class SummaryCard extends StatelessWidget {
     this.borderRadius = 28.0,
     this.padding = const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
     this.margin,
+    this.prominent = false,
   }) : assert(
          items.length >= 1 && items.length <= 2,
          'SummaryCard supports exactly one or two metrics.',
+       ),
+       assert(
+         !prominent || items.length == 1,
+         'Prominent layout supports exactly one metric.',
        );
 
   @override
@@ -39,7 +47,23 @@ class SummaryCard extends StatelessWidget {
 
     final cardBgColor =
         backgroundColor ?? colorScheme.primaryContainer.withValues(alpha: 0.4);
+
     final defaultTextColor = textColor ?? colorScheme.primary;
+
+    final Widget content = prominent
+        ? _buildProminentContent(
+            textTheme: textTheme,
+            defaultTextColor: defaultTextColor,
+          )
+        : IntrinsicHeight(
+            child: Row(
+              children: _buildChildren(
+                colorScheme,
+                textTheme,
+                defaultTextColor,
+              ),
+            ),
+          );
 
     Widget cardContent = Card(
       elevation: 0,
@@ -48,14 +72,7 @@ class SummaryCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: Padding(
-        padding: padding,
-        child: IntrinsicHeight(
-          child: Row(
-            children: _buildChildren(colorScheme, textTheme, defaultTextColor),
-          ),
-        ),
-      ),
+      child: Padding(padding: padding, child: content),
     );
 
     if (onTap != null) {
@@ -73,12 +90,48 @@ class SummaryCard extends StatelessWidget {
     return cardContent;
   }
 
+  Widget _buildProminentContent({
+    required TextTheme textTheme,
+    required Color defaultTextColor,
+  }) {
+    final item = items.single;
+    final itemTextColor = item.color ?? defaultTextColor;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          item.label,
+          textAlign: TextAlign.center,
+          // maxLines: 1,
+          // overflow: TextOverflow.ellipsis,
+          style: textTheme.titleMedium?.copyWith(
+            color: itemTextColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          item.value,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: textTheme.displayMedium?.copyWith(
+            color: itemTextColor,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
   List<Widget> _buildChildren(
     ColorScheme colorScheme,
     TextTheme textTheme,
     Color defaultTextColor,
   ) {
     final List<Widget> children = [];
+
     for (int i = 0; i < items.length; i++) {
       final item = items[i];
       final itemTextColor = item.color ?? defaultTextColor;
@@ -123,6 +176,7 @@ class SummaryCard extends StatelessWidget {
         );
       }
     }
+
     return children;
   }
 }

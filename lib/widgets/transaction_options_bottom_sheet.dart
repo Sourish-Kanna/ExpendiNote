@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart';
 
-enum TransactionOption { edit, delete }
+enum TransactionOption { edit, delete, view }
 
 /// Displays a Material 3 modal bottom sheet with options to Edit or Delete a transaction.
 Future<TransactionOption?> showTransactionOptionsBottomSheet({

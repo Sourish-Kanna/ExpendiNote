@@ -78,7 +78,7 @@ class CategoryRepository {
   static Future<List<Map<String, dynamic>>> getCategoriesWithStats() async {
     final db = await _dbService.database;
     return await db.rawQuery('''
-      SELECT 
+      SELECT
         c.*,
         COUNT(t.${DbCols.id}) AS transactionCount,
         SUM(t.${DbCols.amount}) AS totalAmount

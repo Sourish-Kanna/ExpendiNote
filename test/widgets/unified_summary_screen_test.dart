@@ -5,7 +5,7 @@ import 'package:expend_note/models/category.dart';
 import 'package:expend_note/models/transaction.dart';
 import 'package:expend_note/repositories/category_repository.dart';
 import 'package:expend_note/repositories/transaction_repository.dart';
-import 'package:expend_note/screens/unified_summary_screen.dart';
+import 'package:expend_note/screens/analysis/unified_summary_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';

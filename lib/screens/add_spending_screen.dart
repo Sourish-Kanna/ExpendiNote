@@ -8,7 +8,7 @@ import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
-import 'category_management_screen.dart';
+import 'category/category_management_screen.dart';
 
 class AddSpendingScreen extends StatefulWidget {
   final txmodel.Transaction? transaction;

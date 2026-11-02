@@ -5,6 +5,7 @@ import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
+import '../widgets/summary_card.dart';
 import 'add_spending_screen.dart';
 
 class SpendingDetailScreen extends StatefulWidget {
@@ -113,46 +114,20 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // 1. Primary Amount Card (Matches Home/Add Spending layout but using Category Color matching theme)
-            Card(
-              elevation: 0,
-              color: catColor.withValues(alpha: 0.15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 28,
-                  horizontal: 16,
+
+            SummaryCard(
+              prominent: true,
+              backgroundColor: catColor.withValues(alpha: 0.15),
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+              items: [
+                MetricItem(
+                  label: _currentSpending.title,
+                  value: '₹${_currentSpending.amount.toStringAsFixed(2)}',
+                  color: catColor,
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      _currentSpending.title,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: catColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.currency_rupee, size: 38, color: catColor),
-                        Text(
-                          _currentSpending.amount.toStringAsFixed(2),
-                          style: textTheme.displayMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: catColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+              ],
             ),
+
             const SizedBox(height: 20),
 
             // 2. Info Grid / Section Container

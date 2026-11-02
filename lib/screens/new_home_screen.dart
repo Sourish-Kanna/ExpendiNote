@@ -8,11 +8,12 @@ import '../widgets/summary_card.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart' show AddSpendingScreen;
-import 'daily_summary_screen.dart';
+import 'analysis/history_screen.dart';
+import 'analysis/unified_summary_screen.dart';
+import 'category/category_management_screen.dart';
 import 'search_screen.dart' show SearchScreen;
 import 'settings_screen.dart' show SettingsScreen;
 import 'spending_detail_screen.dart' show SpendingDetailScreen;
-import 'unified_summary_screen.dart';
 
 class NewHomeScreen extends StatefulWidget {
   const NewHomeScreen({super.key});
@@ -101,7 +102,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
 
     if (!mounted) return;
     setState(() {
-      _recentSpendings = data.take(10).toList();
+      _recentSpendings = data.take(15).toList();
       _todayTotal = todayTotal;
       _monthlyTotal = monthlyTotal;
       _isLoading = false;
@@ -121,7 +122,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
   void _navigateToDailySummary() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const DailySummaryScreen()),
+      MaterialPageRoute(builder: (context) => const HistoryScreen()),
     ).then((_) {
       _refreshNotifier.value++;
     });
@@ -145,6 +146,19 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         scrolledUnderElevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.category),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryManagementScreen(),
+                ),
+              ).then((_) {
+                _refreshNotifier.value++;
+              });
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
@@ -158,7 +172,16 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: .center,
+                crossAxisAlignment: .center,
+                children: [
+                  CircularProgressIndicator(),
+                  Text("Your Spendings are Loading..."),
+                ],
+              ),
+            )
           : RefreshIndicator(
               onRefresh: _refreshSpendings,
               child: CustomScrollView(
@@ -172,6 +195,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                       ),
                       child: SearchBar(
                         hintText: 'Search Expense',
+                        readOnly: true,
                         trailing: const [Icon(Icons.search)],
                         elevation: WidgetStateProperty.all(0),
                         backgroundColor: WidgetStateProperty.all(
@@ -180,15 +204,13 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                           ),
                         ),
                         onTap: () async {
-                          final result = await Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const SearchScreen(),
                             ),
                           );
-                          if (result == true) {
-                            _refreshNotifier.value++;
-                          }
+                          _refreshNotifier.value++;
                         },
                       ),
                     ),
@@ -281,7 +303,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                               return TransactionCard(
                                 transaction: spending,
                                 onTap: () async {
-                                  final result = await Navigator.push(
+                                  await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
@@ -290,9 +312,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                           ),
                                     ),
                                   );
-                                  if (result == true) {
-                                    _refreshNotifier.value++;
-                                  }
+                                  _refreshNotifier.value++;
                                 },
                                 onLongPress: () async {
                                   final navigator = Navigator.of(context);
@@ -303,16 +323,14 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                                       );
                                   if (!mounted || action == null) return;
                                   if (action == TransactionOption.edit) {
-                                    final result = await navigator.push(
+                                    await navigator.push(
                                       MaterialPageRoute(
                                         builder: (_) => AddSpendingScreen(
                                           transaction: spending,
                                         ),
                                       ),
                                     );
-                                    if (result == true) {
-                                      _refreshNotifier.value++;
-                                    }
+                                    _refreshNotifier.value++;
                                   } else if (action ==
                                       TransactionOption.delete) {
                                     _confirmDelete(spending);
@@ -322,6 +340,7 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                             }, childCount: _recentSpendings.length),
                           ),
                         ),
+
                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),

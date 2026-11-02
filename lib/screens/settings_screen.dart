@@ -9,7 +9,7 @@ import '../services/backup_service.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
 import '../theme/app_colors.dart';
-import 'category_management_screen.dart';
+import 'category/category_management_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -34,6 +34,7 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         children: [
+          // Appearance
           _buildSectionHeader(context, 'Appearance'),
           Card(
             elevation: 0,
@@ -76,6 +77,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
+          // Theme Color
           _buildSectionHeader(context, 'Theme Color'),
           Opacity(
             opacity: themeController.customThemeEnabled ? 1.0 : 0.5,
@@ -153,6 +155,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
+          // Preferences
           _buildSectionHeader(context, 'Preferences'),
           Card(
             elevation: 0,
@@ -179,6 +182,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
+          // Data Management
           _buildSectionHeader(context, 'Data Management'),
           Card(
             elevation: 0,
@@ -230,6 +234,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 28),
+          // About
           _buildSectionHeader(context, 'About'),
           Card(
             elevation: 0,
@@ -239,7 +244,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             child: ListTile(
               leading: const Icon(Icons.info),
-              title: const Text('ExpendiNote'),
+              title: const Text('Expendi Note'),
               subtitle: FutureBuilder<String>(
                 future: AppConstants.getAppVersion(),
                 builder: (context, snapshot) {

@@ -1,9 +1,9 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../models/transaction.dart' as txmodel;
-import '../repositories/transaction_repository.dart';
-import '../widgets/summary_card.dart';
+import '../../models/transaction.dart' as txmodel;
+import '../../repositories/transaction_repository.dart';
+import '../../widgets/summary_card.dart';
 import 'history_screen.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {

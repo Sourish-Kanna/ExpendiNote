@@ -16,6 +16,9 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  // Add a SearchController required by the Material SearchBar widget
+  final SearchController _materialSearchController = SearchController();
+
   List<txmodel.Transaction> _allSpendings = [];
   List<txmodel.Transaction> _filteredSpendings = [];
   bool _isLoading = true;
@@ -26,11 +29,17 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     _loadData();
     _searchController.addListener(_onSearchChanged);
+
+    // Sync the SearchController with your existing TextEditingController logic
+    _materialSearchController.addListener(() {
+      _searchController.text = _materialSearchController.text;
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _materialSearchController.dispose();
     super.dispose();
   }
 
@@ -65,25 +74,29 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final textTheme = theme.textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
+        titleSpacing: 0,
+        centerTitle: true,
+        // Explicit leading overrides automaticallyImplyLeading automatically
         leading: BackButton(
-          onPressed: () => Navigator.pop(context, _hasChanged),
+          onPressed: () => Navigator.of(context).pop(_hasChanged),
         ),
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: InputDecoration(
+        title: Padding(
+          // Adds a 12px gap after the back button and 16px padding on the right edge
+          padding: const EdgeInsets.only(right: 16.0),
+          child: SearchBar(
+            controller: _materialSearchController,
             hintText: 'Search title or category...',
-            border: InputBorder.none,
-            hintStyle: textTheme.bodyLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            trailing: const [Icon(Icons.search)],
+            autoFocus: true,
+            elevation: const WidgetStatePropertyAll(0),
+            backgroundColor: WidgetStatePropertyAll(
+              colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
           ),
-          style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface),
         ),
         backgroundColor: colorScheme.surface,
         scrolledUnderElevation: 0,

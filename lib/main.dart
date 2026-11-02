@@ -32,28 +32,28 @@ class MyApp extends StatelessWidget {
               ColorScheme? darkScheme;
 
               if (themeController.customThemeEnabled) {
-                lightScheme = ColorScheme.fromSeed(
-                  seedColor: themeController.selectedThemeColor.seed,
-                  brightness: Brightness.light,
-                );
-                darkScheme = ColorScheme.fromSeed(
-                  seedColor: themeController.selectedThemeColor.seed,
-                  brightness: Brightness.dark,
-                );
-              } else {
-                lightScheme =
-                    lightDynamic ??
-                    ColorScheme.fromSeed(
-                      seedColor: AppTheme.fallbackSeed,
-                      brightness: Brightness.light,
-                    );
-                darkScheme =
-                    darkDynamic ??
-                    ColorScheme.fromSeed(
-                      seedColor: AppTheme.fallbackSeed,
-                      brightness: Brightness.dark,
-                    );
-              }
+              lightScheme = ColorScheme.fromSeed(
+                seedColor: themeController.selectedThemeColor.seed,
+                brightness: Brightness.light,
+              );
+              darkScheme = ColorScheme.fromSeed(
+                seedColor: themeController.selectedThemeColor.seed,
+                brightness: Brightness.dark,
+              );
+            } else {
+              lightScheme =
+                  lightDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: themeController.selectedThemeColor.seed,
+                    brightness: Brightness.light,
+                  );
+              darkScheme =
+                  darkDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: themeController.selectedThemeColor.seed,
+                    brightness: Brightness.dark,
+                  );
+            }
 
               return MaterialApp(
                 title: 'Expendi Note',
@@ -128,7 +128,17 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
           return const NewHomeScreen();
         }
 
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(body: Center(
+          child: Column(
+            mainAxisAlignment: .center,
+            crossAxisAlignment: .center,
+            children: [
+              CircularProgressIndicator(),
+              Text("Loading..."),
+              Text("Please Wait")
+            ],
+          )
+        ));
       },
     );
   }

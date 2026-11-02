@@ -1,9 +1,10 @@
 import 'dart:io';
+
+import 'package:expend_note/constants/database_constants.dart';
+import 'package:expend_note/services/database_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:expend_note/services/database_service.dart';
-import 'package:expend_note/constants/database_constants.dart';
 
 void main() {
   setUpAll(() {
@@ -86,13 +87,21 @@ void main() {
           isFalse,
         ); // Legacy table dropped
 
-        // Verify categories were created with normalized names
+        // Verify categories were created with normalized names and populated icons/colors
         final categories = await migratedDb.query(DbTables.categories);
         final catNames = categories
             .map((c) => c[DbCols.name] as String)
             .toList();
         expect(catNames, contains('Food & Dining'));
         expect(catNames, contains('Others'));
+
+        final foodCat = categories.firstWhere((c) => c[DbCols.name] == 'Food & Dining');
+        expect(foodCat[DbCols.icon], equals('restaurant'));
+        expect(foodCat[DbCols.color], isNotNull);
+
+        final othersCat = categories.firstWhere((c) => c[DbCols.name] == 'Others');
+        expect(othersCat[DbCols.icon], equals('category'));
+        expect(othersCat[DbCols.color], isNotNull);
 
         // Verify transactions preserved
         final transactions = await migratedDb.query(DbTables.transactions);
@@ -140,6 +149,11 @@ void main() {
               DbCols.name: 'Groceries',
               DbCols.createdAt: '2024-01-01T00:00:00.000',
             });
+            await db.insert(DbTables.categories, {
+              'id': 2,
+              DbCols.name: 'Transport',
+              DbCols.createdAt: '2024-01-01T00:00:00.000',
+            });
             await db.insert(DbTables.transactions, {
               'id': 10,
               DbCols.title: 'Milk',
@@ -165,12 +179,22 @@ void main() {
         expect(catCols, contains(DbCols.isArchived));
         expect(catCols, contains(DbCols.includeInSpendingAnalysis));
 
-        // Verify existing data preserved
-        final cat = (await migratedDb.query(
+        // Verify existing data preserved and icons backfilled
+        final cat1 = (await migratedDb.query(
           DbTables.categories,
           where: 'id = 1',
         )).first;
-        expect(cat[DbCols.name], equals('Groceries'));
+        expect(cat1[DbCols.name], equals('Groceries'));
+        expect(cat1[DbCols.icon], isNotNull);
+        expect(cat1[DbCols.color], isNotNull);
+
+        final cat2 = (await migratedDb.query(
+          DbTables.categories,
+          where: 'id = 2',
+        )).first;
+        expect(cat2[DbCols.name], equals('Transport'));
+        expect(cat2[DbCols.icon], equals('commute'));
+        expect(cat2[DbCols.color], isNotNull);
 
         final tx = (await migratedDb.query(
           DbTables.transactions,
@@ -182,7 +206,7 @@ void main() {
     );
 
     test(
-      'migrates database from v4 to v5 converting numeric codepoints to icon names',
+      'migrates database from v4 to v5 converting numeric codepoints to icon names without overwriting existing or backfilled icons',
       () async {
         final dbPath = await getDatabasesPath();
         final path = p.join(dbPath, DbConfig.databaseFile);
@@ -220,7 +244,19 @@ void main() {
             await db.insert(DbTables.categories, {
               'id': 1,
               DbCols.name: 'Dining',
-              DbCols.icon: '58674', // restaurant
+              DbCols.icon: '58674', // numeric codepoint -> restaurant
+              DbCols.createdAt: '2024-01-01T00:00:00.000',
+            });
+            await db.insert(DbTables.categories, {
+              'id': 2,
+              DbCols.name: 'Travel',
+              DbCols.icon: 'commute', // already named string icon
+              DbCols.createdAt: '2024-01-01T00:00:00.000',
+            });
+            await db.insert(DbTables.categories, {
+              'id': 3,
+              DbCols.name: 'Shopping',
+              DbCols.icon: null, // missing icon -> backfilled to shopping_bag
               DbCols.createdAt: '2024-01-01T00:00:00.000',
             });
           },
@@ -230,11 +266,23 @@ void main() {
         // Open via DatabaseService, executing v4->v5 migration
         final migratedDb = await DatabaseService.instance.database;
 
-        final cat = (await migratedDb.query(
+        final cat1 = (await migratedDb.query(
           DbTables.categories,
           where: 'id = 1',
         )).first;
-        expect(cat[DbCols.icon], equals('restaurant'));
+        expect(cat1[DbCols.icon], equals('restaurant'));
+
+        final cat2 = (await migratedDb.query(
+          DbTables.categories,
+          where: 'id = 2',
+        )).first;
+        expect(cat2[DbCols.icon], equals('commute'));
+
+        final cat3 = (await migratedDb.query(
+          DbTables.categories,
+          where: 'id = 3',
+        )).first;
+        expect(cat3[DbCols.icon], equals('shopping_bag'));
       },
     );
   });
