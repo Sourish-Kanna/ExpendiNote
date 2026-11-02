@@ -78,9 +78,7 @@ class CategoryCard extends StatelessWidget {
             size: 18,
             color: colorScheme.onSurfaceVariant,
           ),
-          onLongPress: () {ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Show Options')),
-              );},
+          tooltip: 'More Options',
           onPressed: onLongPress,
         ),
         onTap: onTap,

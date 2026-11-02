@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
               ColorScheme? lightScheme;
               ColorScheme? darkScheme;
 
+              if (themeController.customThemeEnabled) {
               lightScheme = ColorScheme.fromSeed(
                 seedColor: themeController.selectedThemeColor.seed,
                 brightness: Brightness.light,
@@ -39,6 +40,20 @@ class MyApp extends StatelessWidget {
                 seedColor: themeController.selectedThemeColor.seed,
                 brightness: Brightness.dark,
               );
+            } else {
+              lightScheme =
+                  lightDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: themeController.selectedThemeColor.seed,
+                    brightness: Brightness.light,
+                  );
+              darkScheme =
+                  darkDynamic ??
+                  ColorScheme.fromSeed(
+                    seedColor: themeController.selectedThemeColor.seed,
+                    brightness: Brightness.dark,
+                  );
+            }
 
               return MaterialApp(
                 title: 'Expendi Note',

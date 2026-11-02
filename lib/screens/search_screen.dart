@@ -79,9 +79,8 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         // Converted title to use the Material SearchBar widget
-        automaticallyImplyActions: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+        leading: BackButton(
+          // icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(_hasChanged),
         ),
         title: SearchBar(

@@ -103,8 +103,8 @@ class SummaryCard extends StatelessWidget {
         Text(
           item.label,
           textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          // maxLines: 1,
+          // overflow: TextOverflow.ellipsis,
           style: textTheme.titleMedium?.copyWith(
             color: itemTextColor,
             fontWeight: FontWeight.bold,
