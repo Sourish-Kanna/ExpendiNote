@@ -1,13 +1,12 @@
+import 'package:expend_note/screens/analysis/history_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
 import '../../widgets/category_card.dart';
 import '../../widgets/category_options_bottom_sheet.dart';
-import '../analysis/category_summary_screen.dart';
 import 'edit_category_screen.dart';
 import 'merge_category_screen.dart';
-
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -120,11 +119,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
-  Future<void> _viewCategory(Category? category) async {
+  Future<void> _viewCategory(Category category) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CategorySummaryScreen(),
+        builder: (context) => HistoryScreen(filterCategory: category.name),
       ),
     );
     if (result == true) {

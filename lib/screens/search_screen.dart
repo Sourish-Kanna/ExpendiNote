@@ -78,20 +78,23 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        // Converted title to use the Material SearchBar widget
+        titleSpacing: 0,
+        centerTitle: true,
+        // Explicit leading overrides automaticallyImplyLeading automatically
         leading: BackButton(
-          // icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(_hasChanged),
         ),
-        title: SearchBar(
-          controller: _materialSearchController,
-          hintText: 'Search title or category...',
-          trailing: const [Icon(Icons.search)],
-          autoFocus: true,
-          elevation: WidgetStateProperty.all(0),
-          backgroundColor: WidgetStateProperty.all(
-            colorScheme.surfaceContainerHighest.withValues(
-              alpha: 0.5,
+        title: Padding(
+          // Adds a 12px gap after the back button and 16px padding on the right edge
+          padding: const EdgeInsets.only(right: 16.0),
+          child: SearchBar(
+            controller: _materialSearchController,
+            hintText: 'Search title or category...',
+            trailing: const [Icon(Icons.search)],
+            autoFocus: true,
+            elevation: const WidgetStatePropertyAll(0),
+            backgroundColor: WidgetStatePropertyAll(
+              colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             ),
           ),
         ),
