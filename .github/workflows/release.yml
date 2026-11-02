@@ -150,7 +150,7 @@ jobs:
           
           # 64-bit APK
           OLD_NAME_64="build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
-          NEW_NAME_64="build/app/outputs/flutter-apk/Next-Bus-${BUILD_NAME}-(64-Bit).apk"
+          NEW_NAME_64="build/app/outputs/flutter-apk/Expendi-Note-${BUILD_NAME}-(64-Bit).apk"
           
           if [ -f "$OLD_NAME_64" ]; then
             echo "Renaming 64-bit APK..."
@@ -162,7 +162,7 @@ jobs:
       - name: 🚀 Upload Signed APKs to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/Next-Bus-*.apk
+          files: build/app/outputs/flutter-apk/Expendi-Note-*.apk
 
   # --------------------------------------
   # 📢 DISCORD NOTIFICATION
