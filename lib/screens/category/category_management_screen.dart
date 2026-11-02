@@ -1,10 +1,10 @@
-import 'package:expend_note/screens/analysis/history_screen.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
 import '../../widgets/category_card.dart';
 import '../../widgets/category_options_bottom_sheet.dart';
+import '../analysis/history_screen.dart';
 import 'edit_category_screen.dart';
 import 'merge_category_screen.dart';
 
