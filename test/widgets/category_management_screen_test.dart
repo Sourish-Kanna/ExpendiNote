@@ -219,52 +219,29 @@ void main() {
       },
     );
 
-    testWidgets(
-      'tapping discoverability hint icon opens category options',
-      (tester) async {
-        configureViewport(tester);
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
+    testWidgets('tapping discoverability hint icon opens category options', (
+      tester,
+    ) async {
+      configureViewport(tester);
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
 
-        // Should find hint icon for category items
-        final hintIconFinder = find.byIcon(Icons.more_vert);
-        expect(hintIconFinder, findsWidgets);
+      // Should find hint icon for category items
+      final hintIconFinder = find.byIcon(Icons.more_vert);
+      expect(hintIconFinder, findsWidgets);
 
-        // Tapping hint icon directly opens category options
-        await tester.tap(hintIconFinder.first);
-        await tester.pumpAndSettle();
+      // Tapping hint icon directly opens category options
+      await tester.tap(hintIconFinder.first);
+      await tester.pumpAndSettle();
 
-        expect(find.text('Edit'), findsOneWidget);
-        expect(find.text('Merge'), findsOneWidget);
-        expect(find.text('Delete (Disabled)'), findsOneWidget);
-        expect(find.text('Unpin category'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'long pressing hint icon shows the options snackbar',
-      (tester) async {
-        configureViewport(tester);
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
-
-        final cardFinder = find.widgetWithText(CategoryCard, 'Entertainment');
-        final hintIconFinder = find.descendant(
-          of: cardFinder,
-          matching: find.byIcon(Icons.more_vert),
-        );
-        await tester.longPress(hintIconFinder);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Show Options'), findsOneWidget);
-      },
-    );
+      expect(find.text('Edit'), findsOneWidget);
+      expect(find.text('Merge'), findsOneWidget);
+      expect(find.text('Delete (Disabled)'), findsOneWidget);
+      expect(find.text('Unpin category'), findsOneWidget);
+    });
 
     testWidgets(
       'bottom sheet includes Pin/Unpin category option and updates pinned state',

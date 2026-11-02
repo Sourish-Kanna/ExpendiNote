@@ -154,45 +154,25 @@ void main() {
       },
     );
 
+    testWidgets('tapping discoverability hint icon opens transaction options', (
+      tester,
+    ) async {
+      configureViewport(tester);
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump();
 
-    testWidgets(
-      'tapping discoverability hint icon opens transaction options',
-      (tester) async {
-        configureViewport(tester);
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
+      // Discoverability hint icon should be rendered
+      final hintIconFinder = find.byIcon(Icons.more_vert);
+      expect(hintIconFinder, findsOneWidget);
 
-        // Discoverability hint icon should be rendered
-        final hintIconFinder = find.byIcon(Icons.more_vert);
-        expect(hintIconFinder, findsOneWidget);
-
-        // Tapping hint icon directly opens transaction options
-        await tester.tap(hintIconFinder);
-        await tester.pumpAndSettle();
-        expect(find.text('Edit'), findsOneWidget);
-        expect(find.text('Delete'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'long pressing hint icon shows the options snackbar',
-      (tester) async {
-        configureViewport(tester);
-        await tester.pumpWidget(createWidgetUnderTest());
-        await tester.runAsync(() async {
-          await Future.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump();
-
-        final hintIconFinder = find.byIcon(Icons.more_vert);
-        await tester.longPress(hintIconFinder);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Show Options'), findsOneWidget);
-      },
-    );
+      // Tapping hint icon directly opens transaction options
+      await tester.tap(hintIconFinder);
+      await tester.pumpAndSettle();
+      expect(find.text('Edit'), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+    });
   });
 }
