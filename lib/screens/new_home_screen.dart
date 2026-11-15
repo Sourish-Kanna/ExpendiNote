@@ -178,7 +178,8 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
                 crossAxisAlignment: .center,
                 children: [
                   CircularProgressIndicator(),
-                  Text("Your Spendings are Loading..."),
+                  Text("Your Spending"),
+                  Text("are Loading..."),
                 ],
               ),
             )

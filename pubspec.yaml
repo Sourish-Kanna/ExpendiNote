@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  change_case: ^2.2.0
   csv: ^8.0.0
   cupertino_icons: ^1.0.9
   dynamic_color: ^2.1.0

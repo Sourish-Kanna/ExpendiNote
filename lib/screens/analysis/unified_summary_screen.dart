@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../models/transaction.dart' as txmodel;
 import '../../repositories/transaction_repository.dart';
 import '../../services/export_service.dart';
+import '../../theme/app_shapes.dart';
 import '../../utils/color_utils.dart';
 import '../../utils/icon_utils.dart';
 import 'category_summary_screen.dart';
@@ -127,7 +128,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
                     elevation: 0,
                     color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: AppShapes.extraLargeRadius,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -321,9 +322,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           child: Card(
             elevation: 0,
             color: catColor.withValues(alpha: 0.12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.mediumRadius),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -408,9 +407,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           child: Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.mediumRadius),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -499,9 +496,7 @@ class _UnifiedSummaryScreenState extends State<UnifiedSummaryScreen> {
           child: Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.mediumRadius),
             child: ListTile(
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,

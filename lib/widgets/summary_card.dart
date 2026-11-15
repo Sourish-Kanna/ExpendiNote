@@ -1,5 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../theme/app_dimensions.dart';
+import '../theme/app_shapes.dart';
+
 class MetricItem {
   final String label;
   final String value;
@@ -26,8 +29,11 @@ class SummaryCard extends StatelessWidget {
     this.onTap,
     this.backgroundColor,
     this.textColor,
-    this.borderRadius = 28.0,
-    this.padding = const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    this.borderRadius = AppShapes.radiusExtraLarge,
+    this.padding = const EdgeInsets.symmetric(
+      vertical: AppDimensions.spacingLg,
+      horizontal: AppDimensions.paddingPage,
+    ),
     this.margin,
     this.prominent = false,
   }) : assert(
@@ -103,14 +109,12 @@ class SummaryCard extends StatelessWidget {
         Text(
           item.label,
           textAlign: TextAlign.center,
-          // maxLines: 1,
-          // overflow: TextOverflow.ellipsis,
           style: textTheme.titleMedium?.copyWith(
             color: itemTextColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacingSm),
         Text(
           item.value,
           textAlign: TextAlign.center,
@@ -151,7 +155,7 @@ class SummaryCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppDimensions.spacingXs),
               Text(
                 item.value,
                 textAlign: TextAlign.center,

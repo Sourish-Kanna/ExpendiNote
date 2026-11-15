@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/transaction.dart' as txmodel;
 import '../../repositories/transaction_repository.dart';
+import '../../theme/app_shapes.dart';
+import '../../theme/app_dimensions.dart';
 import '../../utils/color_utils.dart';
 import '../../utils/icon_utils.dart';
 import 'history_screen.dart';
@@ -127,8 +129,8 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
           preferredSize: const Size.fromHeight(60),
           child: Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
+              horizontal: AppDimensions.paddingPage,
+              vertical: AppDimensions.spacingSm,
             ),
             child: TextField(
               controller: _searchController,
@@ -140,20 +142,20 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   alpha: 0.4,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppShapes.mediumRadius,
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppShapes.mediumRadius,
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppShapes.mediumRadius,
                   borderSide: BorderSide(color: colorScheme.primary, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: AppDimensions.paddingPage,
+                  vertical: AppDimensions.paddingCard,
                 ),
                 hintStyle: textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
@@ -178,7 +180,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     size: 64,
                     color: colorScheme.outline,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimensions.spacingMd),
                   Text(
                     'No spending history found.',
                     style: textTheme.bodyLarge?.copyWith(
@@ -191,24 +193,26 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
           : RefreshIndicator(
               onRefresh: _loadSummary,
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppDimensions.paddingPage),
                 itemCount: _filteredDates.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(
+                        bottom: AppDimensions.spacingMd,
+                      ),
                       child: Card(
                         elevation: 0,
                         color: colorScheme.primaryContainer.withValues(
                           alpha: 0.3,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius: AppShapes.extraLargeRadius,
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             vertical: 20,
-                            horizontal: 16,
+                            horizontal: AppDimensions.paddingPage,
                           ),
                           child: IntrinsicHeight(
                             child: Row(
@@ -286,14 +290,16 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   final catIcon = IconUtils.fromString(topCat.icon);
 
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.spacingSm,
+                    ),
                     child: Card(
                       elevation: 0,
                       color: isToday
                           ? colorScheme.primaryContainer.withValues(alpha: 0.3)
                           : catColor.withValues(alpha: 0.12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppShapes.mediumRadius,
                         side: isToday
                             ? BorderSide(color: colorScheme.primary, width: 1.5)
                             : BorderSide.none,

@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
+import '../../theme/app_dimensions.dart';
 import '../../widgets/category_card.dart';
 import '../../widgets/category_options_bottom_sheet.dart';
 import '../analysis/history_screen.dart';
@@ -56,7 +57,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           : _categoriesWithStats.isEmpty
           ? const Center(child: Text('No categories found.'))
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingPage,
+                vertical: AppDimensions.paddingCard,
+              ),
               itemCount: _categoriesWithStats.length,
               itemBuilder: (context, index) {
                 final catMap = _categoriesWithStats[index];

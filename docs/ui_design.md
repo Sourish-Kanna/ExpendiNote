@@ -68,11 +68,25 @@ ExpendiNote relies on bold, readable typography with strong visual contrast:
 
 ---
 
-## 6. Spacing & Padding System
+## 6. Spacing & Padding System (`lib/theme/app_dimensions.dart`)
 
-- **Standard Screen Outer Padding**: `EdgeInsets.symmetric(horizontal: 16, vertical: 12)`.
-- **Item / Card Vertical Spacing**: `8dp` to `12dp`.
-- **Major Section Spacing**: `20dp` to `28dp`.
+All padding, spacing, and layout dimensions MUST use centralized constants from `AppDimensions`:
+- **Page Outer Padding**: `AppDimensions.paddingPage` (16.0)
+- **Card Padding**: `AppDimensions.paddingCard` (12.0)
+- **Spacing Scale**: 
+  - `AppDimensions.spacingXs` (4.0)
+  - `AppDimensions.spacingSm` (8.0)
+  - `AppDimensions.spacingMd` (16.0)
+  - `AppDimensions.spacingLg` (24.0)
+  - `AppDimensions.spacingXl` (32.0)
+
+## 7. Shapes & Corner Radii (`lib/theme/app_shapes.dart`)
+
+All border radii and shapes MUST use centralized constants/getters from `AppShapes`:
+- **Primary Metric / Highlight Summary Banners**: `AppShapes.extraLargeRadius` (28.0)
+- **Grouped Container / Section Cards**: `AppShapes.largeRadius` (24.0)
+- **List Item Cards**: `AppShapes.mediumRadius` (16.0)
+- **Small Tags / Badges / Input Containers**: `AppShapes.smallRadius` (12.0)
 
 ---
 

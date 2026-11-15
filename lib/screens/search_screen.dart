@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_dimensions.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/transaction_options_bottom_sheet.dart';
 import 'add_spending_screen.dart';
@@ -86,7 +87,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         title: Padding(
           // Adds a 12px gap after the back button and 16px padding on the right edge
-          padding: const EdgeInsets.only(right: 16.0),
+          padding: const EdgeInsets.only(right: AppDimensions.paddingPage),
           child: SearchBar(
             controller: _materialSearchController,
             hintText: 'Search title or category...',
@@ -106,7 +107,10 @@ class _SearchScreenState extends State<SearchScreen> {
           : _filteredSpendings.isEmpty
           ? const Center(child: Text('No results found.'))
           : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingPage,
+                vertical: AppDimensions.paddingCard,
+              ),
               itemCount: _filteredSpendings.length,
               itemBuilder: (context, index) {
                 final s = _filteredSpendings[index];

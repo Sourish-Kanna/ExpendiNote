@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/transaction.dart' as txmodel;
 import '../../repositories/transaction_repository.dart';
+import '../../theme/app_shapes.dart';
+import '../../theme/app_dimensions.dart';
 import '../../widgets/summary_card.dart';
 import 'history_screen.dart';
 
@@ -79,12 +81,14 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
           : _sortedMonths.isEmpty
           ? const Center(child: Text('No spending history found.'))
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDimensions.paddingPage),
               itemCount: _sortedMonths.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.spacingMd,
+                    ),
                     child: SummaryCard(
                       items: [
                         MetricItem(
@@ -107,19 +111,21 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                 final filterMonthStr = DateFormat('MMM yyyy').format(date);
 
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(
+                    bottom: AppDimensions.spacingSm,
+                  ),
                   child: Card(
                     elevation: 0,
                     color: colorScheme.surfaceContainerHighest.withValues(
                       alpha: 0.3,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppShapes.mediumRadius,
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                        horizontal: AppDimensions.paddingPage,
+                        vertical: AppDimensions.spacingXs,
                       ),
                       leading: Icon(
                         Icons.calendar_month,

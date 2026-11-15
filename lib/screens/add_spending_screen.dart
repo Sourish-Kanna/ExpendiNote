@@ -1,3 +1,4 @@
+import 'package:change_case/change_case.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -6,6 +7,8 @@ import '../models/category.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
+import '../theme/app_dimensions.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'category/category_management_screen.dart';
@@ -141,13 +144,13 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
     if (isFormValid) {
       final tx = txmodel.Transaction(
         id: widget.transaction?.id,
-        title: _titleController.text.trim(),
+        title: _titleController.text.trim().toTitleCase(),
         amount: double.parse(_amountController.text),
         date: _selectedDate,
         categoryId: _selectedCategoryId,
         description: _descriptionController.text.trim().isEmpty
             ? null
-            : _descriptionController.text.trim(),
+            : _descriptionController.text.trim().toTitleCase(),
         includeInSpendingAnalysis: _includeInSpendingAnalysis,
       );
 
@@ -194,18 +197,21 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppShapes.smallRadius,
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppShapes.smallRadius,
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppShapes.smallRadius,
         borderSide: BorderSide(color: colorScheme.primary, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingPage,
+        vertical: AppDimensions.spacingMd,
+      ),
     );
 
     return Scaffold(
@@ -230,7 +236,10 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       body: Theme(
         data: theme.copyWith(inputDecorationTheme: inputDecorationTheme),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingPage,
+            vertical: AppDimensions.paddingCard,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -241,12 +250,12 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   elevation: 0,
                   color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: AppShapes.extraLargeRadius,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 24,
-                      horizontal: 16,
+                      vertical: AppDimensions.spacingLg,
+                      horizontal: AppDimensions.paddingPage,
                     ),
                     child: Column(
                       children: [
@@ -385,7 +394,7 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 const SizedBox(height: 8),
                 InkWell(
                   onTap: _presentDatePicker,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: AppShapes.mediumRadius,
                   child: InputDecorator(
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.calendar_today),
@@ -452,12 +461,16 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                   children: [
                     if (_isLoadingCategories)
                       const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+                        padding: EdgeInsets.symmetric(
+                          vertical: AppDimensions.spacingMd,
+                        ),
                         child: Center(child: CircularProgressIndicator()),
                       )
                     else if (_categories.isEmpty)
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppDimensions.spacingSm,
+                        ),
                         child: Text(
                           'No categories available. Please add via Manage.',
                           style: textTheme.bodyMedium?.copyWith(
@@ -476,19 +489,19 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
 
                           return InkWell(
                             onTap: () => _onCategorySelected(category),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppShapes.smallRadius,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
+                                horizontal: AppDimensions.paddingPage,
+                                vertical: AppDimensions.paddingCard,
                               ),
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? catColor.withValues(alpha: 0.15)
                                     : colorScheme.surfaceContainerHighest
                                           .withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppShapes.smallRadius,
                                 border: Border.all(
                                   color: isSelected
                                       ? catColor
@@ -526,7 +539,10 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                       ),
                     if (_showCategoryError)
                       Padding(
-                        padding: const EdgeInsets.only(top: 8, left: 4),
+                        padding: const EdgeInsets.only(
+                          top: AppDimensions.spacingSm,
+                          left: AppDimensions.spacingXs,
+                        ),
                         child: Text(
                           'Please explicitly select a category',
                           style: textTheme.bodySmall?.copyWith(
@@ -621,9 +637,11 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                 FilledButton.icon(
                   onPressed: _saveSpending,
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.spacingMd,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppShapes.mediumRadius,
                     ),
                   ),
                   icon: Icon(isEditing ? Icons.check : Icons.save),

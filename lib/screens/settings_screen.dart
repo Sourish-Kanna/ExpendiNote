@@ -9,6 +9,7 @@ import '../services/backup_service.dart';
 import '../services/export_service.dart';
 import '../services/import_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_shapes.dart';
 import 'category/category_management_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -39,9 +40,7 @@ class SettingsScreen extends StatelessWidget {
           Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.largeRadius),
             child: Column(
               children: [
                 ListTile(
@@ -49,9 +48,9 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('Theme Mode'),
                   subtitle: Text(_getThemeModeName(themeController.themeMode)),
                   onTap: () => _showThemeModeDialog(context, themeController),
-                  shape: const RoundedRectangleBorder(
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
+                      top: Radius.circular(AppShapes.radiusLarge),
                     ),
                   ),
                 ),
@@ -67,9 +66,9 @@ class SettingsScreen extends StatelessWidget {
                   value: themeController.customThemeEnabled,
                   onChanged: (value) =>
                       themeController.setCustomThemeEnabled(value),
-                  shape: const RoundedRectangleBorder(
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
+                      bottom: Radius.circular(AppShapes.radiusLarge),
                     ),
                   ),
                 ),
@@ -160,16 +159,14 @@ class SettingsScreen extends StatelessWidget {
           Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.largeRadius),
             child: ListTile(
               leading: const Icon(Icons.category),
               title: const Text('Categories'),
               subtitle: const Text('Manage your spending categories'),
               trailing: const Icon(Icons.chevron_right),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: AppShapes.largeRadius,
               ),
               onTap: () {
                 Navigator.push(
@@ -187,9 +184,7 @@ class SettingsScreen extends StatelessWidget {
           Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.largeRadius),
             child: Column(
               children: [
                 ListTile(
@@ -199,7 +194,7 @@ class SettingsScreen extends StatelessWidget {
                   onTap: () => _backupData(context),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
+                      top: Radius.circular(AppShapes.radiusLarge),
                     ),
                   ),
                 ),
@@ -224,9 +219,9 @@ class SettingsScreen extends StatelessWidget {
                   title: const Text('Export CSV'),
                   subtitle: const Text('Export transactions to CSV file'),
                   onTap: () => _exportCSV(context),
-                  shape: const RoundedRectangleBorder(
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(24),
+                      bottom: Radius.circular(AppShapes.radiusLarge),
                     ),
                   ),
                 ),
@@ -239,9 +234,7 @@ class SettingsScreen extends StatelessWidget {
           Card(
             elevation: 0,
             color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppShapes.largeRadius),
             child: ListTile(
               leading: const Icon(Icons.info),
               title: const Text('Expendi Note'),
@@ -252,8 +245,10 @@ class SettingsScreen extends StatelessWidget {
                   return Text('Version $version');
                 },
               ),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(AppShapes.radiusLarge),
+                ),
               ),
             ),
           ),

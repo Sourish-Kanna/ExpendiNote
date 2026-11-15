@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/transaction.dart' as txmodel;
 import '../../repositories/transaction_repository.dart';
+import '../../theme/app_dimensions.dart';
 import '../../widgets/summary_card.dart';
 import '../../widgets/transaction_card.dart';
 import '../../widgets/transaction_options_bottom_sheet.dart';
@@ -167,12 +168,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           : sortedDates.isEmpty
           ? const Center(child: Text('No entries found.'))
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppDimensions.paddingPage),
               itemCount: sortedDates.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.spacingMd,
+                    ),
                     child: SummaryCard(
                       items: [
                         MetricItem(
@@ -198,8 +201,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: 8.0,
-                        horizontal: 4.0,
+                        vertical: AppDimensions.spacingSm,
+                        horizontal: AppDimensions.spacingXs,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -234,8 +237,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             : s.categoryName ?? 'Other',
                         amountText: '₹${s.amount.toStringAsFixed(2)}',
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
+                          horizontal: AppDimensions.paddingPage,
+                          vertical: AppDimensions.spacingXs,
                         ),
                         onTap: () async {
                           final result = await Navigator.push(

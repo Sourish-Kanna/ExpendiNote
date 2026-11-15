@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart' as txmodel;
 import '../repositories/transaction_repository.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import '../widgets/summary_card.dart';
@@ -135,7 +136,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
               elevation: 0,
               color: catColor.withValues(alpha: 0.05),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: AppShapes.largeRadius,
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -238,7 +239,7 @@ class _SpendingDetailScreenState extends State<SpendingDetailScreen> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: catColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: AppShapes.smallRadius,
           ),
           child: Icon(icon, color: catColor, size: 20),
         ),

@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/transaction.dart' as txmodel;
 import '../../repositories/transaction_repository.dart';
+import '../../theme/app_shapes.dart';
+import '../../theme/app_dimensions.dart';
 import '../../utils/color_utils.dart';
 import '../../utils/icon_utils.dart';
 import '../../widgets/summary_card.dart';
@@ -94,7 +96,12 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingPage,
+                    AppDimensions.spacingSm,
+                    AppDimensions.paddingPage,
+                    AppDimensions.spacingSm,
+                  ),
                   child: SegmentedButton<String>(
                     segments: const [
                       ButtonSegment(
@@ -125,7 +132,9 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                         child: Column(
                           children: [
                             Padding(
-                              padding: const EdgeInsets.all(16.0),
+                              padding: const EdgeInsets.all(
+                                AppDimensions.paddingPage,
+                              ),
                               child: SummaryCard(
                                 items: [
                                   MetricItem(
@@ -138,8 +147,8 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                             Expanded(
                               child: ListView.builder(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
+                                  horizontal: AppDimensions.paddingPage,
+                                  vertical: AppDimensions.spacingXs,
                                 ),
                                 itemCount: _categoryGroups.length,
                                 itemBuilder: (context, index) {
@@ -157,12 +166,14 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                   );
 
                                   return Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.only(
+                                      bottom: AppDimensions.spacingSm,
+                                    ),
                                     child: Card(
                                       elevation: 0,
                                       color: catColor.withValues(alpha: 0.12),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
+                                        borderRadius: AppShapes.mediumRadius,
                                       ),
                                       child: InkWell(
                                         onTap: () async {
@@ -186,9 +197,11 @@ class _CategorySummaryScreenState extends State<CategorySummaryScreen> {
                                           );
                                           _loadCategoryData();
                                         },
-                                        borderRadius: BorderRadius.circular(16),
+                                        borderRadius: AppShapes.mediumRadius,
                                         child: Padding(
-                                          padding: const EdgeInsets.all(16.0),
+                                          padding: const EdgeInsets.all(
+                                            AppDimensions.paddingPage,
+                                          ),
                                           child: Column(
                                             children: [
                                               Row(

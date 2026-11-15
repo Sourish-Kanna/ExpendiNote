@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
+import '../../theme/app_shapes.dart';
 import '../../utils/color_utils.dart';
 import '../../utils/icon_utils.dart';
 
@@ -173,13 +174,13 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSourceCard(theme),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Center(
                       child: Icon(
                         Icons.arrow_downward,
                         size: 32,
-                        color: Colors.grey,
+                        color: colorScheme.outline,
                       ),
                     ),
                   ),
@@ -203,7 +204,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                               )
                             : null,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppShapes.mediumRadius,
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
@@ -218,21 +219,21 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                     const SizedBox(height: 12),
                   ],
                   if (_allOtherCategories.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
                       child: Text(
                         'No other categories available to merge into.\nCreate another category first.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: colorScheme.outline),
                       ),
                     )
                   else if (_filteredCategories.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 30),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 30),
                       child: Text(
                         'No categories match your search.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: colorScheme.outline),
                       ),
                     )
                   else
@@ -250,13 +251,13 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                               ? catColor.withValues(alpha: 0.2)
                               : catColor.withValues(alpha: 0.08),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: AppShapes.mediumRadius,
                             side: isSelected
                                 ? BorderSide(color: catColor, width: 2)
                                 : BorderSide.none,
                           ),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: AppShapes.mediumRadius,
                             onTap: () {
                               setState(() {
                                 _selectedDestination = c;
@@ -314,7 +315,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
                       backgroundColor: colorScheme.error,
                       foregroundColor: colorScheme.onError,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: AppShapes.mediumRadius,
                       ),
                     ),
                     icon: const Icon(Icons.merge),
@@ -345,7 +346,7 @@ class _MergeCategoryScreenState extends State<MergeCategoryScreen> {
       elevation: 0,
       color: catColor.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppShapes.largeRadius,
         side: BorderSide(color: catColor.withValues(alpha: 0.3)),
       ),
       child: Padding(

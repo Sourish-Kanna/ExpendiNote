@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart';
+import '../theme/app_dimensions.dart';
 
 enum TransactionOption { edit, delete, view }
 
@@ -30,13 +31,16 @@ class TransactionOptionsBottomSheet extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: AppDimensions.spacingMd),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacingLg,
+                vertical: AppDimensions.spacingSm,
+              ),
               child: Text(
                 transaction.title,
                 style: textTheme.titleMedium?.copyWith(
@@ -47,7 +51,7 @@ class TransactionOptionsBottomSheet extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacingSm),
             ListTile(
               leading: const Icon(Icons.edit),
               title: Text(

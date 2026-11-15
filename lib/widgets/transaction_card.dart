@@ -2,6 +2,8 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:material_ui/material_ui.dart';
 
 import '../models/transaction.dart';
+import '../theme/app_dimensions.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 
@@ -22,10 +24,10 @@ class TransactionCard extends StatelessWidget {
     this.onLongPress,
     this.subtitle,
     this.amountText,
-    this.margin = const EdgeInsets.only(bottom: 8),
+    this.margin = const EdgeInsets.only(bottom: AppDimensions.spacingSm),
     this.contentPadding = const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 8,
+      horizontal: AppDimensions.paddingPage,
+      vertical: AppDimensions.spacingSm,
     ),
   });
 
@@ -50,7 +52,7 @@ class TransactionCard extends StatelessWidget {
       elevation: 0,
       margin: EdgeInsets.zero,
       color: catColor.withValues(alpha: 0.12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: AppShapes.mediumRadius),
       child: ListTile(
         contentPadding: contentPadding,
         leading: Icon(catIcon, color: catColor, size: 24),
@@ -87,7 +89,7 @@ class TransactionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacingXs),
               IconButton(
                 icon: Icon(
                   Icons.more_vert,

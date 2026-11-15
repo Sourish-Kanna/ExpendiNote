@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../models/category.dart';
+import '../theme/app_dimensions.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 
@@ -21,10 +23,10 @@ class CategoryCard extends StatelessWidget {
     required this.totalAmount,
     this.onTap,
     this.onLongPress,
-    this.margin = const EdgeInsets.only(bottom: 8),
+    this.margin = const EdgeInsets.only(bottom: AppDimensions.spacingSm),
     this.contentPadding = const EdgeInsets.symmetric(
-      horizontal: 16,
-      vertical: 4,
+      horizontal: AppDimensions.paddingPage,
+      vertical: AppDimensions.spacingXs,
     ),
   });
 
@@ -41,7 +43,7 @@ class CategoryCard extends StatelessWidget {
       elevation: 0,
       margin: EdgeInsets.zero,
       color: catColor.withValues(alpha: 0.12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: AppShapes.mediumRadius),
       child: ListTile(
         contentPadding: contentPadding,
         leading: Icon(catIcon, color: catColor, size: 24),
@@ -59,7 +61,7 @@ class CategoryCard extends StatelessWidget {
               ),
             ),
             if (category.isPinned) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacingSm),
               Icon(Icons.push_pin, size: 14, color: catColor),
             ],
           ],

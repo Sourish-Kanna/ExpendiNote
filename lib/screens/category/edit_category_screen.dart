@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../models/category.dart';
 import '../../repositories/category_repository.dart';
 import '../../repositories/transaction_repository.dart';
+import '../../theme/app_shapes.dart';
 import '../../utils/color_utils.dart';
 import '../../utils/icon_utils.dart';
 
@@ -168,15 +169,15 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
       filled: true,
       fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppShapes.mediumRadius,
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppShapes.mediumRadius,
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: AppShapes.mediumRadius,
         borderSide: BorderSide(color: _selectedColor, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -209,7 +210,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                   elevation: 0,
                   color: _selectedColor.withValues(alpha: 0.15),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
+                    borderRadius: AppShapes.extraLargeRadius,
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -274,7 +275,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                     final isSelected = _selectedIcon == icon;
                     return InkWell(
                       onTap: () => setState(() => _selectedIcon = icon),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppShapes.mediumRadius,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         width: 56,
@@ -285,7 +286,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                               : colorScheme.surfaceContainerHighest.withValues(
                                   alpha: 0.3,
                                 ),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: AppShapes.mediumRadius,
                           border: Border.all(
                             color: isSelected
                                 ? _selectedColor
@@ -381,7 +382,7 @@ class _EditCategoryScreenState extends State<EditCategoryScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: _selectedColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: AppShapes.mediumRadius,
                     ),
                   ),
                   icon: Icon(
