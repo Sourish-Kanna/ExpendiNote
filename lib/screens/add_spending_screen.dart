@@ -7,8 +7,8 @@ import '../models/category.dart';
 import '../models/transaction.dart' as txmodel;
 import '../repositories/category_repository.dart';
 import '../repositories/transaction_repository.dart';
-import '../theme/app_shapes.dart';
 import '../theme/app_dimensions.dart';
+import '../theme/app_shapes.dart';
 import '../utils/color_utils.dart';
 import '../utils/icon_utils.dart';
 import 'category/category_management_screen.dart';
@@ -235,18 +235,18 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
       ),
       body: Theme(
         data: theme.copyWith(inputDecorationTheme: inputDecorationTheme),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingPage,
-            vertical: AppDimensions.paddingCard,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 1. Amount Card
-                Card(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Pinned Top: Amount Card
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingPage,
+                  vertical: AppDimensions.paddingCard,
+                ),
+                child: Card(
                   elevation: 0,
                   color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                   shape: RoundedRectangleBorder(
@@ -323,318 +323,346 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
 
-                // 2. Title
-                Text(
-                  'Title',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+              // 2. Middle Scrollable: Form fields (Title, Description, Date, Category, Analysis)
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingPage,
+                    vertical: AppDimensions.paddingCard,
                   ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _titleController,
-                  focusNode: _titleFocusNode,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    hintText: 'What did you spend on?',
-                    prefixIcon: Icon(Icons.title),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Please enter a title'
-                      : null,
-                  onFieldSubmitted: (_) => FocusScope.of(
-                    context,
-                  ).requestFocus(_descriptionFocusNode),
-                ),
-                const SizedBox(height: 20),
-
-                // 3. Description (Optional)
-                Row(
-                  children: [
-                    Text(
-                      'Description',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Title
+                      Text(
+                        'Title',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(Optional)',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _descriptionController,
-                  focusNode: _descriptionFocusNode,
-                  textInputAction: TextInputAction.next,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Add extra details...',
-                    prefixIcon: Icon(Icons.description),
-                  ),
-                  onFieldSubmitted: (_) {
-                    FocusScope.of(context).unfocus();
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Date Picker field (Preserved existing behavior)
-                Text(
-                  'Date',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: _presentDatePicker,
-                  borderRadius: AppShapes.mediumRadius,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(Icons.calendar_today),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          DateFormat(
-                            'EEEE, MMM dd, yyyy',
-                          ).format(_selectedDate),
-                          style: textTheme.bodyLarge,
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _titleController,
+                        focusNode: _titleFocusNode,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          hintText: 'What did you spend on?',
+                          prefixIcon: Icon(Icons.title),
                         ),
-                        const Icon(Icons.arrow_drop_down),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // 4. Category
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Category',
-                          style: textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '*',
-                          style: TextStyle(
-                            color: colorScheme.error,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final result = await Navigator.push(
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Please enter a title'
+                            : null,
+                        onFieldSubmitted: (_) => FocusScope.of(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const CategoryManagementScreen(),
-                          ),
-                        );
-                        if (result == true) {
-                          _loadCategories();
-                        }
-                      },
-                      icon: const Icon(Icons.settings, size: 16),
-                      label: const Text('Manage'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (_isLoadingCategories)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: AppDimensions.spacingMd,
-                        ),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (_categories.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppDimensions.spacingSm,
-                        ),
-                        child: Text(
-                          'No categories available. Please add via Manage.',
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.outline,
-                          ),
-                        ),
-                      )
-                    else
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _categories.map((category) {
-                          final isSelected = _selectedCategoryId == category.id;
-                          final catColor = ColorUtils.fromInt(category.color);
-                          final iconData = IconUtils.fromString(category.icon);
+                        ).requestFocus(_descriptionFocusNode),
+                      ),
+                      const SizedBox(height: 20),
 
-                          return InkWell(
-                            onTap: () => _onCategorySelected(category),
-                            borderRadius: AppShapes.smallRadius,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppDimensions.paddingPage,
-                                vertical: AppDimensions.paddingCard,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? catColor.withValues(alpha: 0.15)
-                                    : colorScheme.surfaceContainerHighest
-                                          .withValues(alpha: 0.3),
-                                borderRadius: AppShapes.smallRadius,
-                                border: Border.all(
-                                  color: isSelected
-                                      ? catColor
-                                      : Colors.transparent,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    iconData,
-                                    color: isSelected
-                                        ? catColor
-                                        : colorScheme.onSurfaceVariant,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    category.name,
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                      color: isSelected
-                                          ? colorScheme.onSurface
-                                          : colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      // Description (Optional)
+                      Row(
+                        children: [
+                          Text(
+                            'Description',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        }).toList(),
-                      ),
-                    if (_showCategoryError)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: AppDimensions.spacingSm,
-                          left: AppDimensions.spacingXs,
-                        ),
-                        child: Text(
-                          'Please explicitly select a category',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.error,
                           ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '(Optional)',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _descriptionController,
+                        focusNode: _descriptionFocusNode,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.newline,
+                        minLines: 2,
+                        maxLines: 5,
+                        decoration: const InputDecoration(
+                          hintText: 'Add extra details...',
+                          prefixIcon: Icon(Icons.description),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // 5. Spending Analysis choice
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Spending Analysis',
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (_selectedCategoryId != null &&
-                        _categories.any(
-                          (c) => c.id == _selectedCategoryId,
-                        )) ...[
-                      Builder(
-                        builder: (context) {
-                          final currentCat = _categories.firstWhere(
-                            (c) => c.id == _selectedCategoryId,
-                          );
-                          if (_includeInSpendingAnalysis !=
-                              currentCat.includeInSpendingAnalysis) {
-                            return TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _includeInSpendingAnalysis =
-                                      currentCat.includeInSpendingAnalysis;
-                                });
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text('Reset to Default'),
-                            );
-                          }
-                          return const SizedBox.shrink();
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).unfocus();
                         },
                       ),
+                      const SizedBox(height: 20),
+
+                      // Date Picker field
+                      Text(
+                        'Date',
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: _presentDatePicker,
+                        borderRadius: AppShapes.mediumRadius,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.calendar_today),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                DateFormat(
+                                  'EEEE, MMM dd, yyyy',
+                                ).format(_selectedDate),
+                                style: textTheme.bodyLarge,
+                              ),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Category
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                'Category',
+                                style: textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '*',
+                                style: TextStyle(
+                                  color: colorScheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const CategoryManagementScreen(),
+                                ),
+                              );
+                              if (result == true) {
+                                _loadCategories();
+                              }
+                            },
+                            icon: const Icon(Icons.settings, size: 16),
+                            label: const Text('Manage'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_isLoadingCategories)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppDimensions.spacingMd,
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          else if (_categories.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppDimensions.spacingSm,
+                              ),
+                              child: Text(
+                                'No categories available. Please add via Manage.',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.outline,
+                                ),
+                              ),
+                            )
+                          else
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _categories.map((category) {
+                                final isSelected =
+                                    _selectedCategoryId == category.id;
+                                final catColor = ColorUtils.fromInt(
+                                  category.color,
+                                );
+                                final iconData = IconUtils.fromString(
+                                  category.icon,
+                                );
+
+                                return InkWell(
+                                  onTap: () => _onCategorySelected(category),
+                                  borderRadius: AppShapes.smallRadius,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppDimensions.paddingPage,
+                                      vertical: AppDimensions.paddingCard,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? catColor.withValues(alpha: 0.15)
+                                          : colorScheme.surfaceContainerHighest
+                                                .withValues(alpha: 0.3),
+                                      borderRadius: AppShapes.smallRadius,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? catColor
+                                            : Colors.transparent,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          iconData,
+                                          color: isSelected
+                                              ? catColor
+                                              : colorScheme.onSurfaceVariant,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          category.name,
+                                          style: textTheme.bodyMedium?.copyWith(
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                            color: isSelected
+                                                ? colorScheme.onSurface
+                                                : colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          if (_showCategoryError)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppDimensions.spacingSm,
+                                left: AppDimensions.spacingXs,
+                              ),
+                              child: Text(
+                                'Please explicitly select a category',
+                                style: textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.error,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Spending Analysis choice
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Spending Analysis',
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (_selectedCategoryId != null &&
+                              _categories.any(
+                                (c) => c.id == _selectedCategoryId,
+                              )) ...[
+                            Builder(
+                              builder: (context) {
+                                final currentCat = _categories.firstWhere(
+                                  (c) => c.id == _selectedCategoryId,
+                                );
+                                if (_includeInSpendingAnalysis !=
+                                    currentCat.includeInSpendingAnalysis) {
+                                  return TextButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _includeInSpendingAnalysis = currentCat
+                                            .includeInSpendingAnalysis;
+                                      });
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: const Text('Reset to Default'),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Should this spending affect normal summary totals?',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SegmentedButton<bool>(
+                            segments: const [
+                              ButtonSegment<bool>(
+                                value: true,
+                                label: Text('Include'),
+                                icon: Icon(Icons.analytics),
+                              ),
+                              ButtonSegment<bool>(
+                                value: false,
+                                label: Text('Exclude'),
+                                icon: Icon(Icons.block),
+                              ),
+                            ],
+                            selected: {_includeInSpendingAnalysis},
+                            onSelectionChanged: (Set<bool> newSelection) {
+                              setState(() {
+                                _includeInSpendingAnalysis = newSelection.first;
+                              });
+                            },
+                            style: const ButtonStyle(
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
                     ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Should this spending affect normal summary totals?',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.outline,
                   ),
                 ),
-                const SizedBox(height: 12),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SegmentedButton<bool>(
-                      segments: const [
-                        ButtonSegment<bool>(
-                          value: true,
-                          label: Text('Include'),
-                          icon: Icon(Icons.analytics),
-                        ),
-                        ButtonSegment<bool>(
-                          value: false,
-                          label: Text('Exclude'),
-                          icon: Icon(Icons.block),
-                        ),
-                      ],
-                      selected: {_includeInSpendingAnalysis},
-                      onSelectionChanged: (Set<bool> newSelection) {
-                        setState(() {
-                          _includeInSpendingAnalysis = newSelection.first;
-                        });
-                      },
-                      style: const ButtonStyle(
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 36),
+              ),
 
-                // 6. Save Button
-                FilledButton.icon(
+              // 3. Pinned Bottom: Save / Update Button
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingPage,
+                  vertical: AppDimensions.paddingCard,
+                ),
+                child: FilledButton.icon(
                   onPressed: _saveSpending,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -653,9 +681,8 @@ class _AddSpendingScreenState extends State<AddSpendingScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
