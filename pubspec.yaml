@@ -1,4 +1,4 @@
-name: expendi_note
+name: expend_note
 description: "An App to track daily spending and analyze it"
 publish_to: 'none'
 version: 2.0.4-dev
