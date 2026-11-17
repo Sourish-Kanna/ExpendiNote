@@ -18,41 +18,23 @@ jobs:
 
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
-      - name: ☕ Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
+      # - name: Setup Java
+      #   uses: actions/setup-java@v6
+      #   with:
+      #     distribution: microsoft
+      #     java-version: '21'
 
       - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+          flutter-version: 3.50.0
 
       - name: 📦 Install dependencies
         run: flutter pub get
-
-      # - name: ⚡ Cache Gradle
-      #   id: gradle-cache
-      #   uses: actions/cache@v5
-      #   with:
-      #     path: |
-      #       ~/.gradle/caches
-      #       ~/.gradle/wrapper
-      #     key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/build.gradle*', 'android/**/settings.gradle*', 'android/**/gradle-wrapper.properties') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-gradle-
-
-      # - name: 📊 Gradle Cache Status
-      #   run: |
-      #     if [ "${{ steps.gradle-cache.outputs.cache-hit }}" = "true" ]; then
-      #       echo "✅ Gradle cache HIT"
-      #     else
-      #       echo "🆕 Gradle cache MISS (created)"
-      #     fi
 
       - name: 🔍 Tool Versions
         run: |
@@ -94,21 +76,22 @@ jobs:
 
     steps:
       - name: 📥 Checkout release tag
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.setup.outputs.build_name }}
 
-      - name: ☕ Setup Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
+      # - name: Setup Java
+      #   uses: actions/setup-java@v6
+      #   with:
+      #     distribution: microsoft
+      #     java-version: '21'
 
       - name: 🐦 Install Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+          flutter-version: 3.50.0
 
       # - name: ⚡ Restore Gradle Cache
       #   id: gradle-cache
@@ -129,7 +112,7 @@ jobs:
       #     mkdir -p android/app/src/release
       #     echo "${{ secrets.FIREBASE_JSON_RELEASE }}" | base64 --decode > android/app/src/release/google-services.json
 
-      - name: 📱 Build ~~Signed~~ APK (Gradle Cache ON)
+      - name: 📱 Build ~~Signed~~ APK
         # env:
         #   KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         #   KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -160,25 +143,31 @@ jobs:
           fi
 
       - name: 🚀 Upload Signed APKs to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: build/app/outputs/flutter-apk/Expendi-Note-*.apk
+          working_directory: build/app/outputs/flutter-apk
+          files: Expendi-Note-*.apk
 
   # --------------------------------------
   # 📢 DISCORD NOTIFICATION
   # --------------------------------------
   notify:
-    needs: [android-release]
-    if: always() # Runs even if a previous job failed
+    needs: [precache, android-release]
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: 📢 Send Discord Notification
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          status: ${{ needs.android-release.result == 'success' && 'success' || 'failure' }}
-          title: "🚀 Deployment for ${{ github.event.release.tag_name }}"
+          status: ${{ needs.android-release.result == 'success' && 'success' || (needs.android-release.result == 'cancelled' && 'cancelled' || 'failure') }}
+          nodetail: true
+          title: "Expendi Note ${{ github.event.release.tag_name }}"
           description: |
             **Android Build:** ${{ needs.android-release.result }}
-            
-            Check the progress here: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Pre-check (analyze/test):** ${{ needs.precache.result }}
+
+            [Download release](${{ github.event.release.html_url }})
+            [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          color: ${{ needs.android-release.result == 'success' && '0x2ecc71' || '0xe74c3c' }}
+          # url: ${{ github.event.release.html_url }}
