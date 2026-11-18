@@ -13,19 +13,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Setup Java
-        uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: "17"
+      # - name: Setup Java
+      #   uses: actions/setup-java@v6
+      #   with:
+      #     distribution: microsoft
+      #     java-version: '21'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
+          flutter-version: 3.50.0
 
       - name: Install dependencies
         run: flutter pub get
