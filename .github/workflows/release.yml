@@ -8,13 +8,17 @@ permissions:
   contents: read
 
 jobs:
+  verify:
+    name: Analyze & Test
+    uses: ./.github/workflows/flutter-check.yml
 
-  # --------------------------------------
-  # 🔥 PRE-CACHE JOB (runs once)
-  # --------------------------------------
-  precache:
-    name: 🔥 Pre-cache Flutter & Gradle
+  android-release:
+    needs: verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ github.event.release.tag_name }}
 
     steps:
       - name: 📥 Checkout
@@ -31,128 +35,36 @@ jobs:
         with:
           channel: stable
           cache: true
-          flutter-version: 3.50.0
+          # flutter-version: 3.50.0
+          flutter-version-file: pubspec.yaml
 
-      - name: 📦 Install dependencies
-        run: flutter pub get
-
-      - name: 🔍 Tool Versions
+      - name: 🔐 Decode keystore
         run: |
-            flutter --version
-            java -version
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          test -s android/app/upload-keystore.jks || { echo "::error::Keystore missing or empty"; exit 1; }
 
-      - name: Analyze
-        run: flutter analyze --no-fatal-infos
-
-      - name: Run tests
-        run: flutter test
-
-  # --------------------------------------
-  # 🔢 SETUP JOB
-  # --------------------------------------
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      build_name: ${{ steps.vars.outputs.build_name }}
-      build_number: ${{ steps.vars.outputs.build_number }}
-
-    steps:
-      - name: 🔢 Set build variables
-        id: vars
+      - name: 📱 Build signed APK (arm64)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          echo "build_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          echo "build_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
-          echo "Using Build Name: ${{ github.event.release.tag_name }}"
-          echo "Using Build Number: ${{ github.run_number }}"
+          flutter build apk --split-per-abi --target-platform android-arm64 --release \
+            --build-name "${TAG#v}" --build-number "${{ github.run_number }}"
 
-  # --------------------------------------
-  # 📱 ANDROID RELEASE
-  # --------------------------------------
-  android-release:
-    needs: [setup, precache]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: 📥 Checkout release tag
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.setup.outputs.build_name }}
-
-      # - name: Setup Java
-      #   uses: actions/setup-java@v6
-      #   with:
-      #     distribution: microsoft
-      #     java-version: '21'
-
-      - name: 🐦 Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-          flutter-version: 3.50.0
-
-      # - name: ⚡ Restore Gradle Cache
-      #   id: gradle-cache
-      #   uses: actions/cache@v5
-      #   with:
-      #     path: |
-      #       ~/.gradle/caches
-      #       ~/.gradle/wrapper
-      #     key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/build.gradle*', 'android/**/settings.gradle*', 'android/**/gradle-wrapper.properties') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-gradle-
-
-      # - name: 🔐 Decode Keystore
-      #   run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
-
-      # - name: 🔥 Decode Firebase Config
-      #   run: |
-      #     mkdir -p android/app/src/release
-      #     echo "${{ secrets.FIREBASE_JSON_RELEASE }}" | base64 --decode > android/app/src/release/google-services.json
-
-      - name: 📱 Build ~~Signed~~ APK
-        # env:
-        #   KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        #   KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        #   KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        #   GRADLE_OPTS: >
-        #     -Xmx4G
-        #     -Dorg.gradle.daemon=false
-        #     -Dfile.encoding=UTF-8
-        #     -Dorg.gradle.caching.debug=true
-        run: >
-          flutter build apk --split-per-abi --release
-          --build-name ${{ needs.setup.outputs.build_name }}
-          --build-number ${{ needs.setup.outputs.build_number }}
-
-      - name: ✏️ Rename APKs
+      - name: ✏️ Rename APK
         run: |
-          BUILD_NAME="${{ needs.setup.outputs.build_name }}"
-          
-          # 64-bit APK
-          OLD_NAME_64="build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
-          NEW_NAME_64="build/app/outputs/flutter-apk/Expendi-Note-${BUILD_NAME}-(64-Bit).apk"
-          
-          if [ -f "$OLD_NAME_64" ]; then
-            echo "Renaming 64-bit APK..."
-            mv $OLD_NAME_64 $NEW_NAME_64
-          else
-             echo "⚠️ 64-bit APK not found!"
-          fi
+          DIR=build/app/outputs/flutter-apk
+          mv "$DIR/app-arm64-v8a-release.apk" "$DIR/Expendi-Note-${TAG}-arm64.apk"
 
-      - name: 🚀 Upload Signed APKs to GitHub Release
+      - name: 🚀 Upload to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          working_directory: build/app/outputs/flutter-apk
-          files: Expendi-Note-*.apk
+          files: build/app/outputs/flutter-apk/Expendi-Note-*.apk
+          fail_on_unmatched_files: true
 
-  # --------------------------------------
-  # 📢 DISCORD NOTIFICATION
-  # --------------------------------------
   notify:
-    needs: [precache, android-release]
+    needs: [verify, android-release]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -165,9 +77,9 @@ jobs:
           title: "Expendi Note ${{ github.event.release.tag_name }}"
           description: |
             **Android Build:** ${{ needs.android-release.result }}
-            **Pre-check (analyze/test):** ${{ needs.precache.result }}
+            **Analyze & Test:** ${{ needs.verify.result }}
 
             [Download release](${{ github.event.release.html_url }})
             [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           color: ${{ needs.android-release.result == 'success' && '0x2ecc71' || '0xe74c3c' }}
-          # url: ${{ github.event.release.html_url }}
+          url: ${{ github.event.release.html_url }}

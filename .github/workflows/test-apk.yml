@@ -3,6 +3,13 @@ name: Build Test APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-test-apk:
     name: Build Test APK
@@ -26,13 +33,23 @@ jobs:
         with:
           channel: stable
           cache: true
-          flutter-version: 3.50.0
+          # flutter-version: 3.50.0
+          flutter-version-file: pubspec.yaml
 
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          test -s android/app/upload-keystore.jks || { echo "::error::Keystore missing or empty"; exit 1; }
+
       - name: Build APK
-        run: flutter build apk --release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: flutter build apk --release --target-platform android-arm64 --build-number ${{ github.run_number }}
 
       - name: Rename APK
         run: |
