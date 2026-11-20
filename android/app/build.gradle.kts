@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.expend_note"
+    namespace = "com.sourish.expend_note"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
     val isTestBuild = System.getenv("TEST_BUILD") == "true"
@@ -27,10 +27,11 @@ android {
 
     defaultConfig {
         applicationId = if (isTestBuild) {
-            "com.example.expend_note.test"
+            "com.sourish.expend_note.test"
         } else {
-            "com.example.expend_note"
+            "com.sourish.expend_note"
         }
+//        applicationId = "com.sourish.expend_note"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

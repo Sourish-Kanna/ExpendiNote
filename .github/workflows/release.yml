@@ -72,14 +72,18 @@ jobs:
         uses: sarisia/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
-          status: ${{ needs.android-release.result == 'success' && 'success' || (needs.android-release.result == 'cancelled' && 'cancelled' || 'failure') }}
+          status: ${{ (needs.verify.result == 'success' && needs.android-release.result == 'success') && 'success' || (contains(needs.*.result, 'cancelled') && 'cancelled' || 'failure') }}
           nodetail: true
           title: "Expendi Note ${{ github.event.release.tag_name }}"
           description: |
-            **Android Build:** ${{ needs.android-release.result }}
+            **Repo:** ${{ github.repository }}
+            **Workflow:** ${{ github.workflow }}
+            **Triggered by:** ${{ github.actor }}
+            
             **Analyze & Test:** ${{ needs.verify.result }}
-
+            **Android Build:** ${{ needs.android-release.result }}
+            
             [Download release](${{ github.event.release.html_url }})
             [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          color: ${{ needs.android-release.result == 'success' && '0x2ecc71' || '0xe74c3c' }}
+          color: ${{ (needs.verify.result == 'success' && needs.android-release.result == 'success') && '0x2ecc71' || (contains(needs.*.result, 'cancelled') && 'cancelled' || '0x95a5a6') }}
           url: ${{ github.event.release.html_url }}
