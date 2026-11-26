@@ -4,14 +4,15 @@ import 'package:expend_note/screens/new_home_screen.dart';
 import 'package:expend_note/services/database_service.dart';
 import 'package:expend_note/theme/app_theme.dart';
 import 'package:expend_note/theme/app_theme_controller.dart';
+import 'package:expend_note/services/notification_service.dart';
 import 'package:material_ui/material_ui.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await AppConstants.init();
-
   final themeController = AppThemeController();
-
+  await NotificationService.instance.initialize();
+  await NotificationService.instance.requestPermission();
+  await NotificationService.instance.setWeeklyNotificationsEnabled(enabled: true); // for dev will change it
   runApp(MyApp(themeController: themeController));
 }
 
@@ -32,28 +33,28 @@ class MyApp extends StatelessWidget {
               ColorScheme? darkScheme;
 
               if (themeController.customThemeEnabled) {
-              lightScheme = ColorScheme.fromSeed(
-                seedColor: themeController.selectedThemeColor.seed,
-                brightness: Brightness.light,
-              );
-              darkScheme = ColorScheme.fromSeed(
-                seedColor: themeController.selectedThemeColor.seed,
-                brightness: Brightness.dark,
-              );
-            } else {
-              lightScheme =
-                  lightDynamic ??
-                  ColorScheme.fromSeed(
-                    seedColor: themeController.selectedThemeColor.seed,
-                    brightness: Brightness.light,
-                  );
-              darkScheme =
-                  darkDynamic ??
-                  ColorScheme.fromSeed(
-                    seedColor: themeController.selectedThemeColor.seed,
-                    brightness: Brightness.dark,
-                  );
-            }
+                lightScheme = ColorScheme.fromSeed(
+                  seedColor: themeController.selectedThemeColor.seed,
+                  brightness: Brightness.light,
+                );
+                darkScheme = ColorScheme.fromSeed(
+                  seedColor: themeController.selectedThemeColor.seed,
+                  brightness: Brightness.dark,
+                );
+              } else {
+                lightScheme =
+                    lightDynamic ??
+                    ColorScheme.fromSeed(
+                      seedColor: themeController.selectedThemeColor.seed,
+                      brightness: Brightness.light,
+                    );
+                darkScheme =
+                    darkDynamic ??
+                    ColorScheme.fromSeed(
+                      seedColor: themeController.selectedThemeColor.seed,
+                      brightness: Brightness.dark,
+                    );
+              }
 
               return MaterialApp(
                 title: 'Expendi Note',
@@ -83,16 +84,11 @@ class MyApp extends StatelessWidget {
 }
 
 class AppThemeScope extends InheritedNotifier<AppThemeController> {
-  const AppThemeScope({
-    super.key,
-    required AppThemeController controller,
-    required super.child,
-  }) : super(notifier: controller);
+  const AppThemeScope({super.key, required AppThemeController controller, required super.child})
+    : super(notifier: controller);
 
   static AppThemeController of(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<AppThemeScope>()!
-        .notifier!;
+    return context.dependOnInheritedWidgetOfExactType<AppThemeScope>()!.notifier!;
   }
 }
 
@@ -102,8 +98,7 @@ class AppInitializationWrapper extends StatefulWidget {
   const AppInitializationWrapper({super.key});
 
   @override
-  State<AppInitializationWrapper> createState() =>
-      _AppInitializationWrapperState();
+  State<AppInitializationWrapper> createState() => _AppInitializationWrapperState();
 }
 
 class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
@@ -113,10 +108,7 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
   void initState() {
     super.initState();
     // Trigger database and app constants init after frame rendering schedule starts
-    _initFuture = Future.wait([
-      DatabaseService.instance.database,
-      AppConstants.init(),
-    ]).then((_) => null);
+    _initFuture = Future.wait([DatabaseService.instance.database, AppConstants.init()]).then((_) => null);
   }
 
   @override
@@ -128,17 +120,19 @@ class _AppInitializationWrapperState extends State<AppInitializationWrapper> {
           return const NewHomeScreen();
         }
 
-        return const Scaffold(body: Center(
-          child: Column(
-            mainAxisAlignment: .center,
-            crossAxisAlignment: .center,
-            children: [
-              CircularProgressIndicator(),
-              Text("Loading..."),
-              Text("Please Wait")
-            ],
-          )
-        ));
+        return const Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: .center,
+              crossAxisAlignment: .center,
+              children: [
+                CircularProgressIndicator(), 
+                Text("Loading..."), 
+                Text("Please Wait")
+              ],
+            ),
+          ),
+        );
       },
     );
   }
