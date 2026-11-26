@@ -26,12 +26,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = if (isTestBuild) {
-            "com.sourish.expend_note.test"
-        } else {
-            "com.sourish.expend_note"
-        }
-//        applicationId = "com.sourish.expend_note"
+        applicationId = "com.sourish.expend_note"
+        if (isTestBuild) applicationIdSuffix = ".test"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION

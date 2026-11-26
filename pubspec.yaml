@@ -56,5 +56,5 @@ flutter_launcher_icons:
   # Android 13+ Monochromatic/Themed Home Screen Icon Config
   adaptive_icon_monochrome: "assets/icon/icon_monochrome.png"
   
-# dart run change_app_package_name:main com.example.expend_note
+# dart run change_app_package_name:main com.sourish.expend_note
 # flutter pub add dev:change_app_package_name  
